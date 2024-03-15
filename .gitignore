@@ -1,0 +1,9 @@
+bin
+build
+output
+*.vti
+*.vtu
+*.stl
+*.dat
+*.DS_Store
+*.vscode
