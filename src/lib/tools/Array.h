@@ -1,6 +1,3 @@
-#ifdef ARRAY_H
-#define ARRAY_H
-
 #include <iostream>
 #include <vector>
 
@@ -15,14 +12,17 @@ class Array1D
         width(0){}
 
         inline T& operator()(size_t x)
-        { return data[x]; }
+        { return data.at(x); }
 
         inline size_t size()
         { return data.size(); }
 
+        inline void setZero(int n)
+        { data.resize(n, 0e0); }
+
     private:
     	size_t width; 
-	    vector<T> data;
+	    std::vector<T> data;
 
 };
 
@@ -31,16 +31,16 @@ template <class T>
 class Array2D
 {
     public:
-        Array2D(size_t width, size_t height) :
+        Array2D(size_t height, size_t width) :
         width(width), height(height), data(width * height){}
 
         Array2D() :
         width(0), height(0){}
 
         inline T& operator()(size_t n)
-        { return data[y * width + x]; }
+        { return data[n]; }
 
-        inline T& operator()(size_t x, size_t y)
+        inline T& operator()(size_t y, size_t x)
         { return data[y * width + x]; }
 
         inline size_t size()
@@ -48,7 +48,7 @@ class Array2D
 
     private:
     	size_t width, height; 
-	    vector<T> data;
+	    std::vector<T> data;
 
 };
 
@@ -57,13 +57,16 @@ template <class T>
 class Array3D
 {
     public:
-        Array3D(size_t width, size_t height, size_t depth) :
-        width(width), height(height), depth(depth), data(length * width * height){}
+        Array3D(size_t depth, size_t height, size_t width) :
+        width(width), height(height), depth(depth), data(depth * width * height){}
 
         Array3D() :
         width(0), height(0), depth(0){}
 
-        inline T& operator()(size_t x, size_t y, size_t z)
+        inline T& operator()(size_t n)
+        { return data[n]; }
+
+        inline T& operator()(size_t z, size_t y, size_t x)
         { return data[z * width * height + y * width + x]; }
 
         inline size_t size()
@@ -71,8 +74,8 @@ class Array3D
 
     private:
     	size_t width, height, depth; 
-	    vector<T> data;
+	    std::vector<T> data;
 
 };
 
-#endif
+

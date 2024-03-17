@@ -24,15 +24,11 @@ include_directories(
   /opt/petsc/include
 )
 
-##################################
-      # lib directories #
-##################################
 link_directories(
   /opt/homebrew/Cellar/metis/5.1.0/lib
   /opt/TextParser/lib
   /opt/petsc/lib
   /opt/homebrew/opt/libomp/lib
 )
-
 
 add_subdirectory(src)

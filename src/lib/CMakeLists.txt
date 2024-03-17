@@ -1,0 +1,8 @@
+add_subdirectory(boundary)
+add_subdirectory(config)
+add_subdirectory(direct)
+add_subdirectory(inverse)
+add_subdirectory(mesh)
+add_subdirectory(postprocess)
+add_subdirectory(preprocess)
+add_subdirectory(solver)
