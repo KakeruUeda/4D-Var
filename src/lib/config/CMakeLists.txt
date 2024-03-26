@@ -5,11 +5,12 @@ add_library(config STATIC)
 target_sources(config
     PRIVATE
         Config.cpp
+        ReadTP.cpp
 )
 
 target_include_directories(config 
     PUBLIC
-        ${PROJECT_SOURCE_DIR}/src/lib/tools
+        ${PROJECT_SOURCE_DIR}/src/lib/common
 )
 
 target_compile_options(config PUBLIC ${compile_options_tmp})

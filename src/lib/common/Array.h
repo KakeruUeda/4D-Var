@@ -1,3 +1,6 @@
+#ifndef ARRAY_H
+#define ARRAY_H
+
 #include <iostream>
 #include <vector>
 
@@ -12,13 +15,19 @@ class Array1D
         width(0){}
 
         inline T& operator()(size_t x)
-        { return data.at(x); }
+        { return data[x]; }
 
         inline size_t size()
         { return data.size(); }
 
-        inline void setZero(int n)
-        { data.resize(n, 0e0); }
+        inline void resize(size_t n)
+        { width = n; data.resize(n); }
+
+        inline void setZero()
+        {
+            for(T& n : data) 
+                n = 0;
+        }
 
     private:
     	size_t width; 
@@ -78,4 +87,5 @@ class Array3D
 
 };
 
+#endif
 

@@ -10,6 +10,8 @@ target_sources(postprocess
 
 target_include_directories(postprocess 
     PUBLIC
+        ${PROJECT_SOURCE_DIR}/src/lib/common
+        ${PROJECT_SOURCE_DIR}/src/lib/config
 )
 
 target_compile_options(postprocess PUBLIC ${compile_options_tmp})

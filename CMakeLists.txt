@@ -4,7 +4,7 @@ set(CMAKE_CXX_COMPILER "/opt/petsc/bin/mpic++")
 set(base_compile_options ${base_compile_options} "-O2")
 string(REPLACE " " " " compile_options ${base_compile_options})
 
-project(cfdMPI C CXX)
+project(DataAssimilation C CXX)
 set(CMAKE_CXX_STANDARD 11)
 
 set(CMAKE_BUILD_TYPE Release)
@@ -32,3 +32,4 @@ link_directories(
 )
 
 add_subdirectory(src)
+add_subdirectory(test)

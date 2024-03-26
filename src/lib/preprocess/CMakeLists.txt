@@ -10,7 +10,7 @@ target_sources(preprocess
 
 target_include_directories(preprocess 
     PUBLIC  
-        ${PROJECT_SOURCE_DIR}/src/lib/tools
+        ${PROJECT_SOURCE_DIR}/src/lib/common
         ${PROJECT_SOURCE_DIR}/src/lib/config
 )
 

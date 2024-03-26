@@ -1,4 +1,5 @@
 add_subdirectory(boundary)
+add_subdirectory(common)
 add_subdirectory(config)
 add_subdirectory(direct)
 add_subdirectory(inverse)

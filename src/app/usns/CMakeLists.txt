@@ -1,4 +1,4 @@
-set(main_target "test")
+set(main_target "UnsteadyNavierStokesSolver")
 
 set(compile_options_tmp ${base_compile_options})
 string(REPLACE " " ";" compile_options_tmp ${compile_options_tmp})
@@ -35,7 +35,7 @@ target_include_directories(${main_target}
         ${PROJECT_SOURCE_DIR}/src/lib/postprocess
         ${PROJECT_SOURCE_DIR}/src/lib/preprocess
         ${PROJECT_SOURCE_DIR}/src/lib/solver
-        ${PROJECT_SOURCE_DIR}/src/lib/tools
+        ${PROJECT_SOURCE_DIR}/src/lib/common
 )
 
 install(TARGETS ${main_target} DESTINATION ${CMAKE_INSTALL_PREFIX})

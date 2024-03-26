@@ -2,16 +2,19 @@
 #define PREPROCESSDIRECT_H
 
 #include <iostream>
-#include "TextParser.h"
+#include "Config.h"
 
-class PreDirect
+namespace Direct
 {
-    public:
-        PreDirect(){}
-        ~PreDirect(){}
-        
-        TextParser tp;
-        Config conf;
-};
+    class Preprocess
+    {
+        public:
+            Preprocess(std::string inputFile);
+            ~Preprocess(){}
+    
+            Config conf;
+    };
+}
+
 
 #endif

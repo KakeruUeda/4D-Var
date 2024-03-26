@@ -5,11 +5,12 @@ add_library(mesh STATIC)
 target_sources(mesh
     PRIVATE
         Cell.cpp
+        Grid.cpp
 )
 
-target_include_directories(mesh 
+target_include_directories(mesh
     PUBLIC  
-        ${PROJECT_SOURCE_DIR}/src/lib/tools
+        ${PROJECT_SOURCE_DIR}/src/lib/common
         ${PROJECT_SOURCE_DIR}/src/lib/config
 )
 

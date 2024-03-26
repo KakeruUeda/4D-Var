@@ -1,31 +1,29 @@
-#ifdef GRID_H
+#ifndef GRID_H
 #define GRID_H
 
 #include <iostream>
+#include "Config.h"
+#include "Cell.h"
 
-class StructuredGrid
+class Grid
 {
     public:
-        StructuredGrid(const ConfigTextParser &params) : 
-        nx(params.nx), ny(param.ny), nz(param.nz), 
-        lx(params.nx), ly(param.ny), lz(param.nz)
-        nNodesInElm(param.nNodesInElm), nCellsGlobal(param.nCellsGlobal)
-        { dx = lx / double(nx), dy = ly / double(ny), lz = lz / double(nz) };
+        Grid(Config &conf);
+        virtual ~Grid(){};
 
-        virtual ~StructuredGrid(){};
-        
-        const size_t nx, ny, nz;
-        const double lx, ly, lz;
-        const double dx, dy, dz;
+        GridType gridType;
 
-        const size_t nNodesGlobal;
-        const size_t nCellsGlobal;
+        Array1D<size_t> nx;
+        Array1D<double> lx;
+        Array1D<double> dx;
 
-};
+        size_t dim;
+        size_t nNodesGlobal;
+        size_t nCellsGlobal;
 
+    private:
+        Cell<CellInfo> cell;
 
-class UnstructuredGrid
-{
 };
 
 #endif

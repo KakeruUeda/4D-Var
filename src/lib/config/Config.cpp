@@ -1,30 +1,54 @@
 #include "Config.h"
 
-void Config::readStructuredParam()
+Config::Config(std::string inputFile)
 {
+    tryOpenConfigFile(inputFile);
+    tryReadConfigFile();
+}
+
+void Config::tryOpenConfigFile(std::string inputFile)
+{
+    try
+    {
+        int error;
+        if ((error = tp.read(inputFile)) != TP_NO_ERROR)
+            throw std::runtime_error("Open error");
+    }
+    catch (const std::runtime_error& e)
+    {
+		std::cout << e.what() << std::endl;
+		isReadingError = true;
+    }
+    
     return;
 }
 
-void Config::readUnstructuredParam()
+void Config::tryReadConfigFile()
 {
+    try
+    {
+        readConfigFile();
+    }
+    catch(const std::runtime_error& e)
+    {
+        std::cout << e.what() << std::endl;
+        isReadingError = true;
+    }
+
     return;
 }
 
-void Config::set()
+void Config::readConfigFile()
 {
-    assert(nx != 0 && ny != 0 && nz != 0);
-    assert(lx != 0 && ly != 0 && lz != 0);
-
-    dx = lx / (double)nx;
-    dy = ly / (double)ny;
-    dz = lz / (double)nz;
-
-    nCellsGlobal = nx * ny * nz;
-    nNodesGlobal = (nx + 1) * (ny + 1) * (nz + 1);
-
-    nNodesInCell.resize(nCellsGlobal, 0e0);
-    for(size_t i=0; i<nCellsGlobal; i++)
-        nNodesInCell.at(i) = nNodesInCellTmp;
+    readGridType();
+    if(gridType == GridType::STRUCTURED)
+    {
+        readBase(); readPysicalParam();
+        readGrid();
+    }
+    else if(gridType == GridType::UNSTRUCTURED) 
+    {
+    }
 
     return;
 }
