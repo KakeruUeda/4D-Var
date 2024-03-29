@@ -1,9 +1,27 @@
 #include "Config.h"
 
-Config::Config(std::string inputFile)
+Config::Config(std::string inputFile, std::string appName)
 {
+    setApplication(appName);
     tryOpenConfigFile(inputFile);
     tryReadConfigFile();
+}
+
+void Config::setApplication(std::string appName)
+{   
+    if(appName == "STGRID")
+        app = Application::STGRID;
+    else if(appName == "SNS")
+        app = Application::SNS;
+    else if(appName == "USNS")
+        app = Application::USNS;
+    else if(appName == "TDVAR")
+        app = Application::TDVAR;
+    else if(appName == "FDVAR")
+        app = Application::FDVAR;
+    else
+        if(mpi.myId == 0)
+            std::cout << "Unknown appName" << std::endl;
 }
 
 void Config::tryOpenConfigFile(std::string inputFile)
@@ -16,8 +34,10 @@ void Config::tryOpenConfigFile(std::string inputFile)
     }
     catch (const std::runtime_error& e)
     {
-		std::cout << e.what() << std::endl;
-		isReadingError = true;
+		if(mpi.myId == 0) 
+            std::cout << e.what() << std::endl;
+		if(mpi.myId == 0) 
+            isReadingError = true;
     }
     
     return;
@@ -31,8 +51,10 @@ void Config::tryReadConfigFile()
     }
     catch(const std::runtime_error& e)
     {
-        std::cout << e.what() << std::endl;
-        isReadingError = true;
+        if(mpi.myId == 0)
+            std::cout << e.what() << std::endl;
+        if(mpi.myId == 0)
+            isReadingError = true;
     }
 
     return;
@@ -40,15 +62,21 @@ void Config::tryReadConfigFile()
 
 void Config::readConfigFile()
 {
-    readGridType();
-    if(gridType == GridType::STRUCTURED)
+    switch(app)
     {
-        readBase(); readPysicalParam();
-        readGrid();
+        case Application::STGRID:
+            readBasicParameter(); 
+            readGridParameter(); 
+            readBoundaryParameter();
+            break;
+            
+        case Application::USNS:
+            readBasicParameter();
+            break;
+        default:
+            if(mpi.myId == 0)
+                std::cout << "Unknown Application" << std::endl;
+            break;
     }
-    else if(gridType == GridType::UNSTRUCTURED) 
-    {
-    }
-
     return;
 }

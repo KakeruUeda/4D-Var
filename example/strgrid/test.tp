@@ -1,17 +1,17 @@
 Base
 {
     dim = 3
-    outputDir = "gird"
+    outputDir = "test"
     numOfOMP = 1
 }
 
 Grid
 {
-    nx=(32, 32, 32) 
-    Lx=(1.0, 1.0, 1.0)
+    nx = (32, 32, 32) 
+    lx = (1.0, 1.0, 1.0)
+    nNodesInCell = 8
     image = "input/image32x32.dat"
 }
-
 
 Boundary
 {
@@ -40,41 +40,3 @@ Boundary
         value = (0,0,0)
     }
 }
-
-
-PysicalParameter
-{   
-    rho = 100  // density
-    mu = 1      // viscocity
-}
-
-
-TimeParameter
-{
-    dt = 0.005
-    timeMax = 10000
-    pulsatile_flow = "ON"
-    pulse_begin_itr = -1
-    T = 1.0
-}
-
-
-BoundaryMethod 
-{
-    boundary = "Darcy"
-}
-
-
-XFEMParameter
-{
-    sub_div = 6  
-}
-
-
-DarcyParameter
-{
-    alpha = 1e-1
-    resistance = 1e2
-}
-
-

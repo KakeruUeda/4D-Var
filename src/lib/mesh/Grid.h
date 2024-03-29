@@ -4,6 +4,14 @@
 #include <iostream>
 #include "Config.h"
 #include "Cell.h"
+#include "Boundary.h"
+
+enum class GridType
+{
+    STRUCTURED = 0,
+    UNSTRUCTURED = 1
+};
+ 
 
 class Grid
 {
@@ -12,6 +20,8 @@ class Grid
         virtual ~Grid(){};
 
         GridType gridType;
+        Cell<CellInfo> cell;
+        Boundary boundary;
 
         Array1D<size_t> nx;
         Array1D<double> lx;
@@ -21,8 +31,11 @@ class Grid
         size_t nNodesGlobal;
         size_t nCellsGlobal;
 
+        void initialize(Config &conf);
+
     private:
-        Cell<CellInfo> cell;
+        void initializeStructuredGrid(Config &conf);
+        void initializeUnstructuredGrid(Config &conf);
 
 };
 

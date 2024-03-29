@@ -9,7 +9,7 @@ namespace Direct
     class Preprocess
     {
         public:
-            Preprocess(std::string inputFile);
+            Preprocess(std::string inputFile, std::string appName);
             ~Preprocess(){}
     
             Config conf;

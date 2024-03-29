@@ -14,6 +14,7 @@ target_include_directories(direct
         ${PROJECT_SOURCE_DIR}/src/lib/config
         ${PROJECT_SOURCE_DIR}/src/lib/mesh
         ${PROJECT_SOURCE_DIR}/src/lib/common
+        ${PROJECT_SOURCE_DIR}/src/lib/boundary
 )
 
 target_compile_options(direct PUBLIC ${compile_options_tmp})

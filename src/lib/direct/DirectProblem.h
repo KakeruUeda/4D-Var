@@ -5,6 +5,7 @@
 #include <omp.h>
 #include <mpi.h>
 #include "Grid.h"
+#include "Boundary.h"
 
 struct EstimatedVariable
 {
@@ -17,12 +18,14 @@ class DirectProblem
     public:
         DirectProblem(Config &conf);
         ~DirectProblem(){}
+
+        Grid grid;
      
         Array1D<double> u, v, w;
         double Re, pho, mu, nu;
 
     private:
-        Grid grid;
+        void runSimulation();
 
 
 };
