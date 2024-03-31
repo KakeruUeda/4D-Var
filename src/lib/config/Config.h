@@ -13,7 +13,7 @@ extern MyMPI mpi;
 
 enum class Application
 {
-    STGRID = 0, SNS = 1, USNS = 2,
+    STRGRID = 0, SNS = 1, USNS = 2,
     TDVAR = 3,  FDVAR = 4
 };
 
@@ -36,24 +36,25 @@ class Config
         double rho, mu;
 
         // Grid param
-        Array1D<size_t> nx;
-        Array1D<double> lx;
-        Array1D<double> dx;
+        size_t nx, ny, nz;
+        double lx, ly, lz;
+        double dx, dy, dz;
+        size_t nxNodes, nyNodes, nzNodes;
+        size_t nxCells, nyCells, nzCells;
         size_t nCellsGlobal;
         size_t nNodesGlobal;
-        size_t nNodesInCellTmp;
-        Array1D<double> nNodesInCell;
+        size_t nNodesInCell;
 
         // Boundary param
         std::vector<std::string> bdStr;
         std::vector<std::string> bdType;
-        std::vector<std::vector<size_t>> bdValue; 
+        std::vector<std::vector<double>> bdValue; 
 
         // Image param
         std::vector<double> phi;
 
         // Error param
-        bool isReadingError;
+        bool isReadingError = false;
 
     private:
         void setApplication(std::string appName);

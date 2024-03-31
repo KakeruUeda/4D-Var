@@ -11,7 +11,7 @@ void Config::readGridTypeParameter()
         throw std::runtime_error(label + " is not set");
     
     if(gridTypeString != "Structured" && gridTypeString != "Unstructured")
-        throw std::runtime_error("Unknown GridType");   
+        throw std::runtime_error("Unknown GridType");  
 
     return;
 }
@@ -122,23 +122,56 @@ void Config::readGridParameter()
     std::string str, base_label, label;
     int tmpInt[dim];
     double tmpDouble[dim];
+    int nNodesInCellTmp;
   
     base_label = "/Grid";
     label = base_label + "/nx";
     if (!tp.getInspectedVector(label, tmpInt, dim))
         throw std::runtime_error(label + " is not set");
 
-    nx.resize(dim);
-    for(int i=0; i<dim; i++)
-        nx(i) = tmpInt[i];
+    nx = tmpInt[0];
+    ny = tmpInt[1];
+    nz = tmpInt[2];
+
+    if(dim == 2){
+        nxNodes = nx + 1; 
+        nyNodes = ny + 1;
+        nzNodes = 1;
+        nxCells = nx;
+        nyCells = ny;
+        nzCells = 1;
+    }
+    if(dim == 3){
+        nxNodes = nx + 1; 
+        nyNodes = ny + 1;
+        nzNodes = nz + 1;
+        nxCells = nx;
+        nyCells = ny;
+        nzCells = nz;
+    }
 
     label = base_label + "/lx";
     if (!tp.getInspectedVector(label, tmpDouble, dim))
         throw std::runtime_error(label + " is not set");
 
-    lx.resize(dim);
-    for(int i=0; i<dim; i++)
-        lx(i) = tmpDouble[i];
+    lx = tmpDouble[0];
+    ly = tmpDouble[1];
+    if(dim == 2) lz = 0.0;
+    else if(dim == 3) lz = tmpDouble[2];
+
+    dx = lx / (double)nx;
+    dy = ly / (double)ny;
+    dz = lz / (double)nz;
+
+    nCellsGlobal = nx * ny * nz;
+    if(dim == 2) nNodesGlobal = (nx+1) * (ny+1);
+    else if(dim == 3) nNodesGlobal = (nx+1) * (ny+1) * (nz+1);
+
+    label = base_label + "/nNodesInCell";
+    if (!tp.getInspectedValue(label, nNodesInCellTmp))
+        throw std::runtime_error(label + " is not set"); 
+
+    nNodesInCell  = static_cast<size_t>(nNodesInCellTmp);
 
     return;
 }
@@ -150,7 +183,7 @@ void Config::readImageParameter()
 
     phi.resize(nCellsGlobal);
     for(int i=0;i<nCellsGlobal;i++)
-        phi.at(i) = 1e0;
+        phi.at(i) = 1.0;
 
     label = "/Domain/image";
     if(!tp.getInspectedValue(label, imageFile))
@@ -256,7 +289,7 @@ void Config::readBoundaryTypeAndValue(std::string labelType, std::string labelVa
             throw std::runtime_error(labelValue + " is not set");  
         bdValue.emplace_back();
         for(int k=0; k<dim; k++)
-            bdValue[tmp++].push_back(value[dim]);
+            bdValue[tmp].push_back(value[k]);
     }
     else if(bdTypeTmp == "p")
     {
@@ -264,11 +297,21 @@ void Config::readBoundaryTypeAndValue(std::string labelType, std::string labelVa
         if(!tp.getInspectedValue(labelValue, value))
             throw std::runtime_error(labelValue + " is not set");
         bdValue.emplace_back();
-        bdValue[tmp++].push_back(value);
+        bdValue[tmp].push_back(value);
     }
-    else if(bdTypeTmp == "File")
+    else if(bdTypeTmp == "free")
+    {
+        bdValue.emplace_back();
+    }
+    else if(bdTypeTmp == "file")
     {
     }
+    else
+    {
+        throw std::runtime_error("label " + bdTypeTmp + " undefined");
+    }
+
+    tmp++;
 
     return;
 }

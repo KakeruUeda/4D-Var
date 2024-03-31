@@ -24,10 +24,7 @@ class Array1D
         { width = n; data.resize(n); }
 
         inline void setZero()
-        {
-            for(T& n : data) 
-                n = 0;
-        }
+        { for(T& n : data) n = 0; }
 
     private:
     	size_t width; 

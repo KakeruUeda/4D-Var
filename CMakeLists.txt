@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
 set(CMAKE_CXX_COMPILER "/opt/petsc/bin/mpic++")
-set(base_compile_options ${base_compile_options} "-O2")
+set(base_compile_options ${base_compile_options} "-O2 -std=c++17")
 string(REPLACE " " " " compile_options ${base_compile_options})
 
 project(DataAssimilation C CXX)

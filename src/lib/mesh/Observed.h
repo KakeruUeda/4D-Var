@@ -16,8 +16,7 @@ class ObservedGrid
         Observed(Configure &conf) :
         nx(conf.nxObs), ny(conf.nyObs), nz(conf.nzObs), data(conf.nxObs * conf.nyObs * conf.nzObs),
         nCellsGlobal(conf.nzObs * conf.nyObs * conf.nxObs), nNodesInCell(conf.nNodesInCell)
-        {
-        }
+        {}
         Obserbed() :
         nx(0), ny(0), nz(0){}
 

@@ -1,1 +1,1 @@
-add_subdirectory(stgrid)
+add_subdirectory(strgrid)

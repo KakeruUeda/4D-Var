@@ -18,7 +18,6 @@ int main(int argc, char *argv[])
         return EXIT_FAILURE;
 
     DirectProblem direct(pre.conf);
-    direct.grid.initialize(pre.conf);
 
     return EXIT_SUCCESS;
 }
