@@ -26,34 +26,40 @@ class Config
         TextParser tp;
         Application app;
 
-        // Badsic param
-        size_t dim;
-        size_t nOMP;
-        std::string outputDir;
-        std::string gridTypeString;
+        // Basic parameter
+        int dim, nOMP;
+        std::string outputDir, gridTypeString;
 
-        // Physical param
-        double rho, mu;
+        // Physical parameter
+        double rho, mu, Re;
 
-        // Grid param
-        size_t nx, ny, nz;
+        // Grid parameter
+        int nx, ny, nz;
         double lx, ly, lz;
         double dx, dy, dz;
-        size_t nxNodes, nyNodes, nzNodes;
-        size_t nxCells, nyCells, nzCells;
-        size_t nCellsGlobal;
-        size_t nNodesGlobal;
-        size_t nNodesInCell;
+        int nxNodes, nyNodes, nzNodes;
+        int nxCells, nyCells, nzCells;
+        int nCellsGlobal, nNodesGlobal, nNodesInCell;
 
-        // Boundary param
+        // Boundary parameter for stgrid
         std::vector<std::string> bdStr;
         std::vector<std::string> bdType;
         std::vector<std::vector<double>> bdValue; 
 
-        // Image param
+        // For image data
         std::vector<double> phi;
 
-        // Error param
+        // For Dirichlet boundary data
+        std::vector<int> vDirichletNode;
+        std::vector<int> pDirichletNode;
+        std::vector<double> vDirichletValue;
+        std::vector<double> pDirichletValue;
+
+        // For cell and node data
+        std::vector<std::vector<double>> node;
+        std::vector<std::vector<double>> cell;
+
+        // Error parameter
         bool isReadingError = false;
 
     private:
@@ -62,18 +68,19 @@ class Config
         void tryReadConfigFile();
         void readConfigFile();
 
-        void readGridTypeParameter();     
+        void readGridTypeParameter();  
+        void readGridParameter(); 
+        void readImageData();
+        void readStructuredGridParameter();
+        void readStructuredBoundaryParameter();
         void readBasicParameter();           
         void readPysicalParameter(); 
-        void readBoundaryMethodParameter(); 
-        void readXFEMParameter();    
         void readDarcyParameter();    
-        void readTimeParameter();    
-        void readGridParameter();      
-        void readBoundaryParameter();    
+        void readTimeParameter();         
         void readImageParameter();
 
-        void readBoundaryTypeAndValue(std::string labelType, std::string labelValue, size_t &tmp);
+        void readBoundaryTypeAndValue(std::string labelType, 
+                                      std::string labelValue, int &tmp);
 };
 
 #endif

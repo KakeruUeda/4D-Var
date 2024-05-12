@@ -1,42 +1,45 @@
 Base
 {
     dim = 3
-    outputDir = "test"
+    outputDir = "square"
     numOfOMP = 1
 }
 
-Grid
+Domainb
 {
-    nx = (32, 32, 32) 
+    imageFile = "input/image4x4x4.dat"
+}
+
+UnstructuredGrid
+{
+    nx = (4, 4, 4) 
     lx = (1.0, 1.0, 1.0)
     nNodesInCell = 8
-    image = "input/image32x32.dat"
 }
 
 Boundary
 {
     top{
         type = "free"
-        value = (0,0,0)
     }
     bottom{
-        type = "free"
-        value = (0,0,0)
+        type = "v"
+        value = (0,1,0)
     }
     left{
         type = "v"
-        value = (1,0,0)
+        value = (0,0,0)
     }
     right{
-        type = "free"
+        type = "v"
         value = (0,0,0)
     }
     front{
-        type = "free"
+        type = "v"
         value = (0,0,0)
     }
     back{
-        type = "free"
+        type = "v"
         value = (0,0,0)
     }
 }

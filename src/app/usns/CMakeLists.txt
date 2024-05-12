@@ -19,10 +19,12 @@ target_link_libraries( ${main_target}
         petsc
         metis
         omp
+        direct
         config
         mesh
-        preprocess
-        postprocess
+        solver
+        boundary
+        output
 )
 
 target_include_directories(${main_target} 
@@ -32,10 +34,9 @@ target_include_directories(${main_target}
         ${PROJECT_SOURCE_DIR}/src/lib/direct
         ${PROJECT_SOURCE_DIR}/src/lib/inverse
         ${PROJECT_SOURCE_DIR}/src/lib/mesh
-        ${PROJECT_SOURCE_DIR}/src/lib/postprocess
-        ${PROJECT_SOURCE_DIR}/src/lib/preprocess
         ${PROJECT_SOURCE_DIR}/src/lib/solver
-        ${PROJECT_SOURCE_DIR}/src/lib/common
+        ${PROJECT_SOURCE_DIR}/src/lib/output
+        ${PROJECT_SOURCE_DIR}/src/lib/common 
 )
 
 install(TARGETS ${main_target} DESTINATION ${CMAKE_INSTALL_PREFIX})

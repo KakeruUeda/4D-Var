@@ -23,14 +23,12 @@ void Config::setApplication(std::string appName)
 
 void Config::tryOpenConfigFile(std::string inputFile)
 {
-    try
-    {
+    try{
         int error;
         if ((error = tp.read(inputFile)) != TP_NO_ERROR)
             throw std::runtime_error("Open error");
     }
-    catch (const std::runtime_error& e)
-    {
+    catch (const std::runtime_error& e){
 		if(mpi.myId == 0) 
             std::cout << e.what() << std::endl;
 		if(mpi.myId == 0) 
@@ -42,12 +40,10 @@ void Config::tryOpenConfigFile(std::string inputFile)
 
 void Config::tryReadConfigFile()
 {
-    try
-    {
+    try{
         readConfigFile();
     }
-    catch(const std::runtime_error& e)
-    {
+    catch(const std::runtime_error& e){
         if(mpi.myId == 0)
             std::cout << e.what() << std::endl;
         if(mpi.myId == 0)
@@ -59,16 +55,18 @@ void Config::tryReadConfigFile()
 
 void Config::readConfigFile()
 {
-    switch(app)
-    {
+    switch(app){
         case Application::STRGRID:
             readBasicParameter(); 
-            readGridParameter(); 
-            readBoundaryParameter();
+            readImageData();
+            readStructuredGridParameter(); 
+            readStructuredBoundaryParameter();
             break;
 
         case Application::USNS:
             readBasicParameter();
+            readGridParameter();
+            readImageData();
             break;
 
         default:

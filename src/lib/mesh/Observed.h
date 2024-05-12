@@ -15,21 +15,20 @@ class ObservedGrid
     public:
         Observed(Configure &conf) :
         nx(conf.nxObs), ny(conf.nyObs), nz(conf.nzObs), data(conf.nxObs * conf.nyObs * conf.nzObs),
-        nCellsGlobal(conf.nzObs * conf.nyObs * conf.nxObs), nNodesInCell(conf.nNodesInCell)
-        {}
+        nCellsGlobal(conf.nzObs * conf.nyObs * conf.nxObs), nNodesInCell(conf.nNodesInCell){}
         Obserbed() :
         nx(0), ny(0), nz(0){}
 
-        inline T& operator()(size_t n)
+        inline T& operator()(int n)
         { return data.at(n); }
 
-        inline T& operator()(size_t i, size_t, j, size_t k)
+        inline T& operator()(int i, int, j, int k)
         { return data.at(k * width * height + j * width + i); }
 
-        size_t nxObs, nyObs, nzObs;
+        int nxObs, nyObs, nzObs;
         double dxObs, dyObs, dzObs; 
         double lxObs, lyObs, lzObs;
-        size_t nNodesInCell;
+        int nNodesInCell;
 
     private:
 	    std::vector<T> data;

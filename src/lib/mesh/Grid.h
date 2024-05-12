@@ -2,10 +2,13 @@
 #define GRID_H
 
 #include <iostream>
+#include "metis.h"
 #include "Config.h"
 #include "Cell.h"
 #include "Node.h"
+#include "Array.h"
 #include "Boundary.h"
+#include "Output.h"
 
 enum class GridType
 {
@@ -13,41 +16,43 @@ enum class GridType
     UNSTRUCTURED = 1
 };
  
-
 class Grid
 {
     public:
-        Grid(){};
+        Grid(){}
         Grid(Config &conf);
-        virtual ~Grid(){};
+        virtual ~Grid(){}
 
         GridType gridType;
-        Cell<CellInfo> cell;
-        Node<NodeInfo> node;
-        DirichletBoundary boundary;
+        Cell cell; 
+        Node node;
+        DirichletBoundary dirichlet;
+        OutputVTU outputVTU;
+        
+        int nx, ny, nz;
+        double lx, ly, lz, dx, dy, dz;
 
-        size_t nx, ny, nz;
-        double lx, ly, lz;
-        double dx, dy, dz;
+        int dim;
 
-        size_t dim;
-        size_t nNodesGlobal;
-        size_t nCellsGlobal;
+        int nNodesGlobal, nCellsGlobal, nDofsGlobal;
+        int nNodesLocal, nCellsLocal, nDofsLocal;
 
         void setStructuredGrid(
-            const size_t nxCells, const size_t nyCells, const size_t nzCells, 
-            const size_t nxNodes, const size_t nyNodes, const size_t nzNodes, 
+            const int nxCells, const int nyCells, const int nzCells, 
+            const int nxNodes, const int nyNodes, const int nzNodes, 
             const double dx, const double dy, const double dz,
-            const size_t nNodesInCell, const size_t dim, 
-            Cell<CellInfo> &cell, Node<NodeInfo> &node);
+            const int nNodesInCell, const int dim, 
+            Cell &cell, Node &node);
+        void divideWholeGrid();
 
     private:
-        size_t structuredGridNodeSet(
-            const size_t nxNodes, const size_t nyNodes, const size_t nzNodes,
-            const size_t i, const size_t j, const size_t k, const size_t p);
+        int structuredGridNodeSet(
+            const int nxNodes, const int nyNodes, const int nzNodes,
+            const int i, const int j, const int k, const int p);
         double structuredGridCoordinateSet(
             const double dx, const double dy, const double dz,
-            const size_t i, const size_t j, const size_t k, const size_t d);
+            const int i, const int j, const int k, const int d);
+        
 };
 
 #endif

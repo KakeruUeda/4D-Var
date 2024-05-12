@@ -5,46 +5,40 @@
 #include <cassert>
 #include "Array.h"
 #include "Config.h"
-
-template <class T> 
-class Cell
-{
-    public:
-        Cell(){};
-        Cell(Config &conf) :
-        nCellsGlobal(conf.nCellsGlobal), data(conf.nCellsGlobal)
-        {  
-            for(size_t i=0; i<nCellsGlobal; i++) 
-                data[i].nNodesInCell = conf.nNodesInCell;
-             for(size_t i=0; i<nCellsGlobal; i++) 
-                data[i].node.resize(conf.nNodesInCell);
-        }
-        ~Cell(){}
-        
-        inline T& operator()(size_t n)
-        { return data[n]; }
-
-        inline void resize(size_t n)
-        { data.resize(n); }
-
-        inline void setZero()
-        { for(T& n : data) n = 0; }
-
-        size_t nCellsGlobal;
-        size_t meshType;
-
-    private:
-	    std::vector<T> data;
-};
-
+#include "VTKCellType.h"
 
 struct CellInfo
 {
     public:
-        size_t nNodesInCell;
-        Array1D<size_t> node;
+        VTKCellType cellType;
+        int nNodesInCell;
+        int subId;
+        Array1D<int> node;
+        Array2D<double> x;
 
-        inline void setArrayZero(size_t n);
+        inline void setArrayZero(int n);
+};
+
+class Cell
+{
+    public:
+        Cell(){}
+        Cell(Config conf) :
+        nCellsGlobal(conf.nCellsGlobal), data(conf.nCellsGlobal){}
+        ~Cell(){}
+        
+        inline CellInfo& operator()(int n)
+        { return data[n]; }
+
+        inline void resize(int n)
+        { data.resize(n); }
+
+        int nCellsGlobal;
+
+        void initialize(Config conf);
+
+    private:
+	    std::vector<CellInfo> data;
 };
 
 

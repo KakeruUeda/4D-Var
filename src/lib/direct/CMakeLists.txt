@@ -5,8 +5,9 @@ add_library(direct STATIC)
 target_sources(direct
     PRIVATE
         DirectProblem.cpp
-        MatAssySNS.cpp
-        MatAssyUSNS.cpp
+        MatrixAssemblySNS.cpp
+        MatrixAssemblyUSNS.cpp
+        MatrixPreparation.cpp
 )
 
 target_include_directories(direct
@@ -15,6 +16,8 @@ target_include_directories(direct
         ${PROJECT_SOURCE_DIR}/src/lib/mesh
         ${PROJECT_SOURCE_DIR}/src/lib/common
         ${PROJECT_SOURCE_DIR}/src/lib/boundary
+        ${PROJECT_SOURCE_DIR}/src/lib/output
+        ${PROJECT_SOURCE_DIR}/src/lib/solver
 )
 
 target_compile_options(direct PUBLIC ${compile_options_tmp})

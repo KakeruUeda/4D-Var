@@ -8,28 +8,27 @@ template <class T>
 class Array1D
 {
     public:
-        Array1D(size_t width) :
+        Array1D(int width) :
         width(width), data(width){}
 
         Array1D() :
         width(0){}
 
-        inline T& operator()(size_t x)
+        inline T& operator()(int x)
         { return data[x]; }
 
-        inline size_t size()
+        inline int size()
         { return data.size(); }
 
-        inline void resize(size_t n)
+        inline void resize(int n)
         { width = n; data.resize(n); }
 
         inline void setZero()
         { for(T& n : data) n = 0; }
 
     private:
-    	size_t width; 
+    	int width; 
 	    std::vector<T> data;
-
 };
 
 
@@ -37,23 +36,23 @@ template <class T>
 class Array2D
 {
     public:
-        Array2D(size_t height, size_t width) :
+        Array2D(int height, int width) :
         width(width), height(height), data(width * height){}
 
         Array2D() :
         width(0), height(0){}
 
-        inline T& operator()(size_t n)
+        inline T& operator()(int n)
         { return data[n]; }
 
-        inline T& operator()(size_t y, size_t x)
+        inline T& operator()(int y, int x)
         { return data[y * width + x]; }
 
-        inline size_t size()
+        inline int size()
         { return data.size(); }
 
     private:
-    	size_t width, height; 
+    	int width, height; 
 	    std::vector<T> data;
 
 };
@@ -63,23 +62,23 @@ template <class T>
 class Array3D
 {
     public:
-        Array3D(size_t depth, size_t height, size_t width) :
+        Array3D(int depth, int height, int width) :
         width(width), height(height), depth(depth), data(depth * width * height){}
 
         Array3D() :
         width(0), height(0), depth(0){}
 
-        inline T& operator()(size_t n)
+        inline T& operator()(int n)
         { return data[n]; }
 
-        inline T& operator()(size_t z, size_t y, size_t x)
+        inline T& operator()(int z, int y, int x)
         { return data[z * width * height + y * width + x]; }
 
-        inline size_t size()
+        inline int size()
         { return data.size(); }
 
     private:
-    	size_t width, height, depth; 
+    	int width, height, depth; 
 	    std::vector<T> data;
 
 };

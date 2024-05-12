@@ -6,6 +6,10 @@
 #include <mpi.h>
 #include "Grid.h"
 #include "Boundary.h"
+#include "PetscSolver.h"
+#include "Config.h"
+
+extern MyMPI mpi;
 
 struct EstimatedVariable
 {
@@ -16,16 +20,20 @@ struct EstimatedVariable
 class DirectProblem
 {
     public:
-        DirectProblem(Config &conf);
+        DirectProblem(Config conf);
         ~DirectProblem(){}
 
         Grid grid;
+        PetscSolver petsc;
      
         Array1D<double> u, v, w;
         double Re, pho, mu, nu;
 
-    private:
         void runSimulation();
+
+    private:
+        void prepareSerialMatrix();
+        void prepareParallelMatrix();
 
 
 };

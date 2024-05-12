@@ -19,12 +19,11 @@ void Config::readGridTypeParameter()
 void Config::readBasicParameter()
 {
     std::string str, base_label, label;
-    int tmp_dim, tmp_nOMP;
 
     base_label = "/Base";
     label = base_label + "/dim";
 
-    if(!tp.getInspectedValue(label, tmp_dim))
+    if(!tp.getInspectedValue(label, dim))
         throw std::runtime_error(label + " is not set");
 
     label = base_label + "/outputDir";
@@ -32,11 +31,8 @@ void Config::readBasicParameter()
         throw std::runtime_error(label + " is not set");
 
     label = base_label + "/numOfOMP";
-    if(!tp.getInspectedValue(label, tmp_nOMP))
+    if(!tp.getInspectedValue(label, nOMP))
         throw std::runtime_error(label + " is not set");
-
-    dim  = static_cast<size_t>(tmp_dim);
-    nOMP = static_cast<size_t>(tmp_nOMP);
 
     return;
 }
@@ -57,27 +53,6 @@ void Config::readPysicalParameter()
     return;
 }
 
-void Config::readBoundaryMethodParameter()
-{
-    /*
-    string str,base_label,label;
-    string method;
-
-    base_label = "/BoundaryMethod";
-    label = base_label + "/boundary";
-    if (!tp.getInspectedValue(label, method))
-        throw std::runtime_error(label + " is not set");
-
-    if(method == "XFEM")
-        bd = BOUNDARY::XFEM;
-    else if(method == "Darcy")
-        bd = BOUNDARY::DARCY;
-    else
-        throw std::runtime_error("Boundary method is not defined");
-
-    return;
-    */
-}
 
 void Config::readTimeParameter()
 {
@@ -117,14 +92,88 @@ void Config::readTimeParameter()
     return;
 }
 
+void Config::readImageData()
+{
+    std::string str, base_label, label;
+    std::string imageFile;
+
+    base_label = "/Domain";
+    label = base_label + "/image";
+
+    if(!tp.getInspectedValue(label, imageFile))
+        throw std::runtime_error(label + " is not set");
+    
+    std::ifstream ifsImage(imageFile);
+    if(!ifsImage)
+        throw std::runtime_error(imageFile + " open error");
+
+    while(getline(ifsImage, str)){
+        std::istringstream iss(str);
+        double line;
+
+        getline(iss, str, ' ');
+        line = stod(str);
+
+        phi.push_back(line);
+    }
+    ifsImage.close();
+}
+
 void Config::readGridParameter()
 {
     std::string str, base_label, label;
+    std::string nodeFile;
+    label = base_label + "/node";
+
+    if(!tp.getInspectedValue(label, nodeFile))
+        throw std::runtime_error(label + " is not set");
+
+    std::ifstream ifsNode(nodeFile);
+    if(!ifsNode)
+        throw std::runtime_error(nodeFile + " open error");
+
+    while(getline(ifsNode, str)){
+        std::istringstream iss(str);
+        std::vector<double> nodeTmp;
+
+        for(int d=0; d<dim; d++){
+            getline(iss, str, ' ');
+            nodeTmp.push_back(stod(str));
+        }
+        node.push_back(nodeTmp);
+    }
+    ifsNode.close();
+
+    std::string cellFile;
+    label = base_label + "/cell";
+
+    if(!tp.getInspectedValue(label, cellFile))
+        throw std::runtime_error(label + " is not set");
+
+    std::ifstream ifsCell(cellFile);
+
+    while(getline(ifsCell, str)){
+        std::istringstream iss(str);
+        std::vector<double> cellTmp;
+
+        for(int d=0; d<nNodesInCell; d++){
+            getline(iss, str, ' ');
+            cellTmp.push_back(stod(str));
+        }
+        cell.push_back(cellTmp);
+    }
+    ifsCell.close();
+
+}
+
+void Config::readStructuredGridParameter()
+{
+    std::string str, base_label, label;
+    std::string imageFile;
     int tmpInt[dim];
     double tmpDouble[dim];
-    int nNodesInCellTmp;
   
-    base_label = "/Grid";
+    base_label = "/UnstructuredGrid";
     label = base_label + "/nx";
     if (!tp.getInspectedVector(label, tmpInt, dim))
         throw std::runtime_error(label + " is not set");
@@ -151,130 +200,101 @@ void Config::readGridParameter()
     }
 
     label = base_label + "/lx";
-    if (!tp.getInspectedVector(label, tmpDouble, dim))
+    if(!tp.getInspectedVector(label, tmpDouble, dim))
         throw std::runtime_error(label + " is not set");
 
     lx = tmpDouble[0];
     ly = tmpDouble[1];
-    if(dim == 2) lz = 0.0;
+    if(dim == 2)      lz = 0.0;
     else if(dim == 3) lz = tmpDouble[2];
 
     dx = lx / (double)nx;
     dy = ly / (double)ny;
     dz = lz / (double)nz;
 
-    nCellsGlobal = nx * ny * nz;
-    if(dim == 2) nNodesGlobal = (nx+1) * (ny+1);
-    else if(dim == 3) nNodesGlobal = (nx+1) * (ny+1) * (nz+1);
+    nCellsGlobal = nxCells * nyCells * nzCells;
+    nNodesGlobal = nxNodes * nyNodes * nzNodes;
 
     label = base_label + "/nNodesInCell";
-    if (!tp.getInspectedValue(label, nNodesInCellTmp))
+    if (!tp.getInspectedValue(label, nNodesInCell))
         throw std::runtime_error(label + " is not set"); 
 
-    nNodesInCell  = static_cast<size_t>(nNodesInCellTmp);
+    if(nNodesInCell == 4 && dim != 2)
+        throw std::runtime_error("nNodesInCell is not consistent with dim");
+    
+    if(nNodesInCell == 8 && dim != 3)
+        throw std::runtime_error("nNodesInCell is not consistent with dim");
 
     return;
 }
 
-void Config::readImageParameter()
-{
-    std::string str, base_label, label;
-    std::string imageFile;
-
-    phi.resize(nCellsGlobal);
-    for(int i=0;i<nCellsGlobal;i++)
-        phi.at(i) = 1.0;
-
-    label = "/Domain/image";
-    if(!tp.getInspectedValue(label, imageFile))
-        throw std::runtime_error(label + " is not set");
-    
-    std::ifstream ifsImage(imageFile);
-    if(!ifsImage)
-        throw std::runtime_error(imageFile + "open error");
-    
-    while(getline(ifsImage, str))
-    {
-        std::istringstream iss(str);
-        double line;
-
-        for(int i=0; i<dim+1; i++)
-        {
-            if(i < dim) continue;
-            getline(iss, str, ' ');
-            line = stod(str);
-        }
-        phi.push_back(line);
-    }
-    ifsImage.close();
-
-    return;
-}
-
-void Config::readBoundaryParameter()
+void Config::readStructuredBoundaryParameter()
 {
     std::string str, base_label;
     std::string labelType, labelValue;
     std::string bdTypeTmp;
-    size_t tmp = 0;
+    int tmp = 0;
 
     base_label = "/Boundary";
 
-    if(dim == 2)
-    {
+    if(dim == 2){
         bdStr.push_back("bottom");
         labelType = base_label + "/bottom/type";
         labelValue = base_label + "/bottom/value";
         readBoundaryTypeAndValue(labelType, labelValue, tmp);
+
         bdStr.push_back("top");
         labelType = base_label + "/top/type";
         labelValue = base_label + "/top/value";
         readBoundaryTypeAndValue(labelType, labelValue, tmp);
+
         bdStr.push_back("left");
         labelType = base_label + "/left/type";
         labelValue = base_label + "/left/value";
         readBoundaryTypeAndValue(labelType, labelValue, tmp);
+
         bdStr.push_back("right");
         labelType = base_label + "/right/type";
         labelValue = base_label + "/right/value";
         readBoundaryTypeAndValue(labelType, labelValue, tmp);
-    }
-    else if(dim == 3)
-    {
+    }else if(dim == 3){
         bdStr.push_back("bottom");
         labelType = base_label + "/bottom/type";
         labelValue = base_label + "/bottom/value";
         readBoundaryTypeAndValue(labelType, labelValue, tmp);
+
         bdStr.push_back("top");
         labelType = base_label + "/top/type";
         labelValue = base_label + "/top/value";
         readBoundaryTypeAndValue(labelType, labelValue, tmp);
+
         bdStr.push_back("left");
         labelType = base_label + "/left/type";
         labelValue = base_label + "/left/value";
         readBoundaryTypeAndValue(labelType, labelValue, tmp);
+
         bdStr.push_back("right");
         labelType = base_label + "/right/type";
         labelValue = base_label + "/right/value";
         readBoundaryTypeAndValue(labelType, labelValue, tmp);
+
         bdStr.push_back("front");
         labelType = base_label + "/front/type";
         labelValue = base_label + "/front/value";
         readBoundaryTypeAndValue(labelType, labelValue, tmp);
+
         bdStr.push_back("back");
         labelType = base_label + "/back/type";
         labelValue = base_label + "/back/value";
         readBoundaryTypeAndValue(labelType, labelValue, tmp);
-    }
-    else
-    {
+    }else{
         throw std::runtime_error("Undefined dim");
     }
 
     return;
 }
 
-void Config::readBoundaryTypeAndValue(std::string labelType, std::string labelValue, size_t &tmp)
+void Config::readBoundaryTypeAndValue(std::string labelType, std::string labelValue, int &tmp)
 {
     std::string bdTypeTmp;
     if (!tp.getInspectedValue(labelType, bdTypeTmp))
@@ -282,32 +302,28 @@ void Config::readBoundaryTypeAndValue(std::string labelType, std::string labelVa
 
     bdType.push_back(bdTypeTmp);
 
-     if(bdTypeTmp == "v")
-    {
+    if(bdTypeTmp == "v"){
         double value[dim];
         if (!tp.getInspectedVector(labelValue, value, dim))
             throw std::runtime_error(labelValue + " is not set");  
+
         bdValue.emplace_back();
         for(int k=0; k<dim; k++)
             bdValue[tmp].push_back(value[k]);
-    }
-    else if(bdTypeTmp == "p")
-    {
+
+    }else if(bdTypeTmp == "p"){
         double value;
         if(!tp.getInspectedValue(labelValue, value))
             throw std::runtime_error(labelValue + " is not set");
+
         bdValue.emplace_back();
         bdValue[tmp].push_back(value);
-    }
-    else if(bdTypeTmp == "free")
-    {
+
+    }else if(bdTypeTmp == "free"){
         bdValue.emplace_back();
+    }else if(bdTypeTmp == "file"){
     }
-    else if(bdTypeTmp == "file")
-    {
-    }
-    else
-    {
+    else{
         throw std::runtime_error("label " + bdTypeTmp + " undefined");
     }
 
