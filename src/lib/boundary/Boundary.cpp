@@ -1,5 +1,7 @@
 #include "Boundary.h"
 
+
+
 void StructuredBoundaryFace::setNodesOnBoundaryFace(int nxNodes, int nyNodes, int nzNodes)
 {
     if(bdFaceStr == "top"){
@@ -84,13 +86,29 @@ void StructuredBoundaryFace::setDirichletInfo(std::vector<std::string> bdType,
     dirichletValue.resize(node.size());
 
     for(int i=0; i<dirichletType.size(); i++)
-        dirichletType.at(i) = bdType.at(bdIndex);
+        dirichletType[i] = bdType[bdIndex];
 
     for(int i=0; i<dirichletValue.size(); i++)
-        for(int d=0; d<bdValue.at(bdIndex).size(); d++)
-            dirichletValue.at(i).push_back(bdValue.at(bdIndex).at(d));
+        for(int d=0; d<bdValue[bdIndex].size(); d++)
+            dirichletValue[i].push_back(bdValue[bdIndex][d]);
 }
 
-void DirichletBoundary::initialize(Config conf)
+void DirichletBoundary::initialize(Config &conf)
 {
+    for(int ib=0; ib<conf.vDirichletNode.size(); ib++)
+        velocity[ib].node = conf.vDirichletNode[ib];
+
+    for(int ib=0; ib<conf.vDirichletValue.size(); ib++){
+        velocity[ib].value.resize(conf.vDirichletValue[ib].size());
+        for(int d=0; d<conf.vDirichletValue[ib].size(); d++){
+            velocity[ib].value[d] = conf.vDirichletValue[ib][d];
+        }
+    }
+
+    for(int ib=0; ib<conf.pDirichletNode.size(); ib++)
+        pressure[ib].node = conf.pDirichletNode[ib];
+
+    for(int ib=0; ib<conf.pDirichletValue.size(); ib++)
+        pressure[ib].value = conf.pDirichletValue[ib];
+       
 }

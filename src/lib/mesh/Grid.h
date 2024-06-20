@@ -34,6 +34,8 @@ class Grid
 
         int dim;
 
+        int rowStart, rowEnd;
+
         int nNodesGlobal, nCellsGlobal, nDofsGlobal;
         int nNodesLocal, nCellsLocal, nDofsLocal;
 
@@ -44,6 +46,7 @@ class Grid
             const int nNodesInCell, const int dim, 
             Cell &cell, Node &node);
         void divideWholeGrid();
+        void distributeToLocal();
 
     private:
         int structuredGridNodeSet(

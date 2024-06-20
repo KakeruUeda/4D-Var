@@ -58,7 +58,6 @@ void Config::readConfigFile()
     switch(app){
         case Application::STRGRID:
             readBasicParameter(); 
-            readImageData();
             readStructuredGridParameter(); 
             readStructuredBoundaryParameter();
             break;
@@ -66,7 +65,6 @@ void Config::readConfigFile()
         case Application::USNS:
             readBasicParameter();
             readGridParameter();
-            readImageData();
             break;
 
         default:
@@ -74,5 +72,6 @@ void Config::readConfigFile()
                 throw std::runtime_error("Unknown Application");
             break;
     }
+
     return;
 }

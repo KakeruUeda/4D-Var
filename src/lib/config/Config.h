@@ -52,7 +52,7 @@ class Config
         // For Dirichlet boundary data
         std::vector<int> vDirichletNode;
         std::vector<int> pDirichletNode;
-        std::vector<double> vDirichletValue;
+        std::vector<std::vector<double>> vDirichletValue;
         std::vector<double> pDirichletValue;
 
         // For cell and node data

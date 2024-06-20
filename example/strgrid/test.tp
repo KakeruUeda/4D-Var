@@ -5,12 +5,7 @@ Base
     numOfOMP = 1
 }
 
-Domainb
-{
-    imageFile = "input/image4x4x4.dat"
-}
-
-UnstructuredGrid
+StructuredGrid
 {
     nx = (4, 4, 4) 
     lx = (1.0, 1.0, 1.0)

@@ -7,8 +7,13 @@ Base
 
 Grid
 {
-    
-    image = "input/image32x32.dat"
+    type = "Structured"
+    nNodesInCell = 8
+    node = "input/square/4x4x4/node.dat"
+    cell = "input/square/4x4x4/cell.dat"
+    image = "input/square/4x4x4/image.dat"
+    velocityDirichlet = "input/square/4x4x4/velocityDirichlet.dat"
+    pressureDirichlet = "input/square/4x4x4/pressureDirichlet.dat"
 }
 
 

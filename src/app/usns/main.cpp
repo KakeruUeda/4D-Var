@@ -5,7 +5,10 @@ MyMPI mpi;
 
 int main(int argc, char *argv[])
 {
+    std::string petscfile = argv[2];
     MPI_Init(NULL, NULL);
+    PetscInitialize(NULL, NULL, petscfile.c_str(), NULL);
+
     mpi.setSizeAndRank();
     mpi.printSizeAndRank();
 
@@ -17,10 +20,12 @@ int main(int argc, char *argv[])
     if(conf->isReadingError) return EXIT_FAILURE;
 
     DirectProblem direct(*conf);
-    delete conf;
 
     // Solve Unstready Navier Stokes
     direct.runSimulation();
+
+    PetscFinalize(); 
+    MPI_Finalize();
 
     return EXIT_SUCCESS;
 }

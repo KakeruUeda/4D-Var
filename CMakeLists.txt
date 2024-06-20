@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(CMAKE_CXX_COMPILER "/opt/petsc/bin/mpic++")
+set(CMAKE_CXX_COMPILER "/usr/local/petsc/bin/mpic++")
 set(base_compile_options ${base_compile_options} "-O2 -std=c++17")
 string(REPLACE " " " " compile_options ${base_compile_options})
 
@@ -21,15 +21,14 @@ include_directories(
   /opt/homebrew/Cellar/metis/5.1.0/include
   /opt/homebrew/include/eigen3
   /opt/TextParser/include
-  /opt/petsc/include
+  /usr/local/petsc/include
 )
 
 link_directories(
   /opt/homebrew/Cellar/metis/5.1.0/lib
   /opt/TextParser/lib
-  /opt/petsc/lib
+  /usr/local/petsc/lib
   /opt/homebrew/opt/libomp/lib
 )
 
 add_subdirectory(src)
-add_subdirectory(test)

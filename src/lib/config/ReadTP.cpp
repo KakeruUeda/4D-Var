@@ -1,21 +1,5 @@
 #include "Config.h"
 
-void Config::readGridTypeParameter()
-{
-    std::string str, base_label, label;
-
-    base_label = "/Grid";
-
-    label = base_label + "/type";
-    if(!tp.getInspectedValue(label, gridTypeString))
-        throw std::runtime_error(label + " is not set");
-    
-    if(gridTypeString != "Structured" && gridTypeString != "Unstructured")
-        throw std::runtime_error("Unknown GridType");  
-
-    return;
-}
-
 void Config::readBasicParameter()
 {
     std::string str, base_label, label;
@@ -92,45 +76,36 @@ void Config::readTimeParameter()
     return;
 }
 
-void Config::readImageData()
-{
-    std::string str, base_label, label;
-    std::string imageFile;
-
-    base_label = "/Domain";
-    label = base_label + "/image";
-
-    if(!tp.getInspectedValue(label, imageFile))
-        throw std::runtime_error(label + " is not set");
-    
-    std::ifstream ifsImage(imageFile);
-    if(!ifsImage)
-        throw std::runtime_error(imageFile + " open error");
-
-    while(getline(ifsImage, str)){
-        std::istringstream iss(str);
-        double line;
-
-        getline(iss, str, ' ');
-        line = stod(str);
-
-        phi.push_back(line);
-    }
-    ifsImage.close();
-}
-
 void Config::readGridParameter()
 {
     std::string str, base_label, label;
     std::string nodeFile;
+
+    base_label = "/Grid";
+
+    label = base_label + "/type";
+    if(!tp.getInspectedValue(label, gridTypeString))
+        throw std::runtime_error(label + " is not set");
+    
+    if(gridTypeString != "Structured" && gridTypeString != "Unstructured")
+        throw std::runtime_error("Unknown GridType");  
+
+    label = base_label + "/nNodesInCell";
+    if (!tp.getInspectedValue(label, nNodesInCell))
+        throw std::runtime_error(label + " is not set"); 
+
+    if(nNodesInCell == 4 && dim != 2)
+        throw std::runtime_error("nNodesInCell is not consistent with dim");
+    
+    if(nNodesInCell == 8 && dim != 3)
+        throw std::runtime_error("nNodesInCell is not consistent with dim");
+    
     label = base_label + "/node";
 
     if(!tp.getInspectedValue(label, nodeFile))
         throw std::runtime_error(label + " is not set");
 
     std::ifstream ifsNode(nodeFile);
-    if(!ifsNode)
-        throw std::runtime_error(nodeFile + " open error");
 
     while(getline(ifsNode, str)){
         std::istringstream iss(str);
@@ -143,6 +118,8 @@ void Config::readGridParameter()
         node.push_back(nodeTmp);
     }
     ifsNode.close();
+
+    nNodesGlobal = node.size();
 
     std::string cellFile;
     label = base_label + "/cell";
@@ -164,6 +141,69 @@ void Config::readGridParameter()
     }
     ifsCell.close();
 
+    nCellsGlobal = cell.size();
+
+    std::string imageFile;
+    label = base_label + "/image";
+
+    if(!tp.getInspectedValue(label, imageFile))
+        throw std::runtime_error(label + " is not set");
+    
+    std::ifstream ifsImage(imageFile);
+
+    while(getline(ifsImage, str)){
+        std::istringstream iss(str);
+        double line;
+
+        getline(iss, str, ' ');
+        line = stod(str);
+
+        phi.push_back(line);
+    }
+    ifsImage.close();
+
+    std::string velFile;
+    label = base_label + "/velocityDirichlet";
+
+    if(!tp.getInspectedValue(label, velFile))
+        throw std::runtime_error(label + " is not set");
+
+    std::ifstream ifsVel(velFile);
+
+     while(getline(ifsVel, str)){
+        std::istringstream iss(str);
+        std::vector<double> velTmp;
+
+        for(int d=0; d<dim+1; d++){
+            getline(iss, str, ' ');
+            if(d == 0) vDirichletNode.push_back(stoi(str));
+            else velTmp.push_back(stod(str));
+        }
+        vDirichletValue.push_back(velTmp);
+    }
+    ifsVel.close();
+
+    std::string preFile;
+    label = base_label + "/pressureDirichlet";
+
+    if(!tp.getInspectedValue(label, preFile))
+        throw std::runtime_error(label + " is not set");
+
+    std::ifstream ifsPre(preFile);
+     
+     while(getline(ifsPre, str)){
+        std::istringstream iss(str);
+        std::vector<double> preTmp;
+
+        for(int d=0; d<1+1; d++){
+            getline(iss, str, ' ');
+            if(d == 0) pDirichletNode.push_back(stoi(str));
+            else pDirichletValue.push_back(stoi(str));
+        }
+    }
+    ifsPre.close();
+
+    return;
 }
 
 void Config::readStructuredGridParameter()
@@ -173,7 +213,7 @@ void Config::readStructuredGridParameter()
     int tmpInt[dim];
     double tmpDouble[dim];
   
-    base_label = "/UnstructuredGrid";
+    base_label = "/StructuredGrid";
     label = base_label + "/nx";
     if (!tp.getInspectedVector(label, tmpInt, dim))
         throw std::runtime_error(label + " is not set");
@@ -215,6 +255,7 @@ void Config::readStructuredGridParameter()
     nCellsGlobal = nxCells * nyCells * nzCells;
     nNodesGlobal = nxNodes * nyNodes * nzNodes;
 
+
     label = base_label + "/nNodesInCell";
     if (!tp.getInspectedValue(label, nNodesInCell))
         throw std::runtime_error(label + " is not set"); 
@@ -224,6 +265,7 @@ void Config::readStructuredGridParameter()
     
     if(nNodesInCell == 8 && dim != 3)
         throw std::runtime_error("nNodesInCell is not consistent with dim");
+
 
     return;
 }

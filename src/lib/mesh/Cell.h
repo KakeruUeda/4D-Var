@@ -11,10 +11,12 @@ struct CellInfo
 {
     public:
         VTKCellType cellType;
-        int nNodesInCell;
         int subId;
-        Array1D<int> node;
-        Array2D<double> x;
+        double phi;
+
+        std::vector<int> node, nodeNew;
+        std::vector<int> dofsMap, dofsBCsMap;
+        std::vector<std::vector<double>> x;
 
         inline void setArrayZero(int n);
 };
@@ -23,19 +25,24 @@ class Cell
 {
     public:
         Cell(){}
-        Cell(Config conf) :
+        Cell(Config &conf) :
+        nNodesInCell(conf.nNodesInCell),
         nCellsGlobal(conf.nCellsGlobal), data(conf.nCellsGlobal){}
-        ~Cell(){}
+        virtual ~Cell(){}
         
         inline CellInfo& operator()(int n)
         { return data[n]; }
+
+        inline int size()
+        { return data.size(); }
 
         inline void resize(int n)
         { data.resize(n); }
 
         int nCellsGlobal;
+        int nNodesInCell;
 
-        void initialize(Config conf);
+        void initialize(Config &conf);
 
     private:
 	    std::vector<CellInfo> data;

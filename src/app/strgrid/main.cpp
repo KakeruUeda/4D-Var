@@ -41,9 +41,9 @@ int main(int argc, char* argv[])
     for(int ic=0; ic<conf.nCellsGlobal; ic++)
         grid.cell(ic).node.resize(conf.nNodesInCell);
 
-    grid.node.resize(conf.nNodesGlobal);
+    grid.node.x.resize(conf.nNodesGlobal);
     for(int in=0; in<conf.nNodesGlobal; in++)
-        grid.node(in).x.resize(conf.dim);
+        grid.node.x[in].resize(conf.dim);
 
     // Set structured grid components (cell, coordinate informateion)
     grid.setStructuredGrid(conf.nxCells, conf.nyCells, conf.nzCells, conf.nxNodes, 
@@ -71,13 +71,13 @@ int main(int argc, char* argv[])
     if(mpi.myId == 0){
         std::ofstream ofsCell(conf.outputDir + "/cell.dat");
         std::ofstream ofsNode(conf.outputDir + "/node.dat");
-        std::ofstream ofsVelDirichlet(conf.outputDir + "/veocityDirichlet.dat");
+        std::ofstream ofsVelDirichlet(conf.outputDir + "/velocityDirichlet.dat");
         std::ofstream ofsPreDirichlet(conf.outputDir + "/pressureDirichlet.dat");
     
         // Cell dat
         for(int ic=0; ic<conf.nCellsGlobal; ic++){
             for(int p=0; p<conf.nNodesInCell; p++){
-                ofsCell << grid.cell(ic).node(p) << " ";
+                ofsCell << grid.cell(ic).node[p] << " ";
             }
             ofsCell << std::endl;
         }
@@ -85,8 +85,8 @@ int main(int argc, char* argv[])
     
         // Node coordinates dat
         for(int in=0; in<conf.nNodesGlobal; in++){
-            for(int p=0; p<conf.dim; p++){
-                ofsNode << grid.node(in).x(p) << " ";
+            for(int d=0; d<conf.dim; d++){
+                ofsNode << grid.node.x[in][d] << " ";
             }
             ofsNode << std::endl;
         }
@@ -95,15 +95,15 @@ int main(int argc, char* argv[])
         // Dirichlet dat
         for(auto vec : bdFaces){
             for(int in=0; in<vec.node.size(); in++){
-                if(vec.dirichletType.at(in) == "v"){
+                if(vec.dirichletType[in] == "v"){
                     ofsVelDirichlet << vec.node.at(in) << " ";
-                    for(int d=0; d<vec.dirichletValue.at(in).size(); d++)
-                        ofsVelDirichlet << vec.dirichletValue.at(in).at(d) << " ";
+                    for(int d=0; d<vec.dirichletValue[in].size(); d++)
+                        ofsVelDirichlet << vec.dirichletValue[in][d] << " ";
                     ofsVelDirichlet << std::endl;
                 }
                 else if(vec.dirichletType.at(in) == "p"){
-                    ofsPreDirichlet << vec.node.at(in) << " ";
-                    ofsPreDirichlet << vec.dirichletValue.at(in).at(0) << std::endl;
+                    ofsPreDirichlet << vec.node[in] << " ";
+                    ofsPreDirichlet << vec.dirichletValue[in][0] << std::endl;
                 }
             }
         }

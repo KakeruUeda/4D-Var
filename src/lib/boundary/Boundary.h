@@ -7,10 +7,16 @@
 #include "Array.h"
 #include "Config.h"
 
-struct boundaryInfo
+struct velocityInfo
 {
-    Array1D<int> node;
-    Array1D<double> value;
+    int node, nodeNew;
+    std::vector<double> value;
+};
+
+struct pressureInfo
+{
+    int node, nodeNew;
+    double value;
 };
 
 class DirichletBoundary
@@ -19,13 +25,17 @@ class DirichletBoundary
         DirichletBoundary(){}
         DirichletBoundary(Config &conf):
         velocity(conf.vDirichletValue.size()), 
-        pressure(conf.pDirichletValue.size()){}
+        pressure(conf.pDirichletValue.size()),
+        nNodesVelocity(conf.vDirichletValue.size()),
+        nNodesPressure(conf.pDirichletValue.size()){}
         virtual ~DirichletBoundary(){}
-        
-        Array1D<boundaryInfo> velocity;
-        Array1D<boundaryInfo> pressure;
 
-        void initialize(Config conf);
+        int nNodesVelocity, nNodesPressure;
+        
+        std::vector<velocityInfo> velocity;
+        std::vector<pressureInfo> pressure;
+
+        void initialize(Config &conf);
 
         void applyBoundaryConditions();
         void assignBoundaryConfitions();

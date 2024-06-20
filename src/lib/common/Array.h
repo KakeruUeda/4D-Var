@@ -51,6 +51,9 @@ class Array2D
         inline int size()
         { return data.size(); }
 
+        inline void resize(int n, int m)
+        { data.resize(n * m); }
+
     private:
     	int width, height; 
 	    std::vector<T> data;

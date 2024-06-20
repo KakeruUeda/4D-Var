@@ -5,22 +5,36 @@ inline void CellInfo::setArrayZero(int n)
     assert(n != 0);
 }
 
-void Cell::initialize(Config conf)
+void Cell::initialize(Config &conf)
 {
-    for(int ic=0; ic<nCellsGlobal; ic++) 
-        data[ic].nNodesInCell = conf.nNodesInCell;
     for(int ic=0; ic<nCellsGlobal; ic++) 
         data[ic].node.resize(conf.nNodesInCell);
 
+    for(int ic=0; ic<nCellsGlobal; ic++) 
+        data[ic].nodeNew.resize(conf.nNodesInCell);
+
     for(int ic=0; ic<nCellsGlobal; ic++)
-        for(int p=0; p<data[ic].node.size(); ic++)
-            data[ic].node(p) = conf.cell[ic][p];
+        data[ic].x.resize(conf.nNodesInCell, 
+                          std::vector<double>(conf.dim));
+
+    for(int ic=0; ic<nCellsGlobal; ic++)
+        for(int p=0; p<conf.nNodesInCell; p++)
+            data[ic].node[p] = conf.cell[ic][p];
+
+    for(int ic=0; ic<nCellsGlobal; ic++)
+        for(int p=0; p<conf.nNodesInCell; p++)
+            for(int d=0; d<conf.dim; d++)
+                data[ic].x[p][d] = conf.node[data[ic].node[p]][d];
+
+    for(int ic=0; ic<nCellsGlobal; ic++)
+        data[ic].phi = conf.phi[ic];
 
     if(conf.nNodesInCell == 4)
         for(int ic=0; ic<nCellsGlobal; ic++)
             data[ic].cellType = VTK_QUAD;
     if(conf.nNodesInCell == 8)
         for(int ic=0; ic<nCellsGlobal; ic++)
-            data[ic].cellType = VTK_VOXEL;
+            data[ic].cellType = VTK_HEXAHEDRON;
 
+    return;
 }

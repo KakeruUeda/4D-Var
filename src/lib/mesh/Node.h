@@ -7,38 +7,29 @@
 #include "Array.h"
 #include "Config.h"
 
-struct NodeInfo
-{
-    public:
-        int subId, nDofsOnNode;
-        Array1D<int> dofNum, dofNumBd;
-        Array1D<double> x, u;
-        double p;
-
-        Array1D<int> isDofDirichlet;
-};
 
 class Node
 {
     public:
         Node(){};
-        Node(Config conf) :
-        nNodesGlobal(conf.nNodesGlobal), 
-        nDofsGlobal(0), data(conf.nNodesGlobal){}
-        ~Node(){}
+        Node(Config &conf) :
+        nNodesGlobal(conf.nNodesGlobal),
+        nNodesLocal(0){}
+        virtual ~Node(){}
         
-        int nNodesGlobal, nDofsGlobal;
+        int nNodesGlobal, nNodesLocal;
 
-        inline NodeInfo& operator()(int n)
-        { return data[n]; }
+        std::vector<int> map, mapNew;
+        std::vector<int> subId;
+        std::vector<int> nDofsOnNode;
+        std::vector<std::vector<int>> dofsMap, dofsBCsMap;
+        std::vector<std::vector<int>> dofsMapNew, dofsBCsMapNew;
+        std::vector<std::vector<bool>> isDirichlet, isDirichletNew;
+        std::vector<std::vector<double>> type;
+        std::vector<std::vector<double>> x, u;
+        std::vector<double> p;
 
-        inline void resize(int n)
-        { data.resize(n); }
-
-        void initialize(Config conf);
-
-    private:
-	    std::vector<NodeInfo> data;
+        void initialize(Config &conf);
 };
 
 
