@@ -3,7 +3,7 @@
 Grid::Grid(Config &conf) : 
 cell(conf), node(conf), dirichlet(conf),
 nNodesGlobal(conf.nNodesGlobal), nCellsGlobal(conf.nCellsGlobal),
-nDofsGlobal(0), nDofsLocal(0)
+nDofsGlobal(0), nDofsLocal(0), dim(conf.dim)
 {   
     if(conf.gridTypeString == "Structured")
         gridType = GridType::STRUCTURED;
@@ -192,7 +192,7 @@ void Grid::distributeToLocal()
         n1 = node.mapNew[dirichlet.velocity[ib].node];
         dirichlet.velocity[ib].nodeNew = n1;
         for(int d=0; d<dim; d++){
-            node.isDirichletNew[n1][dim] = true;
+            node.isDirichletNew[n1][d] = true;
         }
     }
 
@@ -205,7 +205,7 @@ void Grid::distributeToLocal()
     for(int in=0; in<node.nNodesGlobal; in++)
         for(int id=0; id<node.nDofsOnNode[in]; id++)
             if(node.isDirichletNew[in][id])
-                node.dofsBCsMap[in][id] = -1;
+                node.dofsBCsMapNew[in][id] = -1;
 
     rowStart = 0;
     for(int in=0; in<nodeStart; in++)

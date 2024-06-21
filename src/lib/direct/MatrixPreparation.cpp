@@ -18,6 +18,18 @@ void DirectProblem::preprocess()
         for(int id=0; id<grid.node.nDofsOnNode[in]; id++)
                 grid.nDofsGlobal++;
 
+    // debug
+    if(mpi.myId == 0){
+        std::ofstream outIsDirichlet(outputDir + "/dat/isDirichlet.dat");
+        for(int in=0; in<grid.node.nNodesGlobal; in++){
+            for(int id=0; id<grid.node.nDofsOnNode[in]; id++){
+                outIsDirichlet << grid.node.isDirichlet[in][id] << " ";
+            }
+            outIsDirichlet << std::endl;
+        }
+        outIsDirichlet.close();
+    }
+
     //debug
     if(mpi.myId == 0){
         std::ofstream outDofsBCsMap(outputDir + "/dat/dofsBCsMap.dat");
@@ -35,6 +47,30 @@ void DirectProblem::preprocess()
     }else if(mpi.nId > 1){
         grid.divideWholeGrid();
         grid.distributeToLocal();
+    }
+
+    // debug
+    if(mpi.myId == 0){
+        std::ofstream outIsDirichletNew(outputDir + "/dat/isDirichletNew.dat");
+        for(int in=0; in<grid.node.nNodesGlobal; in++){
+            for(int id=0; id<grid.node.nDofsOnNode[in]; id++){
+                outIsDirichletNew << grid.node.isDirichletNew[in][id] << " ";
+            }
+            outIsDirichletNew << std::endl;
+        }
+        outIsDirichletNew.close();
+    }
+
+    //debug
+    if(mpi.myId == 0){
+        std::ofstream outDofsBCsMapNew(outputDir + "/dat/dofsBCsMapNew.dat");
+        for(int in=0; in<grid.node.nNodesGlobal; in++){
+            for(int id=0; id<grid.node.nDofsOnNode[in]; id++){
+                outDofsBCsMapNew << grid.node.dofsBCsMapNew[in][id] << " ";
+            }
+            outDofsBCsMapNew << std::endl;
+        }
+        outDofsBCsMapNew.close();
     }
 
     int size = 0;
@@ -60,15 +96,15 @@ void DirectProblem::preprocess()
 
     // debug
     if(mpi.myId == 0){
-        std::ofstream outCellDofsMap(outputDir + "/dat/cellDofsMap.dat");
+        std::ofstream outCellDofsMap(outputDir + "/dat/cellDofsBCsMap.dat");
         for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
             if(grid.cell(ic).subId == mpi.myId){
                 for(int p=0; p<grid.cell.nNodesInCell; p++){
                     int i = grid.node.nDofsOnNode[grid.cell(ic).nodeNew[p]] * p;
                     for(int q=0; q<grid.node.nDofsOnNode[grid.cell(ic).nodeNew[p]]; q++){
-                        outCellDofsMap << grid.cell(ic).dofsMap[i+q] << " ";
+                        outCellDofsMap << grid.cell(ic).dofsBCsMap[i+q] << " ";
                     }
-                    outCellDofsMap << "   ";
+                    outCellDofsMap << "  ";
                 }
                 outCellDofsMap << std::endl;
             }

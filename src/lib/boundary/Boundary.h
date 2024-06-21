@@ -5,6 +5,9 @@
 #include <vector>
 #include <memory>
 #include "Array.h"
+#include "Node.h"
+#include "Cell.h"
+#include "PetscSolver.h"
 #include "Config.h"
 
 struct velocityInfo
@@ -34,11 +37,13 @@ class DirichletBoundary
         
         std::vector<velocityInfo> velocity;
         std::vector<pressureInfo> pressure;
+        std::vector<double> dirichletBCsValue;
+        std::vector<double> dirichletBCsValueNew;
 
         void initialize(Config &conf);
 
-        void applyBoundaryConditions();
-        void assignBoundaryConfitions();
+        void assignDirichletBCs(Node &node, int &dim);
+        void applyDirichletBCs(Cell &cell, PetscSolver &petsc);
     
     private:
 };

@@ -9,6 +9,8 @@
 #include "TextParser.h"
 #include "Array.h"
 #include "MyMPI.h"
+#include "define.h"
+
 extern MyMPI mpi;
 
 enum class Application
@@ -33,6 +35,16 @@ class Config
         // Physical parameter
         double rho, mu, Re;
 
+        // Time parameter
+        double dt;
+        int timeMax;
+        int pulsatileFlow;
+        int pulseBeginItr;
+        double T;
+
+        // Darcy Parameter
+        double alpha, resistance;
+    
         // Grid parameter
         int nx, ny, nz;
         double lx, ly, lz;

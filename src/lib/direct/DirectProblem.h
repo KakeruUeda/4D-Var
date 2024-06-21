@@ -17,6 +17,9 @@
 #include "Boundary.h"
 #include "PetscSolver.h"
 #include "Config.h"
+#include "Gauss.h"
+#include "ShapeFunction.h"
+#include "MathFEM.h"
 
 extern MyMPI mpi;
 
@@ -37,16 +40,35 @@ class DirectProblem
 
         Grid grid;
         PetscSolver petsc;
-     
-        Array1D<double> u, v, w;
-        double Re, pho, mu, nu;
+
+        // Pysical parameter
+        double Re, rho, mu, nu;
+
+        // Time parameter
+        double dt;
+        int timeMax;
+        int pulsatileFlow;
+        int pulseBeginItr;
+        double T;
+
+        // Darcy parameter
+        double alpha, resistance;
 
         void runSimulation();
         void preprocess();
+        void solveUSNS();
+        void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
+                                const int ic, const int tItr);
+        void DarcyMatrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
+                                const int ic, const int tItr);
 
     private:
         void prepareSerialMatrix();
         void visualizeDomain();
+        void setVelocityValue(double (&vel)[3], double (&advel)[3], double (&dvdx)[3][3],
+                              std::vector<double> &N, std::vector<std::vector<double>> &dNdx, 
+                              const int ic, const int tItr);
+        void updataValiables(const int tItr);
 
 };
 

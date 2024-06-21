@@ -25,6 +25,7 @@ target_link_libraries( ${main_target}
         solver
         boundary
         output
+        common
 )
 
 target_include_directories(${main_target} 

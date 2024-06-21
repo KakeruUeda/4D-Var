@@ -1,7 +1,5 @@
 #include "Boundary.h"
 
-
-
 void StructuredBoundaryFace::setNodesOnBoundaryFace(int nxNodes, int nyNodes, int nzNodes)
 {
     if(bdFaceStr == "top"){
@@ -111,4 +109,89 @@ void DirichletBoundary::initialize(Config &conf)
     for(int ib=0; ib<conf.pDirichletValue.size(); ib++)
         pressure[ib].value = conf.pDirichletValue[ib];
        
+}
+
+void DirichletBoundary::assignDirichletBCs(Node &node, int &dim)
+{
+    int dofCurrentTmp, dofCurrent;
+
+    // velocity
+    for(int ib=0; ib<nNodesVelocity; ib++){
+        dofCurrentTmp = 0;
+        dofCurrent = 0;
+        for(int i=0; i<velocity[ib].node; i++)
+            dofCurrentTmp += node.nDofsOnNode[i];
+        for(int d=0; d<dim; d++){
+            dofCurrent = dofCurrentTmp + d;
+            dirichletBCsValue[dofCurrent] = velocity[ib].value[d];
+        }
+    }
+
+    // velocity new
+    for(int ib=0; ib<nNodesVelocity; ib++){
+        dofCurrentTmp = 0;
+        dofCurrent = 0;
+        for(int i=0; i<velocity[ib].nodeNew; i++)
+            dofCurrentTmp += node.nDofsOnNode[i];
+        for(int d=0; d<dim; d++){
+            dofCurrent = dofCurrentTmp + d;
+            dirichletBCsValueNew[dofCurrent] = velocity[ib].value[d];
+        }
+    }
+
+    // prresure
+    for(int ib=0; ib<nNodesPressure; ib++){
+        dofCurrentTmp = 0;
+        dofCurrent = 0;
+        for(int i=0; i<pressure[ib].node; i++)
+            dofCurrent += node.nDofsOnNode[i];
+        for(int d=0; d<dim+1; d++){
+            dofCurrent = dofCurrentTmp + d;
+            dirichletBCsValue[dofCurrent] = pressure[ib].value;
+        }
+    }
+
+    // prresure new
+    for(int ib=0; ib<nNodesPressure; ib++){
+        dofCurrentTmp = 0;
+        dofCurrent = 0;
+        for(int i=0; i<pressure[ib].nodeNew; i++)
+            dofCurrent += node.nDofsOnNode[i];
+        for(int d=0; d<dim+1; d++){
+            dofCurrent = dofCurrentTmp + d;
+            dirichletBCsValueNew[dofCurrent] = pressure[ib].value;
+        }
+    }
+}
+
+void DirichletBoundary::applyDirichletBCs(Cell &cell, PetscSolver &petsc)
+{
+    std::vector<int> vecTmp;
+
+    for(int ic=0; ic<cell.nCellsGlobal; ic++){
+        if(cell(ic).subId == mpi.myId){
+            int nDofsInCell = cell(ic).dofsMap.size();
+            PetscScalar  FlocalTmp[nDofsInCell];
+            PetscScalar  KlocalTmp[nDofsInCell * nDofsInCell];
+
+            for(int i=0; i<nDofsInCell; i++)  FlocalTmp[i] = 0e0;
+            for(int i=0; i<nDofsInCell*nDofsInCell; i++)  KlocalTmp[i] = 0e0;
+
+            vecTmp = cell(ic).dofsMap;
+            for(int i=0; i<nDofsInCell; i++){
+                if(cell(ic).dofsBCsMap[i] == -1){
+                    KlocalTmp[i + i * nDofsInCell] = 1;
+                    FlocalTmp[i] = dirichletBCsValueNew[cell(ic).dofsMap[i]];
+                }
+            }
+            MatSetValues(petsc.mtx, nDofsInCell, &vecTmp[0], nDofsInCell, &vecTmp[0], KlocalTmp, INSERT_VALUES);
+            VecSetValues(petsc.rhsVec, nDofsInCell, &vecTmp[0], FlocalTmp, INSERT_VALUES);
+        }
+    }
+
+    MatAssemblyBegin(petsc.mtx, MAT_FLUSH_ASSEMBLY);
+    MatAssemblyEnd(petsc.mtx, MAT_FLUSH_ASSEMBLY);
+    
+    VecAssemblyBegin(petsc.rhsVec);
+    VecAssemblyEnd(petsc.rhsVec);
 }

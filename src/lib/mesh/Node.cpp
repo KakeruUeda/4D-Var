@@ -3,7 +3,6 @@
 void Node::initialize(Config &conf)
 {
     // initialize variables
-    u.resize(nNodesGlobal, std::vector<double>(conf.dim));
     x.resize(nNodesGlobal, std::vector<double>(conf.dim));
     nDofsOnNode.resize(nNodesGlobal);
     isDirichlet.resize(nNodesGlobal);

@@ -65,6 +65,9 @@ void Config::readConfigFile()
         case Application::USNS:
             readBasicParameter();
             readGridParameter();
+            readTimeParameter();
+            readPysicalParameter();
+            readDarcyParameter();
             break;
 
         default:

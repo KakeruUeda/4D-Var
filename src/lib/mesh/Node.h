@@ -26,7 +26,8 @@ class Node
         std::vector<std::vector<int>> dofsMapNew, dofsBCsMapNew;
         std::vector<std::vector<bool>> isDirichlet, isDirichletNew;
         std::vector<std::vector<double>> type;
-        std::vector<std::vector<double>> x, u;
+        std::vector<std::vector<double>> x;
+        std::vector<std::vector<double>> v, vPrev;
         std::vector<double> p;
 
         void initialize(Config &conf);

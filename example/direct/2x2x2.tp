@@ -9,11 +9,11 @@ Grid
 {
     type = "Structured"
     nNodesInCell = 8
-    node = "input/square/4x4x4/node.dat"
-    cell = "input/square/4x4x4/cell.dat"
-    image = "input/square/4x4x4/imageWall.dat"
-    velocityDirichlet = "input/square/4x4x4/velocityDirichlet.dat"
-    pressureDirichlet = "input/square/4x4x4/pressureDirichlet.dat"
+    node = "input/square/2x2x2/node.dat"
+    cell = "input/square/2x2x2/cell.dat"
+    image = "input/square/2x2x2/image.dat"
+    velocityDirichlet = "input/square/2x2x2/velocityDirichlet.dat"
+    pressureDirichlet = "input/square/2x2x2/pressureDirichlet.dat"
 }
 
 PysicalParameter
@@ -36,5 +36,4 @@ DarcyParameter
     alpha = 1e-1
     resistance = 1e2
 }
-
 

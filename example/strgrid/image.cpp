@@ -4,9 +4,9 @@
 
 int main()
 {
-    int nx = 4;
-    int ny = 4;
-    int nz = 4;
+    int nx = 2;
+    int ny = 2;
+    int nz = 2;
 
     double lx = 1e0;
     double ly = 1e0; 
@@ -17,12 +17,22 @@ int main()
     std::vector<double> phi(numOfCells, 0e0);
 
     int tmp = 0;
-
+    /*
     for(int k=0; k<nz; k++){
         for(int j=0; j<ny; j++){
             for(int i=0; i<nx; i++){
                 if(k >= nz/4 && k < nz*3/4 && i >= nx/4 && i < nx*3/4)
                     phi[tmp] = 1.0;
+                tmp++;
+            }
+        }
+    }
+    */
+
+    for(int k=0; k<nz; k++){
+        for(int j=0; j<ny; j++){
+            for(int i=0; i<nx; i++){
+                phi[tmp] = 1.0;
                 tmp++;
             }
         }

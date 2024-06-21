@@ -11,7 +11,6 @@ target_include_directories(solver
     PUBLIC  
         ${PROJECT_SOURCE_DIR}/src/lib/common
         ${PROJECT_SOURCE_DIR}/src/lib/config
-        ${PROJECT_SOURCE_DIR}/src/lib/boundary
         ${PROJECT_SOURCE_DIR}/src/lib/mesh
 )
 

@@ -16,6 +16,7 @@ target_include_directories(mesh
         ${PROJECT_SOURCE_DIR}/src/lib/boundary
         ${PROJECT_SOURCE_DIR}/src/lib/mesh
         ${PROJECT_SOURCE_DIR}/src/lib/output
+        ${PROJECT_SOURCE_DIR}/src/lib/solver
 )
 
 target_compile_options(mesh PUBLIC ${compile_options_tmp})

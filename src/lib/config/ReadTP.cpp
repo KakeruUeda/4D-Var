@@ -40,8 +40,7 @@ void Config::readPysicalParameter()
 
 void Config::readTimeParameter()
 {
-    /*
-    string str,base_label,label;
+    std::string str, base_label, label;
 
     base_label = "/TimeParameter";
     label = base_label + "/dt";
@@ -52,28 +51,42 @@ void Config::readTimeParameter()
     if (!tp.getInspectedValue(label, timeMax))
         throw std::runtime_error(label + " is not set");
 
-    string ON_OFF;
+    std::string ON_OFF;
 
     label = base_label + "/pulsatile_flow";
     if (!tp.getInspectedValue(label, ON_OFF))
         throw std::runtime_error(label + " is not set");
  
     if(ON_OFF == "ON")
-        pulsatile_flow = ON;
+        pulsatileFlow = ON;
     else if(ON_OFF == "OFF")
-        pulsatile_flow = OFF;
+        pulsatileFlow = OFF;
     else 
         throw std::runtime_error("ON or OFF is not set");
   
     label = base_label + "/pulse_begin_itr";
-    if (!tp.getInspectedValue(label, pulse_begin_itr))
+    if (!tp.getInspectedValue(label, pulseBeginItr))
         throw std::runtime_error(label + " is not set");
 
     label = base_label + "/T";
     if (!tp.getInspectedValue(label, T))
         throw std::runtime_error(label + " is not set");
-    */
+    
     return;
+}
+
+void Config::readDarcyParameter()
+{
+    std::string str, base_label, label;
+    base_label = "/DarcyParameter";
+
+    label = base_label + "/alpha";
+    if(!tp.getInspectedValue(label, alpha))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/resistance";
+    if(!tp.getInspectedValue(label, resistance))
+        throw std::runtime_error(label + " is not set");
 }
 
 void Config::readGridParameter()

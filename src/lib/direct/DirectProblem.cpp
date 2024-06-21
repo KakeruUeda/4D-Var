@@ -2,7 +2,11 @@
 
 DirectProblem::DirectProblem(Config &conf) : 
 dim(conf.dim), outputDir(conf.outputDir), 
-nOMP(conf.nOMP), grid(conf)
+nOMP(conf.nOMP), grid(conf),
+rho(conf.rho), mu(conf.mu), dt(conf.dt),
+timeMax(conf.timeMax), pulsatileFlow(conf.pulsatileFlow), 
+pulseBeginItr(conf.pulseBeginItr), T(conf.T),
+alpha(conf.alpha), resistance(conf.resistance)  
 {
     std::string dir;
     std::string output = "output";
@@ -18,9 +22,16 @@ nOMP(conf.nOMP), grid(conf)
     dir = outputDir + "/dat";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 
+    grid.node.v.resize(grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
+    grid.node.vPrev.resize(grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
+    grid.node.p.resize(grid.node.nNodesGlobal, 0e0);
+
     grid.dirichlet.initialize(conf);
     grid.cell.initialize(conf);
     grid.node.initialize(conf);
+
+    nu = mu / rho;
+    Re = 1e0 / nu;
 }
 
 
@@ -36,10 +47,10 @@ void DirectProblem::visualizeDomain()
     grid.outputVTU.exportPhiVTU(vtuFile, grid.node, grid.cell);
 }
 
+
 void DirectProblem::runSimulation()
 {   
     preprocess();
     visualizeDomain();
-
-    return;
+    solveUSNS();
 }
