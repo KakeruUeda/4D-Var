@@ -1,7 +1,7 @@
 Base
 {
     dim = 3
-    outputDir = "test"
+    outputDir = "vessel"
     numOfOMP = 1
 }
 
@@ -9,23 +9,23 @@ Grid
 {
     type = "Structured"
     nNodesInCell = 8
-    node = "input/square/4x4x4/node.dat"
-    cell = "input/square/4x4x4/cell.dat"
-    image = "input/square/4x4x4/imageWall.dat"
-    velocityDirichlet = "input/square/4x4x4/velocityDirichlet.dat"
-    pressureDirichlet = "input/square/4x4x4/pressureDirichlet.dat"
+    node = "input/vessel/node.dat"
+    cell = "input/vessel/cell.dat"
+    image = "input/vessel/image.dat"
+    velocityDirichlet = "input/vessel/velocityDirichlet.dat"
+    pressureDirichlet = "input/vessel/pressureDirichlet.dat"
 }
 
 PysicalParameter
 {   
-    rho = 1
+    rho = 200
     mu = 1   
 }
 
 TimeParameter
 {
-    dt = 0.005
-    timeMax = 1
+    dt = 0.1
+    timeMax = 100
     pulsatile_flow = "ON"
     pulse_begin_itr = -1
     T = 1.0
@@ -36,5 +36,4 @@ DarcyParameter
     alpha = 1e-1
     resistance = 1e2
 }
-
 

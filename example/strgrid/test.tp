@@ -1,26 +1,26 @@
 Base
 {
     dim = 3
-    outputDir = "square"
+    outputDir = "test"
     numOfOMP = 1
 }
 
 StructuredGrid
 {
-    nx = (2, 2, 2) 
-    lx = (1.0, 1.0, 1.0)
+    nx = (64, 64, 64) 
+    lx = (1, 1, 1)
     nNodesInCell = 8
 }
 
 Boundary
 {
     top{
-        type = "free"
+        type = "v"
         value = (1,0,0)
     }
     bottom{
         type = "v"
-        value = (0,1,0)
+        value = (0,0,0)
     }
     left{
         type = "v"

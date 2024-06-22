@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <vector>
+#include <map>
 #include <cassert>
 #include <fstream>
 #include <sstream>
@@ -19,6 +20,12 @@ enum class Application
     TDVAR = 3,  FDVAR = 4
 };
 
+enum class GridType
+{
+    STRUCTURED = 0, 
+    UNSTRUCTURED = 1
+};
+
 class Config
 {
     public:
@@ -27,6 +34,7 @@ class Config
 
         TextParser tp;
         Application app;
+        GridType gridType;
 
         // Basic parameter
         int dim, nOMP;
@@ -66,13 +74,21 @@ class Config
         std::vector<int> pDirichletNode;
         std::vector<std::vector<double>> vDirichletValue;
         std::vector<double> pDirichletValue;
+        std::map<int, std::vector<double>> vDirichlet;
+        std::map<int, double> pDirichlet;
 
         // For cell and node data
         std::vector<std::vector<double>> node;
-        std::vector<std::vector<double>> cell;
+        std::vector<std::vector<int>> cell;
+
+        std::vector<int> sortCell;
+        std::vector<int> sortNode;
 
         // Error parameter
         bool isReadingError = false;
+
+        void setSolidBoundary();
+        void setFluidDomain();
 
     private:
         void setApplication(std::string appName);

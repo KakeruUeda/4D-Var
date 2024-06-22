@@ -10,36 +10,23 @@
 #include "PetscSolver.h"
 #include "Config.h"
 
-struct velocityInfo
-{
-    int node, nodeNew;
-    std::vector<double> value;
-};
-
-struct pressureInfo
-{
-    int node, nodeNew;
-    double value;
-};
-
 class DirichletBoundary
 {
     public:
         DirichletBoundary(){}
-        DirichletBoundary(Config &conf):
-        velocity(conf.vDirichletValue.size()), 
-        pressure(conf.pDirichletValue.size()),
-        nNodesVelocity(conf.vDirichletValue.size()),
-        nNodesPressure(conf.pDirichletValue.size()){}
+        DirichletBoundary(Config &conf){}
         virtual ~DirichletBoundary(){}
 
         int nNodesVelocity, nNodesPressure;
         
-        std::vector<velocityInfo> velocity;
-        std::vector<pressureInfo> pressure;
         std::vector<double> dirichletBCsValue;
         std::vector<double> dirichletBCsValueNew;
 
+        std::map<int, std::vector<double>> vDirichlet;
+        std::map<int, double> pDirichlet;
+        std::map<int, std::vector<double>> vDirichletNew;
+        std::map<int, double> pDirichletNew;
+        
         void initialize(Config &conf);
 
         void assignDirichletBCs(Node &node, int &dim);

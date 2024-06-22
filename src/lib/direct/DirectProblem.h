@@ -68,7 +68,7 @@ class DirectProblem
         void setVelocityValue(double (&vel)[3], double (&advel)[3], double (&dvdx)[3][3],
                               std::vector<double> &N, std::vector<std::vector<double>> &dNdx, 
                               const int ic, const int tItr);
-        void updataValiables(const int tItr);
+        void updateValiables(const int tItr);
 
 };
 

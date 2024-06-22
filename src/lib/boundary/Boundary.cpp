@@ -93,74 +93,65 @@ void StructuredBoundaryFace::setDirichletInfo(std::vector<std::string> bdType,
 
 void DirichletBoundary::initialize(Config &conf)
 {
-    for(int ib=0; ib<conf.vDirichletNode.size(); ib++)
-        velocity[ib].node = conf.vDirichletNode[ib];
+    int count1 = 0;
+    int count2 = 0;
 
-    for(int ib=0; ib<conf.vDirichletValue.size(); ib++){
-        velocity[ib].value.resize(conf.vDirichletValue[ib].size());
-        for(int d=0; d<conf.vDirichletValue[ib].size(); d++){
-            velocity[ib].value[d] = conf.vDirichletValue[ib][d];
-        }
-    }
-
-    for(int ib=0; ib<conf.pDirichletNode.size(); ib++)
-        pressure[ib].node = conf.pDirichletNode[ib];
-
-    for(int ib=0; ib<conf.pDirichletValue.size(); ib++)
-        pressure[ib].value = conf.pDirichletValue[ib];
-       
+    vDirichlet = conf.vDirichlet;
+    pDirichlet = conf.pDirichlet;
 }
 
 void DirichletBoundary::assignDirichletBCs(Node &node, int &dim)
 {
     int dofCurrentTmp, dofCurrent;
+    int count;
 
-    // velocity
-    for(int ib=0; ib<nNodesVelocity; ib++){
+    for(auto &pair : vDirichlet){
         dofCurrentTmp = 0;
-        dofCurrent = 0;
-        for(int i=0; i<velocity[ib].node; i++)
+        dofCurrent = 0; 
+        count = 0;
+        for(int i=0; i<pair.first; i++)
             dofCurrentTmp += node.nDofsOnNode[i];
-        for(int d=0; d<dim; d++){
-            dofCurrent = dofCurrentTmp + d;
-            dirichletBCsValue[dofCurrent] = velocity[ib].value[d];
+        for(auto &value : pair.second){
+            dofCurrent = dofCurrentTmp + count;
+            dirichletBCsValue[dofCurrent] = value;
+            count++;
         }
     }
 
-    // velocity new
-    for(int ib=0; ib<nNodesVelocity; ib++){
+    for(auto &pair : vDirichletNew){
         dofCurrentTmp = 0;
-        dofCurrent = 0;
-        for(int i=0; i<velocity[ib].nodeNew; i++)
+        dofCurrent = 0; 
+        count = 0;
+        for(int i=0; i<pair.first; i++)
             dofCurrentTmp += node.nDofsOnNode[i];
-        for(int d=0; d<dim; d++){
-            dofCurrent = dofCurrentTmp + d;
-            dirichletBCsValueNew[dofCurrent] = velocity[ib].value[d];
+        for(auto &value : pair.second){
+            dofCurrent = dofCurrentTmp + count;
+            dirichletBCsValueNew[dofCurrent] = value;
+            count++;
         }
     }
 
-    // prresure
-    for(int ib=0; ib<nNodesPressure; ib++){
+    for(auto &pair : pDirichlet){
         dofCurrentTmp = 0;
-        dofCurrent = 0;
-        for(int i=0; i<pressure[ib].node; i++)
-            dofCurrent += node.nDofsOnNode[i];
-        for(int d=0; d<dim+1; d++){
-            dofCurrent = dofCurrentTmp + d;
-            dirichletBCsValue[dofCurrent] = pressure[ib].value;
-        }
+        dofCurrent = 0; 
+        count = 0;
+        for(int i=0; i<pair.first; i++)
+            dofCurrentTmp += node.nDofsOnNode[i];
+
+        dofCurrent = dofCurrentTmp + dim ;
+        dirichletBCsValue[dofCurrent] = pair.second;
     }
 
-    // prresure new
-    for(int ib=0; ib<nNodesPressure; ib++){
+
+    for(auto &pair : pDirichletNew){
         dofCurrentTmp = 0;
-        dofCurrent = 0;
-        for(int i=0; i<pressure[ib].nodeNew; i++)
-            dofCurrent += node.nDofsOnNode[i];
-        for(int d=0; d<dim+1; d++){
-            dofCurrent = dofCurrentTmp + d;
-            dirichletBCsValueNew[dofCurrent] = pressure[ib].value;
-        }
+        dofCurrent = 0; 
+        count = 0;
+        for(int i=0; i<pair.first; i++)
+            dofCurrentTmp += node.nDofsOnNode[i];
+
+        dofCurrent = dofCurrentTmp + dim ;
+        dirichletBCsValueNew[dofCurrent] = pair.second;
     }
 }
 

@@ -1,7 +1,7 @@
 #include "Grid.h"
 
 Grid::Grid(Config &conf) : 
-cell(conf), node(conf), dirichlet(conf),
+gridType(conf.gridType), cell(conf), node(conf), dirichlet(conf),
 nNodesGlobal(conf.nNodesGlobal), nCellsGlobal(conf.nCellsGlobal),
 nDofsGlobal(0), nDofsLocal(0), dim(conf.dim)
 {   
@@ -64,14 +64,14 @@ double Grid::structuredGridCoordinateSet(const double dx, const double dy, const
 void Grid::divideWholeGrid()
 {
     std::vector<int> cellId(nCellsGlobal, 0);
-    std::vector<int> nodeId(nNodesGlobal, 0e0);
+    std::vector<int> nodeId(nNodesGlobal, 0);
 
     if(mpi.myId == 0){
         int kk = 0;
         int nparts = mpi.nId;
 
         int *eptr, *eind;
-        eptr = new int[nCellsGlobal+1];
+        eptr = new int[nCellsGlobal + 1];
         eind = new int[nCellsGlobal * cell.nNodesInCell];
 
         for(int in=0; in<nCellsGlobal+1; in++)
@@ -95,16 +95,12 @@ void Grid::divideWholeGrid()
         idx_t options[METIS_NOPTIONS];
 
         METIS_SetDefaultOptions(options);
-
         // Specifies the partitioning method.
         options[METIS_OPTION_PTYPE] = METIS_PTYPE_KWAY;  
-
         // Total communication volume minimization
         options[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_VOL;  
-
         // C-style numbering is assumed that starts from 0
         options[METIS_OPTION_NUMBERING] = 0;  
-
         // METIS partition routine
         int ret = METIS_PartMeshDual(&nCellsGlobal, &nNodesGlobal, eptr, eind, NULL, 
                                      NULL, &ncommon_nodes, &nparts, NULL, options, 
@@ -188,18 +184,23 @@ void Grid::distributeToLocal()
         for(int p=0; p<cell.nNodesInCell; p++)
             cell(ic).nodeNew[p] = node.mapNew[cell(ic).node[p]];
 
-    for(int ib=0; ib<dirichlet.nNodesVelocity; ib++){
-        n1 = node.mapNew[dirichlet.velocity[ib].node];
-        dirichlet.velocity[ib].nodeNew = n1;
-        for(int d=0; d<dim; d++){
-            node.isDirichletNew[n1][d] = true;
+    int count;
+    for(auto &pair : dirichlet.vDirichlet){
+        std::vector<double> vecTmp;
+        n1 = node.mapNew[pair.first];
+        count = 0;
+        for(auto &value : pair.second){
+            vecTmp.push_back(value);
+            node.isDirichletNew[n1][count] = true;
+            count++;
         }
+        dirichlet.vDirichletNew[n1] = vecTmp;
     }
 
-    for(int ib=0; ib<dirichlet.nNodesPressure; ib++){
-        n1 = node.mapNew[dirichlet.pressure[ib].node];
-        dirichlet.pressure[ib].nodeNew = n1;
-        node.isDirichletNew[n1][dim + 1] = true;
+    for(auto &pair : dirichlet.pDirichlet){
+        n1 = node.mapNew[pair.first];
+        dirichlet.pDirichletNew[n1] = pair.second;
+        node.isDirichletNew[n1][dim] = true;
     }
 
     for(int in=0; in<node.nNodesGlobal; in++)

@@ -9,12 +9,7 @@
 #include "Array.h"
 #include "Boundary.h"
 #include "Output.h"
-
-enum class GridType
-{
-    STRUCTURED = 0,
-    UNSTRUCTURED = 1
-};
+#include "Config.h"
  
 class Grid
 {

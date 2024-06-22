@@ -29,9 +29,6 @@ alpha(conf.alpha), resistance(conf.resistance)
     grid.dirichlet.initialize(conf);
     grid.cell.initialize(conf);
     grid.node.initialize(conf);
-
-    nu = mu / rho;
-    Re = 1e0 / nu;
 }
 
 
@@ -49,7 +46,7 @@ void DirectProblem::visualizeDomain()
 
 
 void DirectProblem::runSimulation()
-{   
+{
     preprocess();
     visualizeDomain();
     solveUSNS();

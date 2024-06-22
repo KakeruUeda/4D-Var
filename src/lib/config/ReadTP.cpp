@@ -103,6 +103,11 @@ void Config::readGridParameter()
     if(gridTypeString != "Structured" && gridTypeString != "Unstructured")
         throw std::runtime_error("Unknown GridType");  
 
+    if(gridTypeString == "Structured")
+        gridType = GridType::STRUCTURED;
+    else if(gridTypeString == "Unstructured")
+        gridType = GridType::UNSTRUCTURED;
+
     label = base_label + "/nNodesInCell";
     if (!tp.getInspectedValue(label, nNodesInCell))
         throw std::runtime_error(label + " is not set"); 
@@ -144,7 +149,7 @@ void Config::readGridParameter()
 
     while(getline(ifsCell, str)){
         std::istringstream iss(str);
-        std::vector<double> cellTmp;
+        std::vector<int> cellTmp;
 
         for(int d=0; d<nNodesInCell; d++){
             getline(iss, str, ' ');
@@ -166,6 +171,16 @@ void Config::readGridParameter()
 
     while(getline(ifsImage, str)){
         std::istringstream iss(str);
+        for(int d=0; d<4; d++){
+            getline(iss, str, ' ');
+            if(d == 3) phi.push_back(stod(str));
+        }
+    }
+    ifsImage.close();
+
+    /*
+    while(getline(ifsImage, str)){
+        std::istringstream iss(str);
         double line;
 
         getline(iss, str, ' ');
@@ -174,6 +189,7 @@ void Config::readGridParameter()
         phi.push_back(line);
     }
     ifsImage.close();
+    */
 
     std::string velFile;
     label = base_label + "/velocityDirichlet";
@@ -184,15 +200,16 @@ void Config::readGridParameter()
     std::ifstream ifsVel(velFile);
 
      while(getline(ifsVel, str)){
+        int index;
         std::istringstream iss(str);
-        std::vector<double> velTmp;
+        std::vector<double> vecTmp;
 
         for(int d=0; d<dim+1; d++){
             getline(iss, str, ' ');
-            if(d == 0) vDirichletNode.push_back(stoi(str));
-            else velTmp.push_back(stod(str));
+            if(d == 0) index = stoi(str);
+            else vecTmp.push_back(stod(str));
         }
-        vDirichletValue.push_back(velTmp);
+        vDirichlet[index] = vecTmp;
     }
     ifsVel.close();
 
@@ -205,13 +222,14 @@ void Config::readGridParameter()
     std::ifstream ifsPre(preFile);
      
      while(getline(ifsPre, str)){
+        int index;
         std::istringstream iss(str);
         std::vector<double> preTmp;
 
         for(int d=0; d<1+1; d++){
             getline(iss, str, ' ');
-            if(d == 0) pDirichletNode.push_back(stoi(str));
-            else pDirichletValue.push_back(stoi(str));
+            if(d == 0) index = stoi(str);
+            else pDirichlet[index] = stoi(str);
         }
     }
     ifsPre.close();

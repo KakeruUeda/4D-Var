@@ -2,12 +2,16 @@
 
 void DirectProblem::preprocess()
 {
-    for(int ib=0; ib<grid.dirichlet.nNodesVelocity; ib++)
-        for(int d=0; d<dim; d++)
-            grid.node.isDirichlet[grid.dirichlet.velocity[ib].node][d]  = true;
+    for(auto &pair : grid.dirichlet.vDirichlet){
+        int count = 0;
+        for(auto &value : pair.second){
+            grid.node.isDirichlet[pair.first][count] = true;
+            count++;
+        }
+    }
 
-    for(int ib=0; ib<grid.dirichlet.nNodesPressure; ib++)
-        grid.node.isDirichlet[grid.dirichlet.pressure[ib].node][dim+1]  = true;
+    for(auto &pair : grid.dirichlet.pDirichlet)
+        grid.node.isDirichlet[pair.first][dim] = true;
 
     for(int in=0; in<grid.node.nNodesGlobal; in++)
         for(int id=0; id<grid.node.nDofsOnNode[in]; id++)

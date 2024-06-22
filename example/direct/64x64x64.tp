@@ -9,11 +9,11 @@ Grid
 {
     type = "Structured"
     nNodesInCell = 8
-    node = "input/square/32x32x32/node.dat"
-    cell = "input/square/32x32x32/cell.dat"
-    image = "input/square/32x32x32/image.dat"
-    velocityDirichlet = "input/square/32x32x32/velocityDirichlet.dat"
-    pressureDirichlet = "input/square/32x32x32/pressureDirichlet.dat"
+    node = "input/square/64x64x64/node.dat"
+    cell = "input/square/64x64x64/cell.dat"
+    image = "input/square/64x64x64/image.dat"
+    velocityDirichlet = "input/square/64x64x64/velocityDirichlet.dat"
+    pressureDirichlet = "input/square/64x64x64/pressureDirichlet.dat"
 }
 
 PysicalParameter

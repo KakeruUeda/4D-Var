@@ -1,9 +1,11 @@
 #include "DirectProblem.h"
 
 void DirectProblem::solveUSNS()
-{
+{ 
     PetscPrintf(MPI_COMM_WORLD, "\nUNSTEADY NAVIER STOKES SOLVER\n");
     
+    nu = mu / rho;
+    Re = 1e0 / nu;  
     PetscScalar *arraySolnTmp;
     Vec  vecSEQ;
     VecScatter  ctx;
@@ -28,12 +30,13 @@ void DirectProblem::solveUSNS()
         outDirichletBCsValue.close();
     }
 
-    MPI_Barrier(MPI_COMM_WORLD);
-    double timer = MPI_Wtime();
-
     for(int tItr=0; tItr<timeMax; tItr++){
         petsc.setValueZero();
         grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
+        
+        MPI_Barrier(MPI_COMM_WORLD);
+        double timer = MPI_Wtime();
+        
         for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
             if(grid.cell(ic).subId == mpi.myId){
                 int nDofsInCell = grid.cell(ic).dofsMap.size();
@@ -41,12 +44,10 @@ void DirectProblem::solveUSNS()
                 VectorXd  Flocal(nDofsInCell);
                 Klocal.setZero();
                 Flocal.setZero();
-
                 if(grid.cell(ic).phi > 0.999)
                     matrixAssemblyUSNS(Klocal, Flocal, ic, tItr);
                 else
                     DarcyMatrixAssemblyUSNS(Klocal, Flocal, ic, tItr);
-
                 petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
                                Klocal, Flocal);
             }
@@ -69,11 +70,11 @@ void DirectProblem::solveUSNS()
 
         // update solution vector
         for(int id=0; id<grid.nDofsGlobal; id++){
-            petsc.solution[id] += arraySolnTmp[id];
+            petsc.solution[id] = arraySolnTmp[id];
         }
 
         VecRestoreArray(vecSEQ, &arraySolnTmp);
-        updataValiables(tItr);
+        updateValiables(tItr);
 
         if(mpi.myId == 0){
             double timeNow = tItr * dt;
@@ -86,7 +87,7 @@ void DirectProblem::solveUSNS()
     VecDestroy(&vecSEQ);
 }
 
-void DirectProblem::updataValiables(const int tItr)
+void DirectProblem::updateValiables(const int tItr)
 {
     for(int in=0; in<grid.node.nNodesGlobal; in++){
         int n1 = 0;

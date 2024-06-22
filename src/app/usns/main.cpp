@@ -19,6 +19,11 @@ int main(int argc, char *argv[])
     Config* conf = new Config(inputFile, appName);
     if(conf->isReadingError) return EXIT_FAILURE;
 
+    if(conf->gridType == GridType::STRUCTURED){
+        conf->setSolidBoundary();
+        conf->setFluidDomain();
+    }
+
     DirectProblem direct(*conf);
 
     // Solve Unstready Navier Stokes
