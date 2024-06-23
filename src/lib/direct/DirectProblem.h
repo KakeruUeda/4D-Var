@@ -23,6 +23,26 @@
 
 extern MyMPI mpi;
 
+class SnapShot
+{
+    public:
+        SnapShot(){}
+        SnapShot(Config &conf):
+        isSnapShot(conf.isSnapShot),
+        nSnapShot(conf.nSnapShot),
+        snapInterval(conf.snapInterval),
+        snapTimeBeginItr(conf.snapTimeBeginItr){}
+
+        int isSnapShot;
+        int nSnapShot;
+        int snapInterval;
+        int snapTimeBeginItr;
+
+        std::vector<std::vector<std::vector<double>>> v;
+        void takeSnapShot(std::vector<std::vector<double>> &_v,
+                          const int &snapCount, const int &nNodesGlobal, const int &dim);
+};
+
 class DirectProblem
 {
     public:
@@ -34,6 +54,7 @@ class DirectProblem
 
         Grid grid;
         PetscSolver petsc;
+        SnapShot snap;
 
         // Pysical parameter
         double Re, rho, mu, nu;

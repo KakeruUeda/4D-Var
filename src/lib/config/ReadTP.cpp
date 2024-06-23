@@ -252,6 +252,66 @@ void Config::readGridParameter()
     return;
 }
 
+void Config::readPostprocessParameter()
+{
+    std::string str, base_label, label;
+
+    int tmpInt[dim];
+    double tmpDouble[dim];
+
+    base_label = "/Postprocess";
+
+    std::string ON_OFF;
+    label = base_label + "/isSnapShot";
+    if (!tp.getInspectedValue(label, ON_OFF))
+        throw std::runtime_error(label + " is not set");
+ 
+    if(ON_OFF == "ON")
+        isSnapShot = ON;
+    else if(ON_OFF == "OFF")
+        isSnapShot = OFF;
+    else 
+        throw std::runtime_error("ON or OFF is not set");
+
+    label = base_label + "/nSnapShot";
+    if(!tp.getInspectedValue(label, nSnapShot))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/snapInterval";
+    if(!tp.getInspectedValue(label, snapInterval))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/snapTimeBeginItr";
+    if(!tp.getInspectedValue(label, snapTimeBeginItr))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/nNodesInObsCell";
+    if(!tp.getInspectedValue(label, nNodesInCellObs))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/nxObs";
+    if (!tp.getInspectedVector(label, tmpInt, dim))
+        throw std::runtime_error(label + " is not set");
+
+    nxObs = tmpInt[0];
+    nyObs = tmpInt[1];
+    nzObs = tmpInt[2];
+
+    label = base_label + "/lxObs";
+    if(!tp.getInspectedVector(label, tmpDouble, dim))
+        throw std::runtime_error(label + " is not set");
+
+    lx = tmpDouble[0];
+    ly = tmpDouble[1];
+    lz = tmpDouble[2];
+
+    dxObs = lxObs / (double)nxObs;
+    dyObs = lyObs / (double)nyObs;
+    dzObs = lzObs / (double)nzObs;
+
+    nCellsObsGlobal = nxObs * nxObs * nzObs;
+}
+
 void Config::readStructuredGridParameter()
 {
     std::string str, base_label, label;

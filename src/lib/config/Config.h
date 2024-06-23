@@ -62,10 +62,18 @@ class Config
         int nxCells, nyCells, nzCells;
         int nCellsGlobal, nNodesGlobal, nNodesInCell;
 
+        // SnapShot parameter
+        int isSnapShot;
+        int nSnapShot;
+        int snapInterval;
+        int snapTimeBeginItr;
+
         // ObservedGrid parameter
         int nxObs, nyObs, nzObs;
         double lxObs, lyObs, lzObs;
         double dxObs, dyObs, dzObs;
+        int nNodesInCellObs;
+        int nCellsObsGlobal;
 
         // Boundary parameter for stgrid
         std::vector<std::string> bdStr;
@@ -112,6 +120,7 @@ class Config
         void readDarcyParameter();    
         void readTimeParameter();         
         void readImageParameter();
+        void readPostprocessParameter();
 
         void readBoundaryTypeAndValue(std::string labelType, 
                                       std::string labelValue, int &tmp);

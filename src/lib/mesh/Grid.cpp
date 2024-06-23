@@ -10,10 +10,10 @@ nDofsGlobal(0), nDofsLocal(0), dim(conf.dim)
 ObservedGrid::ObservedGrid(Config &conf) :
 nx(conf.nxObs), ny(conf.nyObs), nz(conf.nzObs),
 nCellsGlobal(conf.nzObs * conf.nyObs * conf.nxObs), 
-nNodesInCell(conf.nNodesInCell)
+nNodesInCell(conf.nNodesInCellObs),
+data(conf.nCellsGlobal)
 {
 }
-
 
 void Grid::setStructuredGrid(const int nxCells, const int nyCells, const int nzCells, 
                              const int nxNodes, const int nyNodes, const int nzNodes, 
@@ -240,6 +240,76 @@ void Grid::distributeToLocal()
 
 }
 
+void VoxelInfo::setNearCell(Grid &grid, double length, int &dim)
+{
+    double distance;
+    double diff[dim];
+
+    for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
+        for(int p=0; p<grid.cell.nNodesInCell; p++){
+            distance = 0e0;
+            for(int d=0; d<dim; d++){
+                diff[d] = grid.cell(ic).x[p][d] - center[d];
+                distance += diff[d] * diff[d]; 
+            } 
+            distance = sqrt(distance);
+            if(distance < length){
+                cellChildren.push_back(ic);
+                break;
+            }
+        }
+    }
+}
+
+void VoxelInfo::averageVelocity(Node &node, const int nNodesInCell, const int dim)
+{
+    for(int ic=0; ic<cellChildren.size(); ic++){
+        std::vector<std::vector<double>> velCurrent;
+        std::vector<std::vector<double>> xCurrent;
+
+        velCurrent.resize(nNodesInCell, std::vector<double>(dim, 0e0));
+        xCurrent.resize(nNodesInCell, std::vector<double>(dim, 0e0));
+
+        for(int p=0; p<nNodesInCell; p++){
+            for(int d=0; d<dim; d++){
+                velCurrent[p][d] = node.v[cellChildren[ic]][d];
+                xCurrent[p][d] = node.x[cellChildren[ic]][d];
+            }
+        }
+        std::vector<double> N;
+        std::vector<std::vector<double>> dNdr;
+        int nGaussPoint = 2;
+        Gauss gauss(nGaussPoint);
+        double detJ, weight;
+
+        for(int i1=0; i1<nGaussPoint; i1++){
+            for(int i2=0; i2<nGaussPoint; i2++){
+                for(int i3=0; i3<nGaussPoint; i3++){
+                    double dxdr[3][3] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
+                    ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
+                    ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
+                    MathFEM::calc_dxdr(dxdr, dNdr, xCurrent, nNodesInCell);
+                    detJ = dxdr[0][0]*dxdr[1][1]*dxdr[2][2]+dxdr[0][1]*dxdr[1][2]*dxdr[2][0]+dxdr[0][2]*dxdr[1][0]*dxdr[2][1]
+                          -dxdr[0][2]*dxdr[1][1]*dxdr[2][0]-dxdr[0][1]*dxdr[1][0]*dxdr[2][2]-dxdr[0][0]*dxdr[1][2]*dxdr[2][1];
+                    weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
+
+                    gaussIntegral(N, xCurrent, velCurrent, nNodesInCell, detJ, weight, dim);
+                }
+            }
+        }
+    }
+}
+
+void VoxelInfo::gaussIntegral(std::vector<double> &N, std::vector<std::vector<double>> &xCurrent, 
+                              std::vector<std::vector<double>> &velCurrent, const int &nNodesInCell,
+                              const double &detJ, const double &weight, const double &dim)
+{
+    for(int d=0; d<dim; d++){
+        for(int p=0; p<nNodesInCell; p++){
+            v[d] += N[p] * velCurrent[p][d] * detJ * weight;
+        }
+    }
+}
 
 
 

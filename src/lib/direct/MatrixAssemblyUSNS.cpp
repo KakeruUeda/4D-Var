@@ -4,8 +4,8 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
                                        const int ic, const int tItr)
 {
     int s, t, u;
-    int IU,IV,IW,IP;
-    int JU,JV,JW,JP;
+    int IU, IV, IW, IP;
+    int JU, JV, JW, JP;
     int nGaussPoint = 2;
     
     std::vector<std::vector<double>> xCurrent(grid.cell.nNodesInCell,

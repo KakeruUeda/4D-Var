@@ -24,7 +24,6 @@ void StructuredBoundaryFace::setNodesOnBoundaryFace(int nxNodes, int nyNodes, in
             }
         }
     }
-
     if(bdFaceStr == "left"){
         for(int k=0; k<nzNodes; k++){
             for(int j=0; j<nyNodes; j++){

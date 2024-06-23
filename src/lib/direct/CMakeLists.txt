@@ -8,6 +8,7 @@ target_sources(direct
         MatrixAssemblySNS.cpp
         MatrixAssemblyUSNS.cpp
         MatrixPreparation.cpp
+        Postprocess.cpp
         USNS.cpp
 )
 

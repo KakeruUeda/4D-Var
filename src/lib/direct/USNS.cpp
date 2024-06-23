@@ -1,11 +1,12 @@
 #include "DirectProblem.h"
 
-void DirectProblem::solveUSNS()
+void DirectProblem:: solveUSNS()
 { 
     PetscPrintf(MPI_COMM_WORLD, "\nUNSTEADY NAVIER STOKES SOLVER\n");
     
     nu = mu / rho;
     Re = 1e0 / nu;  
+
     PetscScalar *arraySolnTmp;
     Vec  vecSEQ;
     VecScatter  ctx;
@@ -22,10 +23,14 @@ void DirectProblem::solveUSNS()
     petsc.setMatAndVecZero(grid.cell);
     petsc.initialAssembly();
 
+    int snapCount = 0;
+    snap.v.resize(snap.nSnapShot, std::vector<std::vector<double>>
+                 (grid.nNodesGlobal, std::vector<double>(dim, 0e0)));
+
     for(int tItr=0; tItr<timeMax; tItr++){
         petsc.setValueZero();
         
-         if(pulsatileFlow)
+         if(pulsatileFlow == ON)
             if(tItr > pulseBeginItr)
                 grid.dirichlet.assignPulsatileBCs(tItr, dt, T, grid.nDofsGlobal);
 
@@ -46,7 +51,7 @@ void DirectProblem::solveUSNS()
                     matrixAssemblyUSNS(Klocal, Flocal, ic, tItr);
                 else
                     DarcyMatrixAssemblyUSNS(Klocal, Flocal, ic, tItr);
-                    
+
                 petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
                                Klocal, Flocal);
             }
@@ -73,6 +78,12 @@ void DirectProblem::solveUSNS()
 
         VecRestoreArray(vecSEQ, &arraySolnTmp);
         updateValiables(tItr);
+
+        if(snap.isSnapShot == ON){
+            if(snap.snapTimeBeginItr >= tItr && (snapCount < snap.nSnapShot))
+                snap.takeSnapShot(grid.node.v, snapCount, grid.node.nNodesGlobal, dim);
+            snapCount++;
+        }
 
         if(mpi.myId == 0){
             double timeNow = tItr * dt;
@@ -110,5 +121,15 @@ void DirectProblem::updateValiables(const int tItr)
         grid.outputVTU.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::VELOCITY);
         vtuFile = outputDir + "/pressure/pressure" + to_string(tItr) + ".vtu";
         grid.outputVTU.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::PRESSURE);
+    }
+}
+
+void SnapShot::takeSnapShot(std::vector<std::vector<double>> &_v,
+                            const int &snapCount, const int &nNodesGlobal, const int &dim)
+{
+    for(int in=0; in<nNodesGlobal; in++){
+        for(int d=0; d<dim; d++){
+            v[snapCount][in][d] = _v[in][d];
+        }
     }
 }

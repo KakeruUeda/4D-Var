@@ -34,8 +34,6 @@ void Config::tryOpenConfigFile(std::string inputFile)
 		if(mpi.myId == 0) 
             isReadingError = true;
     }
-    
-    return;
 }
 
 void Config::tryReadConfigFile()
@@ -49,8 +47,6 @@ void Config::tryReadConfigFile()
         if(mpi.myId == 0)
             isReadingError = true;
     }
-
-    return;
 }
 
 void Config::readConfigFile()
@@ -68,6 +64,7 @@ void Config::readConfigFile()
             readTimeParameter();
             readPysicalParameter();
             readDarcyParameter();
+            readPostprocessParameter();
             break;
 
         default:
@@ -75,8 +72,6 @@ void Config::readConfigFile()
                 throw std::runtime_error("Unknown Application");
             break;
     }
-
-    return;
 }
 
 void Config::setSolidBoundary()

@@ -1,3 +1,6 @@
+#ifndef GAUSS_H
+#define GAUSS_H
+
 #include <cstdio>
 
 class Gauss{
@@ -83,3 +86,5 @@ public:
   }
   double point[4][3],weight[4];
 };
+
+#endif

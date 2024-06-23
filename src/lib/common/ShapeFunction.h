@@ -1,3 +1,6 @@
+#ifndef SHAPEFUNCTION_H
+#define SHAPEFUNCTION_H
+
 #include <iostream>
 #include <vector>
 using namespace std;
@@ -125,3 +128,5 @@ class ShapeFunction2D
             dNdr[5][1] = 4e0*(L1-L3);
         }
 };
+
+#endif

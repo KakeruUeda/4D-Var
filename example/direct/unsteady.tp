@@ -8,7 +8,7 @@ Base
 Grid
 {
     type = "Structured"
-    extractFluid = "ON"
+    extractFluid = "OFF"
     nNodesInCell = 8
     node = "input/straightTube/64x32x32/node.dat"
     cell = "input/straightTube/64x32x32/cell.dat"
@@ -25,10 +25,10 @@ PysicalParameter
 
 TimeParameter
 {
-    dt = 0.025
-    timeMax = 200
-    pulsatileFlow = "ON"
-    pulseBeginItr = 50
+    dt = 0.01
+    timeMax = 300
+    pulsatileFlow = "OFF"
+    pulseBeginItr = 60
     T = 1.0
 }
 

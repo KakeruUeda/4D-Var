@@ -1,3 +1,6 @@
+#ifndef MATHFEM_H
+#define MATHFEM_H
+
 #include <iostream>
 #include <vector>
 #include "define.h"
@@ -14,3 +17,5 @@ class MathFEM
         static void calc_dNdx(std::vector<std::vector<double>> &dNdx, std::vector<std::vector<double>> &dNdr, const double (&dxdr)[3][3], const int &nNodesInCell);
         static double calc_tau(const double (&vel)[3], double he, double Re, double dt);
 };
+
+#endif
