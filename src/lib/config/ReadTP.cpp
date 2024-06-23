@@ -53,7 +53,7 @@ void Config::readTimeParameter()
 
     std::string ON_OFF;
 
-    label = base_label + "/pulsatile_flow";
+    label = base_label + "/pulsatileFlow";
     if (!tp.getInspectedValue(label, ON_OFF))
         throw std::runtime_error(label + " is not set");
  
@@ -64,7 +64,7 @@ void Config::readTimeParameter()
     else 
         throw std::runtime_error("ON or OFF is not set");
   
-    label = base_label + "/pulse_begin_itr";
+    label = base_label + "/pulseBeginItr";
     if (!tp.getInspectedValue(label, pulseBeginItr))
         throw std::runtime_error(label + " is not set");
 
@@ -97,6 +97,8 @@ void Config::readGridParameter()
     base_label = "/Grid";
 
     label = base_label + "/type";
+    std::string gridTypeString;
+
     if(!tp.getInspectedValue(label, gridTypeString))
         throw std::runtime_error(label + " is not set");
     
@@ -107,6 +109,19 @@ void Config::readGridParameter()
         gridType = GridType::STRUCTURED;
     else if(gridTypeString == "Unstructured")
         gridType = GridType::UNSTRUCTURED;
+
+    std::string ON_OFF;
+
+    label = base_label + "/extractFluid";
+    if (!tp.getInspectedValue(label, ON_OFF))
+        throw std::runtime_error(label + " is not set");
+ 
+    if(ON_OFF == "ON")
+        extractFluid = ON;
+    else if(ON_OFF == "OFF")
+        extractFluid = OFF;
+    else 
+        throw std::runtime_error("ON or OFF is not set");
 
     label = base_label + "/nNodesInCell";
     if (!tp.getInspectedValue(label, nNodesInCell))

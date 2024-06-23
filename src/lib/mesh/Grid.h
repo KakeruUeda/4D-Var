@@ -28,7 +28,7 @@ class Grid
         double lx, ly, lz, dx, dy, dz;
 
         int dim;
-
+        int extractFluid;
         int rowStart, rowEnd;
 
         int nNodesGlobal, nCellsGlobal, nDofsGlobal;
@@ -51,6 +51,21 @@ class Grid
             const double dx, const double dy, const double dz,
             const int i, const int j, const int k, const int d);
         
+};
+
+
+class ObservedGrid
+{
+    public:
+        ObservedGrid(Config &conf);
+
+        int nx, ny, nz;
+        double dx, dy, dz; 
+        double lx, ly, lz;
+
+        int nCellsGlobal;
+        int nNodesGlobal;
+        int nNodesInCell;
 };
 
 #endif

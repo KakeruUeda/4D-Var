@@ -5,12 +5,15 @@ gridType(conf.gridType), cell(conf), node(conf), dirichlet(conf),
 nNodesGlobal(conf.nNodesGlobal), nCellsGlobal(conf.nCellsGlobal),
 nDofsGlobal(0), nDofsLocal(0), dim(conf.dim)
 {   
-    if(conf.gridTypeString == "Structured")
-        gridType = GridType::STRUCTURED;
-    else if(conf.gridTypeString == "Unstructured")
-        gridType = GridType::UNSTRUCTURED;
-
 }
+
+ObservedGrid::ObservedGrid(Config &conf) :
+nx(conf.nxObs), ny(conf.nyObs), nz(conf.nzObs),
+nCellsGlobal(conf.nzObs * conf.nyObs * conf.nxObs), 
+nNodesInCell(conf.nNodesInCell)
+{
+}
+
 
 void Grid::setStructuredGrid(const int nxCells, const int nyCells, const int nzCells, 
                              const int nxNodes, const int nyNodes, const int nzNodes, 
@@ -95,12 +98,16 @@ void Grid::divideWholeGrid()
         idx_t options[METIS_NOPTIONS];
 
         METIS_SetDefaultOptions(options);
+
         // Specifies the partitioning method.
         options[METIS_OPTION_PTYPE] = METIS_PTYPE_KWAY;  
+
         // Total communication volume minimization
         options[METIS_OPTION_OBJTYPE] = METIS_OBJTYPE_VOL;  
+
         // C-style numbering is assumed that starts from 0
         options[METIS_OPTION_NUMBERING] = 0;  
+
         // METIS partition routine
         int ret = METIS_PartMeshDual(&nCellsGlobal, &nNodesGlobal, eptr, eind, NULL, 
                                      NULL, &ncommon_nodes, &nparts, NULL, options, 
@@ -232,6 +239,8 @@ void Grid::distributeToLocal()
         std::cout << "Sum of local problem sizes is not equal to global size" << std::endl;
 
 }
+
+
 
 
 

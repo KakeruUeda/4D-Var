@@ -17,6 +17,7 @@ int main()
     std::vector<double> phi(numOfCells, 0e0);
 
     int tmp = 0;
+    
     /*
     for(int k=0; k<nz; k++){
         for(int j=0; j<ny; j++){

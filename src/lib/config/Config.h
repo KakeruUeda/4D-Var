@@ -38,7 +38,7 @@ class Config
 
         // Basic parameter
         int dim, nOMP;
-        std::string outputDir, gridTypeString;
+        std::string outputDir;
 
         // Physical parameter
         double rho, mu, Re;
@@ -54,12 +54,18 @@ class Config
         double alpha, resistance;
     
         // Grid parameter
+        int extractFluid;
         int nx, ny, nz;
         double lx, ly, lz;
         double dx, dy, dz;
         int nxNodes, nyNodes, nzNodes;
         int nxCells, nyCells, nzCells;
         int nCellsGlobal, nNodesGlobal, nNodesInCell;
+
+        // ObservedGrid parameter
+        int nxObs, nyObs, nzObs;
+        double lxObs, lyObs, lzObs;
+        double dxObs, dyObs, dzObs;
 
         // Boundary parameter for stgrid
         std::vector<std::string> bdStr;

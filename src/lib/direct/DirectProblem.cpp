@@ -47,7 +47,7 @@ void DirectProblem::visualizeDomain()
 
 void DirectProblem::runSimulation()
 {
-    preprocess();
+    prepareMatrix();
     visualizeDomain();
     solveUSNS();
 }

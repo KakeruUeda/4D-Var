@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "DirectProblem.h"
+#include "InverseProblem.h"
 #include "MyMPI.h"
 MyMPI mpi;
 
@@ -13,7 +13,7 @@ int main(int argc, char *argv[])
     mpi.printSizeAndRank();
 
     std::string inputFile = argv[1];
-    std::string appName = "USNS";
+    std::string appName = "FDVAR";
 
     // Configurate using Text Parser
     Config* conf = new Config(inputFile, appName);
@@ -25,10 +25,9 @@ int main(int argc, char *argv[])
     if(conf->extractFluid == ON)
         conf->setFluidDomain();
 
-    DirectProblem direct(*conf);
+    InverseProblem inverse(*conf);
 
-    // Solve Unstready Navier Stokes
-    direct.runSimulation();
+    inverse.runSimulation();
 
     PetscFinalize(); 
     MPI_Finalize();

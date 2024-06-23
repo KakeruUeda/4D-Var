@@ -1,19 +1,20 @@
 Base
 {
     dim = 3
-    outputDir = "vessel"
+    outputDir = "straightTube"
     numOfOMP = 1
 }
 
 Grid
 {
     type = "Structured"
+    extractFluid = "ON"
     nNodesInCell = 8
-    node = "input/vessel/node.dat"
-    cell = "input/vessel/cell.dat"
-    image = "input/vessel/image.dat"
-    velocityDirichlet = "input/vessel/velocityDirichlet.dat"
-    pressureDirichlet = "input/vessel/pressureDirichlet.dat"
+    node = "input/straightTube/64x32x32/node.dat"
+    cell = "input/straightTube/64x32x32/cell.dat"
+    image = "input/straightTube/64x32x32/image.dat"
+    velocityDirichlet = "input/straightTube/64x32x32/velocityDirichlet.dat"
+    pressureDirichlet = "input/straightTube/64x32x32/pressureDirichlet.dat"
 }
 
 PysicalParameter
@@ -24,10 +25,10 @@ PysicalParameter
 
 TimeParameter
 {
-    dt = 0.1
-    timeMax = 100
-    pulsatile_flow = "ON"
-    pulse_begin_itr = -1
+    dt = 0.025
+    timeMax = 200
+    pulsatileFlow = "ON"
+    pulseBeginItr = 50
     T = 1.0
 }
 

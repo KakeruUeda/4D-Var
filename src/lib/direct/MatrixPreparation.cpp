@@ -1,6 +1,6 @@
 #include "DirectProblem.h"
 
-void DirectProblem::preprocess()
+void DirectProblem::prepareMatrix()
 {
     for(auto &pair : grid.dirichlet.vDirichlet){
         int count = 0;

@@ -14,24 +14,21 @@ void DirectProblem::solveUSNS()
     petsc.solution.resize(grid.nDofsGlobal);
     grid.dirichlet.dirichletBCsValue.resize(grid.nDofsGlobal, 0e0);
     grid.dirichlet.dirichletBCsValueNew.resize(grid.nDofsGlobal, 0e0);
+    grid.dirichlet.dirichletBCsValueInit.resize(grid.nDofsGlobal, 0e0);
+    grid.dirichlet.dirichletBCsValueNewInit.resize(grid.nDofsGlobal, 0e0);
 
     grid.dirichlet.assignDirichletBCs(grid.node, dim);
+
     petsc.setMatAndVecZero(grid.cell);
     petsc.initialAssembly();
 
-    // debug
-    if(mpi.myId == 0){
-        std::ofstream outDirichletBCsValue(outputDir
-                      + "/dat/dirichletBCsValue.dat");
-        for(int id=0; id<grid.nDofsGlobal; id++){
-            outDirichletBCsValue << grid.dirichlet.dirichletBCsValue[id]
-                                 << std::endl;
-        }
-        outDirichletBCsValue.close();
-    }
-
     for(int tItr=0; tItr<timeMax; tItr++){
         petsc.setValueZero();
+        
+         if(pulsatileFlow)
+            if(tItr > pulseBeginItr)
+                grid.dirichlet.assignPulsatileBCs(tItr, dt, T, grid.nDofsGlobal);
+
         grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
         
         MPI_Barrier(MPI_COMM_WORLD);
@@ -44,24 +41,26 @@ void DirectProblem::solveUSNS()
                 VectorXd  Flocal(nDofsInCell);
                 Klocal.setZero();
                 Flocal.setZero();
+
                 if(grid.cell(ic).phi > 0.999)
                     matrixAssemblyUSNS(Klocal, Flocal, ic, tItr);
                 else
                     DarcyMatrixAssemblyUSNS(Klocal, Flocal, ic, tItr);
+                    
                 petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
                                Klocal, Flocal);
             }
         }
         timer = MPI_Wtime() - timer;
+
         PetscPrintf(MPI_COMM_WORLD, "\n ****** Time for matrix assembly = %f seconds ****** \n", timer);
         petsc.currentStatus = ASSEMBLY_OK;
     
         MPI_Barrier(MPI_COMM_WORLD); 
         timer = MPI_Wtime();
-
         petsc.solve();
-
         timer = MPI_Wtime() - timer;
+
         PetscPrintf(MPI_COMM_WORLD, "\n ****** Time for PETSc solver = %f seconds ****** \n", timer);
 
         VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
@@ -69,9 +68,8 @@ void DirectProblem::solveUSNS()
         VecGetArray(vecSEQ, &arraySolnTmp);
 
         // update solution vector
-        for(int id=0; id<grid.nDofsGlobal; id++){
+        for(int id=0; id<grid.nDofsGlobal; id++)
             petsc.solution[id] = arraySolnTmp[id];
-        }
 
         VecRestoreArray(vecSEQ, &arraySolnTmp);
         updateValiables(tItr);

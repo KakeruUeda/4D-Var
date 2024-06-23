@@ -1,5 +1,5 @@
-#ifndef DIRECT_H
-#define DIRECT_H
+#ifndef DIRECTPROBLEM_H
+#define DIRECTPROBLEM_H
 
 #include <iostream>
 #include <fstream>
@@ -22,12 +22,6 @@
 #include "MathFEM.h"
 
 extern MyMPI mpi;
-
-struct EstimatedVariable
-{
-    public:
-        Array1D<double> u, v ,w;
-};
 
 class DirectProblem
 {
@@ -55,7 +49,7 @@ class DirectProblem
         double alpha, resistance;
 
         void runSimulation();
-        void preprocess();
+        void prepareMatrix();
         void solveUSNS();
         void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
                                 const int ic, const int tItr);
