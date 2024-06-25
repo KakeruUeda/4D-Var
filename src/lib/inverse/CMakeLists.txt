@@ -10,6 +10,7 @@ target_sources(inverse
 target_include_directories(inverse
     PUBLIC
         ${PROJECT_SOURCE_DIR}/src/lib/config
+        ${PROJECT_SOURCE_DIR}/src/lib/direct
         ${PROJECT_SOURCE_DIR}/src/lib/mesh
         ${PROJECT_SOURCE_DIR}/src/lib/common
         ${PROJECT_SOURCE_DIR}/src/lib/boundary

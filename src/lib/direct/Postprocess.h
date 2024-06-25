@@ -19,13 +19,14 @@
 class Postprocess
 {
     public:
-        Postprocess(){}
+        Postprocess(Config &conf):
+        voxel(conf){}
         ~Postprocess(){}
 
-        ObservedGrid obs;
+        DataGrid voxel;
 
         void extractOutletVelocity(DirectProblem &direct);
-        void makeObservedData(DirectProblem &direct);
+        void createData(DirectProblem &direct);
 };
 
 #endif

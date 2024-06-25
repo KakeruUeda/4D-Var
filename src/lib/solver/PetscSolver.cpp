@@ -8,6 +8,7 @@ PetscSolver::~PetscSolver()
     //MatDestroy(&mtx);
 }
 
+
 int PetscSolver::initialize(int sizeLocal, int sizeGlobal)
 {
     nRow = nCol = sizeGlobal;
@@ -63,6 +64,7 @@ int PetscSolver::initialize(int sizeLocal, int sizeGlobal)
     CHKERRQ(errpetsc);
     errpetsc = PCSetFromOptions(pc);
     CHKERRQ(errpetsc);
+    
     currentStatus = SOLVER_EMPTY;
 
     return 0;

@@ -7,7 +7,6 @@ MyMPI mpi;
 int main(int argc, char *argv[])
 {
     std::string petscfile = argv[2];
-    MPI_Init(NULL, NULL);
     PetscInitialize(NULL, NULL, petscfile.c_str(), NULL);
 
     mpi.setSizeAndRank();
@@ -28,16 +27,17 @@ int main(int argc, char *argv[])
         conf->setFluidDomain();
 
     DirectProblem direct(*conf);
+    Postprocess post(*conf);
+    
+    direct.initialize(*conf);
 
     // Solve Unstready Navier Stokes
     direct.runSimulation();
 
-    Postprocess post;
     //post.extractOutletVelocity(direct);
-    post.makeObservedData(direct);
+    post.createData(direct);
 
     PetscFinalize(); 
-    MPI_Finalize();
 
     return EXIT_SUCCESS;
 }

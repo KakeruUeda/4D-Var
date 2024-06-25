@@ -54,6 +54,7 @@ void Config::readConfigFile()
     switch(app){
         case Application::STRGRID:
             readBasicParameter(); 
+            readControlBoundaryParameter();
             readStructuredGridParameter(); 
             readStructuredBoundaryParameter();
             break;
@@ -61,10 +62,22 @@ void Config::readConfigFile()
         case Application::USNS:
             readBasicParameter();
             readGridParameter();
+            readBoundaryParameter();
             readTimeParameter();
             readPysicalParameter();
             readDarcyParameter();
             readPostprocessParameter();
+            break;
+
+        case Application::FDVAR:
+            readBasicParameter();
+            readGridParameter();
+            readBoundaryParameter();
+            readTimeParameter();
+            readPysicalParameter();
+            readDarcyParameter();
+            readInverseParameter();
+            readDataParameter();
             break;
 
         default:
@@ -164,6 +177,17 @@ void Config::setFluidDomain()
         if(it != pDirichletTmp.end()){
             int keyNew = convertNodeOldToNew[key];
             pDirichlet[keyNew] = pDirichletTmp[key];
+        }
+    }
+
+    std::vector<int> controlBoundaryMapTmp = controlBoundaryMap;
+    controlBoundaryMap.clear();
+
+    for(int in=0; in<sortNode.size(); in++){
+        if(controlBoundaryMapTmp.size() == 0) break;
+        int key = sortNode[in];
+        if(std::find(controlBoundaryMapTmp.begin(), controlBoundaryMapTmp.end(), key) != controlBoundaryMapTmp.end()){
+            controlBoundaryMap.push_back(convertNodeOldToNew[key]);
         }
     }
 }

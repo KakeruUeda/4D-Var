@@ -12,6 +12,7 @@ target_include_directories(solver
         ${PROJECT_SOURCE_DIR}/src/lib/common
         ${PROJECT_SOURCE_DIR}/src/lib/config
         ${PROJECT_SOURCE_DIR}/src/lib/mesh
+        ${PROJECT_SOURCE_DIR}/src/lib/boundary
 )
 
 target_compile_options(solver PUBLIC ${compile_options_tmp})

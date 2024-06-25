@@ -20,6 +20,7 @@
 #include "Gauss.h"
 #include "ShapeFunction.h"
 #include "MathFEM.h"
+#include "DirectProblem.h"
 
 extern MyMPI mpi;
 
@@ -29,15 +30,42 @@ struct EstimatedVariable
         std::vector<double> u, v ,w;
 };
 
+class Adjoint
+{
+    public:
+        Adjoint(Config &conf):
+        grid(conf){}
+
+        Grid grid;
+        PetscSolver petsc;
+};
+
 class InverseProblem
 {
     public:
         InverseProblem(Config &conf);
         ~InverseProblem(){}
+        
+        int dim, nOMP;
+        std::string outputDir;
+
+        Application app;
+        DataGrid data;
+
+        DirectProblem main;
+        Adjoint adjoint;
+
+        int timeMax;
+        double dt;
+        double rho, mu;
+        double alpha, resistance;
+        double aCF, bCF1, bCF2, gCF;
+        
+        void initialize(Config &conf);
         void runSimulation();
 
     private:
-        void prepareMatrix();
+
 };
 
 #endif

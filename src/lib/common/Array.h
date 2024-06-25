@@ -80,6 +80,15 @@ class Array3D
         inline int size()
         { return data.size(); }
 
+        inline void resize(int _depth, int _height, int _width)
+        {
+            width = _width; 
+            height = _height; 
+            depth = _width;
+            data.resize(width * height * depth);
+        }
+
+
     private:
     	int width, height, depth; 
 	    std::vector<T> data;

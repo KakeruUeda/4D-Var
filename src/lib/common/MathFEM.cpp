@@ -30,7 +30,7 @@ void MathFEM::calc_dxdr(double (&dxdr)[3][3], std::vector<std::vector<double>> &
   for(int i=0; i<3; i++){
     for(int j=0; j<3; j++){
       dxdr[i][j] = 0e0;
-      for(int p=0;p<numOfNodeInElm;p++){
+      for(int p=0; p<numOfNodeInElm; p++){
         dxdr[i][j] += dNdr[p][j] * x1[p][i];
       }
     }

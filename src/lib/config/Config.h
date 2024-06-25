@@ -26,6 +26,12 @@ enum class GridType
     UNSTRUCTURED = 1
 };
 
+enum class ControlBoundary
+{
+    left = 0, right = 1, upper = 2, bottom = 3,
+    top = 4, back = 5
+};
+
 class Config
 {
     public:
@@ -35,6 +41,7 @@ class Config
         TextParser tp;
         Application app;
         GridType gridType;
+        ControlBoundary controlBoundary;
 
         // Basic parameter
         int dim, nOMP;
@@ -42,6 +49,9 @@ class Config
 
         // Physical parameter
         double rho, mu, Re;
+
+        // CostFunction parameter
+        double aCF, bCF1, bCF2, gCF;
 
         // Time parameter
         double dt;
@@ -68,12 +78,13 @@ class Config
         int snapInterval;
         int snapTimeBeginItr;
 
-        // ObservedGrid parameter
-        int nxObs, nyObs, nzObs;
-        double lxObs, lyObs, lzObs;
-        double dxObs, dyObs, dzObs;
-        int nNodesInCellObs;
-        int nCellsObsGlobal;
+        // DataGrid parameter
+        double xOrigin, yOrigin, zOrigin;
+        int nxData, nyData, nzData;
+        double lxData, lyData, lzData;
+        double dxData, dyData, dzData;
+        int nNodesInCellData;
+        int nCellsDataGlobal;
 
         // Boundary parameter for stgrid
         std::vector<std::string> bdStr;
@@ -91,6 +102,8 @@ class Config
         std::map<int, std::vector<double>> vDirichlet;
         std::map<int, double> pDirichlet;
 
+        std::vector<int> controlBoundaryMap;
+
         // For cell and node data
         std::vector<std::vector<double>> node;
         std::vector<std::vector<int>> cell;
@@ -100,6 +113,8 @@ class Config
 
         // Error parameter
         bool isReadingError = false;
+
+        // Inverse Parameter
 
         void setSolidBoundary();
         void setFluidDomain();
@@ -112,6 +127,8 @@ class Config
 
         void readGridTypeParameter();  
         void readGridParameter(); 
+        void readBoundaryParameter();
+        void readControlBoundaryParameter();
         void readImageData();
         void readStructuredGridParameter();
         void readStructuredBoundaryParameter();
@@ -121,6 +138,8 @@ class Config
         void readTimeParameter();         
         void readImageParameter();
         void readPostprocessParameter();
+        void readInverseParameter();
+        void readDataParameter();
 
         void readBoundaryTypeAndValue(std::string labelType, 
                                       std::string labelValue, int &tmp);

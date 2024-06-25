@@ -7,14 +7,6 @@ nDofsGlobal(0), nDofsLocal(0), dim(conf.dim)
 {   
 }
 
-ObservedGrid::ObservedGrid(Config &conf) :
-nx(conf.nxObs), ny(conf.nyObs), nz(conf.nzObs),
-nCellsGlobal(conf.nzObs * conf.nyObs * conf.nxObs), 
-nNodesInCell(conf.nNodesInCellObs),
-data(conf.nCellsGlobal)
-{
-}
-
 void Grid::setStructuredGrid(const int nxCells, const int nyCells, const int nzCells, 
                              const int nxNodes, const int nyNodes, const int nzNodes, 
                              const double dx, const double dy, const double dz,
@@ -62,6 +54,177 @@ double Grid::structuredGridCoordinateSet(const double dx, const double dy, const
     coordinateSet[2] = k * dz;
 
     return coordinateSet[d];
+}
+
+
+void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir)
+{
+    for(auto &pair : dirichlet.vDirichlet){
+        int count = 0;
+        for(auto &value : pair.second){
+            node.isDirichlet[pair.first][count] = true;
+            count++;
+        }
+    }
+
+    for(auto &pair : dirichlet.pDirichlet)
+        node.isDirichlet[pair.first][dim] = true;
+
+    for(int in=0; in<node.nNodesGlobal; in++)
+        for(int id=0; id<node.nDofsOnNode[in]; id++)
+            if(node.isDirichlet[in][id])
+                node.dofsBCsMap[in][id] = -1;
+
+    nDofsGlobal = 0;
+    for(int in=0; in<node.nNodesGlobal; in++)
+        for(int id=0; id<node.nDofsOnNode[in]; id++)
+                nDofsGlobal++;
+
+    // debug
+    if(mpi.myId == 0){
+        std::ofstream outIsDirichlet(outputDir + "/dat/isDirichlet.dat");
+        for(int in=0; in<node.nNodesGlobal; in++){
+            for(int id=0; id<node.nDofsOnNode[in]; id++){
+                outIsDirichlet << node.isDirichlet[in][id] << " ";
+            }
+            outIsDirichlet << std::endl;
+        }
+        outIsDirichlet.close();
+    }
+
+    //debug
+    if(mpi.myId == 0){
+        std::ofstream outDofsBCsMap(outputDir + "/dat/dofsBCsMap.dat");
+        for(int in=0; in<node.nNodesGlobal; in++){
+            for(int id=0; id<node.nDofsOnNode[in]; id++){
+                outDofsBCsMap << node.dofsBCsMap[in][id] << " ";
+            }
+            outDofsBCsMap << std::endl;
+        }
+        outDofsBCsMap.close();
+    }
+
+    if(mpi.nId == 1){
+        //prepareSerialMatrix();
+    }else if(mpi.nId > 1){
+        divideWholeGrid();
+        distributeToLocal();
+    }
+
+    // debug
+    if(mpi.myId == 0){
+        std::ofstream outIsDirichletNew(outputDir + "/dat/isDirichletNew.dat");
+        for(int in=0; in<node.nNodesGlobal; in++){
+            for(int id=0; id<node.nDofsOnNodeNew[in]; id++){
+                outIsDirichletNew << node.isDirichletNew[in][id] << " ";
+            }
+            outIsDirichletNew << std::endl;
+        }
+        outIsDirichletNew.close();
+    }
+
+    //debug
+    if(mpi.myId == 0){
+        std::ofstream outDofsBCsMapNew(outputDir + "/dat/dofsBCsMapNew.dat");
+        for(int in=0; in<node.nNodesGlobal; in++){
+            for(int id=0; id<node.nDofsOnNodeNew[in]; id++){
+                outDofsBCsMapNew << node.dofsBCsMapNew[in][id] << " ";
+            }
+            outDofsBCsMapNew << std::endl;
+        }
+        outDofsBCsMapNew.close();
+    }
+
+    int size = 0;
+    for(int ic=0; ic<cell.nCellsGlobal; ic++){
+        if(cell(ic).subId == mpi.myId){
+            size = 0;
+            for(int p=0; p<cell.nNodesInCell; p++){
+                size += node.nDofsOnNodeNew[cell(ic).nodeNew[p]];
+            }
+            cell(ic).dofsMap.resize(size);
+            cell(ic).dofsBCsMap.resize(size);
+
+            for(int p=0; p<cell.nNodesInCell; p++){
+                int i = node.nDofsOnNodeNew[cell(ic).nodeNew[p]] * p;
+                int j = cell(ic).nodeNew[p];
+                for(int q=0; q<node.nDofsOnNodeNew[cell(ic).nodeNew[p]]; q++){
+                    cell(ic).dofsMap[i+q] = node.dofsMapNew[j][q];
+                    cell(ic).dofsBCsMap[i+q] = node.dofsBCsMapNew[j][q];
+                }
+            }
+        }
+    }
+
+    // debug
+    if(mpi.myId == 0){
+        std::ofstream outCellDofsMap(outputDir + "/dat/cellDofsBCsMap.dat");
+        for(int ic=0; ic<cell.nCellsGlobal; ic++){
+            if(cell(ic).subId == mpi.myId){
+                for(int p=0; p<cell.nNodesInCell; p++){
+                    int i = node.nDofsOnNodeNew[cell(ic).nodeNew[p]] * p;
+                    for(int q=0; q<node.nDofsOnNodeNew[cell(ic).nodeNew[p]]; q++){
+                        outCellDofsMap << cell(ic).dofsBCsMap[i+q] << " ";
+                    }
+                    outCellDofsMap << "  ";
+                }
+                outCellDofsMap << std::endl;
+            }
+        }
+        outCellDofsMap.close();
+    }
+
+    int *tt, tmpInt;
+    int r, kk, nSize;
+    int countDiag, countOffDiag;
+
+    std::vector<std::set<int>> forAssyMatFluid;
+    std::set<int>::iterator it;
+
+    forAssyMatFluid.resize(nDofsGlobal);
+
+    for(int ic=0; ic<cell.nCellsGlobal; ic++){
+        if(cell(ic).subId == mpi.myId){
+            tt = &(cell(ic).dofsMap[0]);
+            nSize = cell(ic).dofsMap.size();
+
+            for(int i=0; i<nSize; i++){
+                r = tt[i];
+                if(r != -1){
+                    if(r >= rowStart && r <= rowEnd){
+                        for(int j=0; j<nSize; j++){
+                            if(tt[j] != -1){
+                                forAssyMatFluid[r].insert(tt[j]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+  
+    PetscMalloc1(nDofsLocal,  &petsc.diag_nnz);
+    PetscMalloc1(nDofsLocal,  &petsc.offdiag_nnz);
+
+    kk = 0;
+    petsc.nnz_max_row = 0;
+    for(int i=rowStart; i<=rowEnd; i++){
+        nSize = forAssyMatFluid[i].size();
+        petsc.nnz_max_row = std::max(petsc.nnz_max_row, nSize);
+        countDiag=0, countOffDiag=0;
+        for(it=forAssyMatFluid[i].begin(); it!=forAssyMatFluid[i].end(); it++){   
+            tmpInt = *it;
+            if(tmpInt >= rowStart && tmpInt <= rowEnd)
+                countDiag++;
+            else
+                countOffDiag++;
+        }
+        petsc.diag_nnz[kk]    = countDiag;
+        petsc.offdiag_nnz[kk] = countOffDiag;
+        kk++;
+    }
+
+    petsc.initialize(nDofsLocal, nDofsGlobal);
 }
 
 void Grid::divideWholeGrid()
@@ -180,17 +343,14 @@ void Grid::distributeToLocal()
     std::vector<int> tmp(nNodesGlobal);
 
     MPI_Allgatherv(&nodeListLocal[0], nNodesLocal, MPI_INT, &node.map[0], &nNodesLocalVector[0], &displs[0], MPI_INT, MPI_COMM_WORLD);
-
-    int n1;
-    for(int in=0; in<nNodesGlobal; in++){
-        n1 = node.map[in];
-        node.mapNew[n1] = in;
-    }
+    
+    node.initializeNew();
 
     for(int ic=0; ic<nCellsGlobal; ic++)
         for(int p=0; p<cell.nNodesInCell; p++)
             cell(ic).nodeNew[p] = node.mapNew[cell(ic).node[p]];
 
+    int n1;
     int count;
     for(auto &pair : dirichlet.vDirichlet){
         std::vector<double> vecTmp;
@@ -211,22 +371,22 @@ void Grid::distributeToLocal()
     }
 
     for(int in=0; in<node.nNodesGlobal; in++)
-        for(int id=0; id<node.nDofsOnNode[in]; id++)
+        for(int id=0; id<node.nDofsOnNodeNew[in]; id++)
             if(node.isDirichletNew[in][id])
                 node.dofsBCsMapNew[in][id] = -1;
 
     rowStart = 0;
     for(int in=0; in<nodeStart; in++)
-        rowStart += node.nDofsOnNode[in];
+        rowStart += node.nDofsOnNodeNew[in];
 
     rowEnd = 0;
     for(int in=0; in<=nodeEnd; in++)
-        rowEnd += node.nDofsOnNode[in];
+        rowEnd += node.nDofsOnNodeNew[in];
 
     rowEnd = rowEnd - 1;
 
     for(int in=nodeStart; in<=nodeEnd; in++)
-        for(int id=0; id<node.nDofsOnNode[in]; id++)
+        for(int id=0; id<node.nDofsOnNodeNew[in]; id++)
             nDofsLocal++;
 
     printf("nDofsLocal = %5d/%5d \t rowStart  = %5d \t rowEnd  = %5d \t myId  = %5d \n", 
@@ -238,77 +398,6 @@ void Grid::distributeToLocal()
     if(nDofsGlobalCheck != nDofsGlobal)
         std::cout << "Sum of local problem sizes is not equal to global size" << std::endl;
 
-}
-
-void VoxelInfo::setNearCell(Grid &grid, double length, int &dim)
-{
-    double distance;
-    double diff[dim];
-
-    for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
-        for(int p=0; p<grid.cell.nNodesInCell; p++){
-            distance = 0e0;
-            for(int d=0; d<dim; d++){
-                diff[d] = grid.cell(ic).x[p][d] - center[d];
-                distance += diff[d] * diff[d]; 
-            } 
-            distance = sqrt(distance);
-            if(distance < length){
-                cellChildren.push_back(ic);
-                break;
-            }
-        }
-    }
-}
-
-void VoxelInfo::averageVelocity(Node &node, const int nNodesInCell, const int dim)
-{
-    for(int ic=0; ic<cellChildren.size(); ic++){
-        std::vector<std::vector<double>> velCurrent;
-        std::vector<std::vector<double>> xCurrent;
-
-        velCurrent.resize(nNodesInCell, std::vector<double>(dim, 0e0));
-        xCurrent.resize(nNodesInCell, std::vector<double>(dim, 0e0));
-
-        for(int p=0; p<nNodesInCell; p++){
-            for(int d=0; d<dim; d++){
-                velCurrent[p][d] = node.v[cellChildren[ic]][d];
-                xCurrent[p][d] = node.x[cellChildren[ic]][d];
-            }
-        }
-        std::vector<double> N;
-        std::vector<std::vector<double>> dNdr;
-        int nGaussPoint = 2;
-        Gauss gauss(nGaussPoint);
-        double detJ, weight;
-
-        for(int i1=0; i1<nGaussPoint; i1++){
-            for(int i2=0; i2<nGaussPoint; i2++){
-                for(int i3=0; i3<nGaussPoint; i3++){
-                    double dxdr[3][3] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
-                    ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-                    ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-                    MathFEM::calc_dxdr(dxdr, dNdr, xCurrent, nNodesInCell);
-                    detJ = dxdr[0][0]*dxdr[1][1]*dxdr[2][2]+dxdr[0][1]*dxdr[1][2]*dxdr[2][0]+dxdr[0][2]*dxdr[1][0]*dxdr[2][1]
-                          -dxdr[0][2]*dxdr[1][1]*dxdr[2][0]-dxdr[0][1]*dxdr[1][0]*dxdr[2][2]-dxdr[0][0]*dxdr[1][2]*dxdr[2][1];
-                    weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
-
-                    gaussIntegral(N, xCurrent, velCurrent, nNodesInCell, detJ, weight, dim);
-                }
-            }
-        }
-    }
-}
-
-void VoxelInfo::gaussIntegral(std::vector<double> &N, std::vector<std::vector<double>> &xCurrent, 
-                              std::vector<std::vector<double>> &velCurrent, const int &nNodesInCell,
-                              const double &detJ, const double &weight, const double &dim)
-{
-    for(int d=0; d<dim; d++){
-        for(int p=0; p<nNodesInCell; p++){
-            v[d] += N[p] * velCurrent[p][d] * detJ * weight;
-        }
-    }
 }
 
 

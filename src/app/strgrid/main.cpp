@@ -16,7 +16,24 @@
 #include "Boundary.h"
 #include "Output.h"
 #include "Grid.h"
+#include "PetscSolver.h"
 MyMPI mpi;
+
+void setControlBoundary(ControlBoundary &controlBoundary, std::vector<int> &controlBoundaryMap,
+                        int nx, int ny, int nz)
+{
+    if(controlBoundary == ControlBoundary::left){
+        for(int k=0; k<nz; k++){
+            for(int j=0; j<ny; j++){
+                for(int i=0; i<nx; i++){
+                    if(i == 0){
+                        controlBoundaryMap.push_back(i + j * nx + k * nx * ny);
+                    }
+                }
+            }
+        }
+    }
+}
 
 int main(int argc, char* argv[])
 { 
@@ -67,12 +84,17 @@ int main(int argc, char* argv[])
         iteration++;
     }
 
+    ControlBoundary controlBoundary = conf.controlBoundary;
+    std::vector<int> controlBoundaryMap;
+    setControlBoundary(controlBoundary, controlBoundaryMap, conf.nxNodes, conf.nyNodes, conf.nzNodes);
+
     // Expoort all results to dat file
     if(mpi.myId == 0){
         std::ofstream ofsCell(conf.outputDir + "/cell.dat");
         std::ofstream ofsNode(conf.outputDir + "/node.dat");
         std::ofstream ofsVelDirichlet(conf.outputDir + "/velocityDirichlet.dat");
         std::ofstream ofsPreDirichlet(conf.outputDir + "/pressureDirichlet.dat");
+        std::ofstream ofsControlBoundary(conf.outputDir + "/controlBoundary.dat");
     
         // Cell dat
         for(int ic=0; ic<conf.nCellsGlobal; ic++){
@@ -109,6 +131,11 @@ int main(int argc, char* argv[])
         }
         ofsVelDirichlet.close();
         ofsPreDirichlet.close();
+
+        for(int ib=0; ib<controlBoundaryMap.size(); ib++){
+            ofsControlBoundary << controlBoundaryMap[ib] << std::endl;
+        }
+        ofsControlBoundary.close();
     }
 
     return EXIT_SUCCESS;

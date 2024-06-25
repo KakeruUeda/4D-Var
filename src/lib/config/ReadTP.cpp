@@ -192,19 +192,14 @@ void Config::readGridParameter()
         }
     }
     ifsImage.close();
+}
 
-    /*
-    while(getline(ifsImage, str)){
-        std::istringstream iss(str);
-        double line;
+void Config::readBoundaryParameter()
+{
+    std::string str, base_label, label;
+    std::string nodeFile;
 
-        getline(iss, str, ' ');
-        line = stod(str);
-
-        phi.push_back(line);
-    }
-    ifsImage.close();
-    */
+    base_label = "/Boundary";
 
     std::string velFile;
     label = base_label + "/velocityDirichlet";
@@ -248,8 +243,29 @@ void Config::readGridParameter()
         }
     }
     ifsPre.close();
+}
 
-    return;
+void Config::readControlBoundaryParameter()
+{
+    std::string str, base_label, label;
+    base_label = "/Boundary";
+    label = base_label + "/control";
+
+    if(!tp.getInspectedValue(label, str))
+        throw std::runtime_error(label + " is not set");
+    
+    if(str == "left")
+        controlBoundary = ControlBoundary::left;
+    if(str == "right")
+        controlBoundary = ControlBoundary::right;
+    if(str == "upper")
+        controlBoundary = ControlBoundary::upper;
+    if(str == "bottom")
+        controlBoundary = ControlBoundary::bottom;
+    if(str == "top")
+        controlBoundary = ControlBoundary::top;
+    if(str == "back")
+        controlBoundary = ControlBoundary::back;
 }
 
 void Config::readPostprocessParameter()
@@ -263,7 +279,7 @@ void Config::readPostprocessParameter()
 
     std::string ON_OFF;
     label = base_label + "/isSnapShot";
-    if (!tp.getInspectedValue(label, ON_OFF))
+    if(!tp.getInspectedValue(label, ON_OFF))
         throw std::runtime_error(label + " is not set");
  
     if(ON_OFF == "ON")
@@ -285,31 +301,119 @@ void Config::readPostprocessParameter()
     if(!tp.getInspectedValue(label, snapTimeBeginItr))
         throw std::runtime_error(label + " is not set");
 
-    label = base_label + "/nNodesInObsCell";
-    if(!tp.getInspectedValue(label, nNodesInCellObs))
+    label = base_label + "/nNodesInDataCell";
+    if(!tp.getInspectedValue(label, nNodesInCellData))
         throw std::runtime_error(label + " is not set");
 
-    label = base_label + "/nxObs";
+    label = base_label + "/origin";
+    if (!tp.getInspectedVector(label, tmpDouble, dim))
+        throw std::runtime_error(label + " is not set");
+
+    xOrigin = tmpDouble[0];
+    yOrigin = tmpDouble[1];
+    zOrigin = tmpDouble[2];
+
+    label = base_label + "/nxData";
     if (!tp.getInspectedVector(label, tmpInt, dim))
         throw std::runtime_error(label + " is not set");
 
-    nxObs = tmpInt[0];
-    nyObs = tmpInt[1];
-    nzObs = tmpInt[2];
+    nxData = tmpInt[0];
+    nyData = tmpInt[1];
+    nzData = tmpInt[2];
 
-    label = base_label + "/lxObs";
+    label = base_label + "/lxData";
     if(!tp.getInspectedVector(label, tmpDouble, dim))
         throw std::runtime_error(label + " is not set");
 
-    lx = tmpDouble[0];
-    ly = tmpDouble[1];
-    lz = tmpDouble[2];
+    lxData = tmpDouble[0];
+    lyData = tmpDouble[1];
+    lzData = tmpDouble[2];
 
-    dxObs = lxObs / (double)nxObs;
-    dyObs = lyObs / (double)nyObs;
-    dzObs = lzObs / (double)nzObs;
+    dxData = lxData / (double)nxData;
+    dyData = lyData / (double)nyData;
+    dzData = lzData / (double)nzData;
 
-    nCellsObsGlobal = nxObs * nxObs * nzObs;
+    nCellsDataGlobal = nxData * nxData * nzData;
+}
+
+void Config::readInverseParameter()
+{
+    std::string str, base_label, label;
+    base_label = "/Inverse"; 
+
+    std::string controlBoundaryFile;
+    label = base_label + "/aCF";
+    if(!tp.getInspectedValue(label, aCF))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/bCF1";
+    if(!tp.getInspectedValue(label, bCF1))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/bCF2";
+    if(!tp.getInspectedValue(label, bCF2))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/gCF";
+    if(!tp.getInspectedValue(label, gCF))
+        throw std::runtime_error(label + " is not set");
+}
+
+void Config::readDataParameter()
+{
+    std::string str, base_label, label;
+    base_label = "/Data"; 
+
+    std::string controlBoundaryFile;
+    label = base_label + "/controlBoundary";
+
+    if(!tp.getInspectedValue(label, controlBoundaryFile))
+        throw std::runtime_error(label + " is not set");
+
+    std::ifstream ifsControlBoundary(controlBoundaryFile);
+    while(getline(ifsControlBoundary, str)){
+        std::istringstream iss(str);
+        getline(iss, str, ' ');
+        controlBoundaryMap.push_back(stoi(str));
+    }
+    ifsControlBoundary.close();
+
+    int tmpInt[dim];
+    double tmpDouble[dim];
+
+    label = base_label + "/nSnapShot";
+    if(!tp.getInspectedValue(label, nSnapShot))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/snapInterval";
+    if(!tp.getInspectedValue(label, snapInterval))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/nNodesInDataCell";
+    if(!tp.getInspectedValue(label, nNodesInCellData))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/nxData";
+    if (!tp.getInspectedVector(label, tmpInt, dim))
+        throw std::runtime_error(label + " is not set");
+
+    nxData = tmpInt[0];
+    nyData = tmpInt[1];
+    nzData = tmpInt[2];
+
+    label = base_label + "/lxData";
+    if(!tp.getInspectedVector(label, tmpDouble, dim))
+        throw std::runtime_error(label + " is not set");
+
+    lxData = tmpDouble[0];
+    lyData = tmpDouble[1];
+    lzData = tmpDouble[2];
+
+    dxData = lxData / (double)nxData;
+    dyData = lyData / (double)nyData;
+    dzData = lzData / (double)nzData;
+
+    nCellsDataGlobal = nxData * nxData * nzData;  
 }
 
 void Config::readStructuredGridParameter()

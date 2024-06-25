@@ -92,6 +92,13 @@ void DirichletBoundary::initialize(Config &conf)
     pDirichlet = conf.pDirichlet;
 }
 
+void DirichletBoundary::initializeAdjoint(Config &conf)
+{
+    vDirichlet = conf.vDirichlet;
+    pDirichlet = conf.pDirichlet;
+    controlBoundaryMap = conf.controlBoundaryMap;
+}
+
 void DirichletBoundary::assignDirichletBCs(Node &node, int &dim)
 {
     int dofCurrentTmp, dofCurrent;
@@ -148,10 +155,10 @@ void DirichletBoundary::assignDirichletBCs(Node &node, int &dim)
     }
 }
 
-void DirichletBoundary::assignPulsatileBCs(const double &tItr, const double &dt, 
+void DirichletBoundary::assignPulsatileBCs(const double &t, const double &dt, 
                                            const double &T, const int &nDofsGlobal)
 {
-    double timeNow = tItr * dt;
+    double timeNow = t * dt;
     double pulse = 0.25 * cos((2e0 * PI / T) * timeNow) + 0.75;
     for(int id=0; id<nDofsGlobal; id++){
         if(dirichletBCsValueNew[id] > 0)

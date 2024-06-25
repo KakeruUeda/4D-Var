@@ -5,6 +5,7 @@ add_library(mesh STATIC)
 target_sources(mesh
     PRIVATE
         Grid.cpp
+        DataGrid.cpp
         Cell.cpp
         Node.cpp
 )

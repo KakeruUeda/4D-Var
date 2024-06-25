@@ -1,5 +1,6 @@
 #include "DirectProblem.h"
 
+/*
 void DirectProblem::prepareMatrix()
 {
     for(auto &pair : grid.dirichlet.vDirichlet){
@@ -170,8 +171,5 @@ void DirectProblem::prepareMatrix()
     petsc.initialize(grid.nDofsLocal, grid.nDofsGlobal);
 
 }
+*/
 
-void DirectProblem::prepareSerialMatrix()
-{
-
-}

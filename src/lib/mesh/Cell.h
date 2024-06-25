@@ -43,6 +43,7 @@ class Cell
         int nNodesInCell;
 
         void initialize(Config &conf);
+        void initializeAdjoint(Config &conf);
 
     private:
 	    std::vector<CellInfo> data;

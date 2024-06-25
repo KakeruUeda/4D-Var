@@ -1,0 +1,72 @@
+Base
+{
+    dim = 3
+    outputDir = "straightTube"
+    numOfOMP = 1
+}
+
+Grid
+{
+    type = "Structured"
+    extractFluid = "ON"
+    nNodesInCell = 8
+    node = "input/straightTube/data12x12x12/node.dat"
+    cell = "input/straightTube/data12x12x12/cell.dat"
+    image = "input/straightTube/data12x12x12/image.dat"
+}
+
+Boundary
+{
+    velocityDirichlet = "input/straightTube/data12x12x12/velocityDirichlet.dat"
+    pressureDirichlet = "input/straightTube/data12x12x12/pressureDirichlet.dat"
+}
+
+Inverse
+{
+    aCF = 1e0
+    bCF1 = 1e-8
+    bCF2 = 1e-4
+    gCF = 1e-4
+}
+
+Data
+{
+    nSnapShot = 10
+    snapInterval = 5
+    nNodesInDataCell = 8
+    nxData = (12, 12, 12)
+    lxData = (1.0, 1.0, 1.0)
+    controlBoundary = "input/straightTube/data12x12x12/controlBoundary.dat"
+    data0 = "input/straightTube/data12x12x12/data0.dat"
+    data1 = "input/straightTube/data12x12x12/data1.dat"
+    data2 = "input/straightTube/data12x12x12/data2.dat"
+    data3 = "input/straightTube/data12x12x12/data3.dat"
+    data4 = "input/straightTube/data12x12x12/data4.dat"
+    data5 = "input/straightTube/data12x12x12/data5.dat"
+    data6 = "input/straightTube/data12x12x12/data6.dat"
+    data7 = "input/straightTube/data12x12x12/data7.dat"
+    data8 = "input/straightTube/data12x12x12/data8.dat"
+    data9 = "input/straightTube/data12x12x12/data9.dat"
+}
+
+PysicalParameter
+{   
+    rho = 200
+    mu = 1   
+}
+
+TimeParameter
+{
+    dt = 0.01
+    timeMax = 1000
+    pulsatileFlow = "ON"
+    pulseBeginItr = 100
+    T = 1.0
+}
+
+
+DarcyParameter
+{
+    alpha = 1e-1
+    resistance = 1e2
+}

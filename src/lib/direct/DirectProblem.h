@@ -23,26 +23,6 @@
 
 extern MyMPI mpi;
 
-class SnapShot
-{
-    public:
-        SnapShot(){}
-        SnapShot(Config &conf):
-        isSnapShot(conf.isSnapShot),
-        nSnapShot(conf.nSnapShot),
-        snapInterval(conf.snapInterval),
-        snapTimeBeginItr(conf.snapTimeBeginItr){}
-
-        int isSnapShot;
-        int nSnapShot;
-        int snapInterval;
-        int snapTimeBeginItr;
-
-        std::vector<std::vector<std::vector<double>>> v;
-        void takeSnapShot(std::vector<std::vector<double>> &_v,
-                          const int &snapCount, const int &nNodesGlobal, const int &dim);
-};
-
 class DirectProblem
 {
     public:
@@ -52,6 +32,7 @@ class DirectProblem
         int dim, nOMP;
         std::string outputDir;
 
+        Application app;
         Grid grid;
         PetscSolver petsc;
         SnapShot snap;
@@ -69,21 +50,20 @@ class DirectProblem
         // Darcy parameter
         double alpha, resistance;
 
+        void initialize(Config &conf);
         void runSimulation();
-        void prepareMatrix();
+        void visualizeDomain();
         void solveUSNS();
         void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
-                                const int ic, const int tItr);
+                                const int ic, const int t);
         void DarcyMatrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
-                                const int ic, const int tItr);
+                                const int ic, const int t);
 
     private:
-        void prepareSerialMatrix();
-        void visualizeDomain();
         void setVelocityValue(double (&vel)[3], double (&advel)[3], double (&dvdx)[3][3],
                               std::vector<double> &N, std::vector<std::vector<double>> &dNdx, 
-                              const int ic, const int tItr);
-        void updateValiables(const int tItr);
+                              const int ic, const int t);
+        void updateValiables(const int t);
 
 };
 

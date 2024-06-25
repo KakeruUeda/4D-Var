@@ -1,9 +1,9 @@
 #include "DirectProblem.h"
 
 void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
-                                       const int ic, const int tItr)
+                                       const int ic, const int t)
 {
-    int s, t, u;
+    int n1, n2, n3;
     int IU, IV, IW, IP;
     int JU, JV, JW, JP;
     int nGaussPoint = 2;
@@ -23,32 +23,27 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
             xCurrent[p][d] = grid.node.x[grid.cell(ic).node[p]][d];
     double he = fabs(xCurrent[1][0] - xCurrent[0][0]);
 
-    double detJ, weight;
+    double detJ, weight, tau;
     Gauss gauss(nGaussPoint);
 
     if(dim == 2){
     }else if(dim == 3){
-        double dxdr[3][3] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
         for(int i1=0; i1<nGaussPoint; i1++){
             for(int i2=0; i2<nGaussPoint; i2++){
                 for(int i3=0; i3<nGaussPoint; i3++){
+                    double dxdr[3][3];
                     ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
                     ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
                     MathFEM::calc_dxdr(dxdr, dNdr, xCurrent, grid.cell.nNodesInCell);
-            
-                    detJ = dxdr[0][0]*dxdr[1][1]*dxdr[2][2]+dxdr[0][1]*dxdr[1][2]*dxdr[2][0]+dxdr[0][2]*dxdr[1][0]*dxdr[2][1]
-                          -dxdr[0][2]*dxdr[1][1]*dxdr[2][0]-dxdr[0][1]*dxdr[1][0]*dxdr[2][2]-dxdr[0][0]*dxdr[1][2]*dxdr[2][1];
+                    MathFEM::calc_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
+                    detJ = MathCommon::calcDeterminant_3x3(dxdr);
                     weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
-
-                    MathFEM::calc_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
-                    MathFEM::calc_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
-
                     double vel[3] = {0e0, 0e0, 0e0};
                     double advel[3] {0e0, 0e0, 0e0};
                     double dvdx[3][3] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
 
-                    setVelocityValue(vel, advel, dvdx, N, dNdx, ic, tItr);
-                    double tau = MathFEM::calc_tau(advel, he, Re, dt);
+                    setVelocityValue(vel, advel, dvdx, N, dNdx, ic, t);
+                    tau = MathFEM::calc_tau(advel, he, Re, dt);
 
                     for(int ii=0; ii<grid.cell.nNodesInCell; ii++){  
                         IU = 4*ii;
@@ -73,12 +68,12 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
 
                              // DIFFUSION TERM
                             for(int mm=0; mm<3; mm++){
-                                if(mm == 0){s = 2e0; t = 1e0; u = 1e0;}
-                                if(mm == 1){s = 1e0; t = 2e0; u = 1e0;}
-                                if(mm == 2){s = 1e0; t = 1e0; u = 2e0;}
-                                Klocal(IU, JU) += 5e-1 * s * dNdx[ii][mm] * dNdx[jj][mm] / Re * detJ * weight;
-                                Klocal(IV, JV) += 5e-1 * t * dNdx[ii][mm] * dNdx[jj][mm] / Re * detJ * weight;
-                                Klocal(IW, JW) += 5e-1 * u * dNdx[ii][mm] * dNdx[jj][mm] / Re * detJ * weight;
+                                if(mm == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
+                                if(mm == 1){n1 = 1e0; n2 = 2e0; n3 = 1e0;}
+                                if(mm == 2){n1 = 1e0; n2 = 1e0; n3 = 2e0;}
+                                Klocal(IU, JU) += 5e-1 * n1 * dNdx[ii][mm] * dNdx[jj][mm] / Re * detJ * weight;
+                                Klocal(IV, JV) += 5e-1 * n2 * dNdx[ii][mm] * dNdx[jj][mm] / Re * detJ * weight;
+                                Klocal(IW, JW) += 5e-1 * n3 * dNdx[ii][mm] * dNdx[jj][mm] / Re * detJ * weight;
                             }
                             Klocal(IU, JV) += 5e-1 * dNdx[ii][1] * dNdx[jj][0] / Re * detJ * weight;
                             Klocal(IU, JW) += 5e-1 * dNdx[ii][2] * dNdx[jj][0] / Re * detJ * weight;
@@ -155,12 +150,12 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
 
                         // DIFFUSION TERM
                         for(int mm=0; mm<3; mm++){
-                            if(mm == 0){s = 2e0; t = 1e0; u = 1e0;}
-                            if(mm == 1){s = 1e0; t = 2e0; u = 1e0;}
-                            if(mm == 2){s = 1e0; t = 1e0; u = 2e0;}
-                            Flocal(IU) -= 5e-1 * s * dNdx[ii][mm]*dvdx[0][mm] / Re * detJ * weight;
-                            Flocal(IV) -= 5e-1 * t * dNdx[ii][mm]*dvdx[1][mm] / Re * detJ * weight;
-                            Flocal(IW) -= 5e-1 * u * dNdx[ii][mm]*dvdx[2][mm] / Re * detJ * weight;
+                            if(mm == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
+                            if(mm == 1){n1 = 1e0; n2 = 2e0; n3 = 1e0;}
+                            if(mm == 2){n1 = 1e0; n2 = 1e0; n3 = 2e0;}
+                            Flocal(IU) -= 5e-1 * n1 * dNdx[ii][mm]*dvdx[0][mm] / Re * detJ * weight;
+                            Flocal(IV) -= 5e-1 * n2 * dNdx[ii][mm]*dvdx[1][mm] / Re * detJ * weight;
+                            Flocal(IW) -= 5e-1 * n3 * dNdx[ii][mm]*dvdx[2][mm] / Re * detJ * weight;
                         }
                         Flocal(IU) -= 5e-1 * dNdx[ii][1] * dvdx[1][0] / Re * detJ * weight;
                         Flocal(IU) -= 5e-1 * dNdx[ii][2] * dvdx[2][0] / Re * detJ * weight;
@@ -217,9 +212,9 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
 
 
 void DirectProblem::DarcyMatrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
-                                       const int ic, const int tItr)
+                                       const int ic, const int t)
 {
-    int s, t, u;
+    int n1, n2, n3;
     int IU,IV,IW,IP;
     int JU,JV,JW,JP;
     int nGaussPoint = 2;
@@ -263,7 +258,7 @@ void DirectProblem::DarcyMatrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
                     double advel[3] {0e0, 0e0, 0e0};
                     double dvdx[3][3] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
 
-                    setVelocityValue(vel, advel, dvdx, N, dNdx, ic, tItr);
+                    setVelocityValue(vel, advel, dvdx, N, dNdx, ic, t);
                     double tau = MathFEM::calc_tau(advel, he, Re, dt);
 
                     for(int ii=0; ii<grid.cell.nNodesInCell; ii++){  
@@ -289,12 +284,12 @@ void DirectProblem::DarcyMatrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
 
                              // DIFFUSION TERM
                             for(int mm=0; mm<3; mm++){
-                                if(mm == 0){s = 2e0; t = 1e0; u = 1e0;}
-                                if(mm == 1){s = 1e0; t = 2e0; u = 1e0;}
-                                if(mm == 2){s = 1e0; t = 1e0; u = 2e0;}
-                                Klocal(IU, JU) += 5e-1 * s * dNdx[ii][mm] * dNdx[jj][mm] / Re * detJ * weight;
-                                Klocal(IV, JV) += 5e-1 * t * dNdx[ii][mm] * dNdx[jj][mm] / Re * detJ * weight;
-                                Klocal(IW, JW) += 5e-1 * u * dNdx[ii][mm] * dNdx[jj][mm] / Re * detJ * weight;
+                                if(mm == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
+                                if(mm == 1){n1 = 1e0; n2 = 2e0; n3 = 1e0;}
+                                if(mm == 2){n1 = 1e0; n2 = 1e0; n3 = 2e0;}
+                                Klocal(IU, JU) += 5e-1 * n1 * dNdx[ii][mm] * dNdx[jj][mm] / Re * detJ * weight;
+                                Klocal(IV, JV) += 5e-1 * n2 * dNdx[ii][mm] * dNdx[jj][mm] / Re * detJ * weight;
+                                Klocal(IW, JW) += 5e-1 * n3 * dNdx[ii][mm] * dNdx[jj][mm] / Re * detJ * weight;
                             }
                             Klocal(IU, JV) += 5e-1 * dNdx[ii][1] * dNdx[jj][0] / Re * detJ * weight;
                             Klocal(IU, JW) += 5e-1 * dNdx[ii][2] * dNdx[jj][0] / Re * detJ * weight;
@@ -377,12 +372,12 @@ void DirectProblem::DarcyMatrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
 
                         // DIFFUSION TERM
                         for(int mm=0; mm<3; mm++){
-                            if(mm == 0){s = 2e0; t = 1e0; u = 1e0;}
-                            if(mm == 1){s = 1e0; t = 2e0; u = 1e0;}
-                            if(mm == 2){s = 1e0; t = 1e0; u = 2e0;}
-                            Flocal(IU) -= 5e-1 * s * dNdx[ii][mm]*dvdx[0][mm] / Re * detJ * weight;
-                            Flocal(IV) -= 5e-1 * t * dNdx[ii][mm]*dvdx[1][mm] / Re * detJ * weight;
-                            Flocal(IW) -= 5e-1 * u * dNdx[ii][mm]*dvdx[2][mm] / Re * detJ * weight;
+                            if(mm == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
+                            if(mm == 1){n1 = 1e0; n2 = 2e0; n3 = 1e0;}
+                            if(mm == 2){n1 = 1e0; n2 = 1e0; n3 = 2e0;}
+                            Flocal(IU) -= 5e-1 * n1 * dNdx[ii][mm]*dvdx[0][mm] / Re * detJ * weight;
+                            Flocal(IV) -= 5e-1 * n2 * dNdx[ii][mm]*dvdx[1][mm] / Re * detJ * weight;
+                            Flocal(IW) -= 5e-1 * n3 * dNdx[ii][mm]*dvdx[2][mm] / Re * detJ * weight;
                         }
                         Flocal(IU) -= 5e-1 * dNdx[ii][1] * dvdx[1][0] / Re * detJ * weight;
                         Flocal(IU) -= 5e-1 * dNdx[ii][2] * dvdx[2][0] / Re * detJ * weight;
@@ -445,9 +440,9 @@ void DirectProblem::DarcyMatrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
 
 void DirectProblem::setVelocityValue(double (&vel)[3], double (&advel)[3], double (&dvdx)[3][3],
                                      std::vector<double> &N, std::vector<std::vector<double>> &dNdx, 
-                                     const int ic, const int tItr)
+                                     const int ic, const int t)
 {
-    if(tItr == 0){
+    if(t == 0){
         for(int d=0; d<dim; d++){
             advel[d] = 0e0;
             vel[d] = 0e0;
@@ -455,7 +450,7 @@ void DirectProblem::setVelocityValue(double (&vel)[3], double (&advel)[3], doubl
                 dvdx[d][e] = 0e0;
             }
         }
-    }else if(tItr == 1){
+    }else if(t == 1){
         for(int d=0; d<dim; d++){
             for(int p=0; p<grid.cell.nNodesInCell; p++){
                 advel[d] += N[p] * 1.5 * grid.node.v[grid.cell(ic).node[p]][d];

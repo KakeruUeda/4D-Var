@@ -6,7 +6,6 @@ MyMPI mpi;
 int main(int argc, char *argv[])
 {
     std::string petscfile = argv[2];
-    MPI_Init(NULL, NULL);
     PetscInitialize(NULL, NULL, petscfile.c_str(), NULL);
 
     mpi.setSizeAndRank();
@@ -27,10 +26,10 @@ int main(int argc, char *argv[])
 
     InverseProblem inverse(*conf);
 
+    inverse.initialize(*conf);
     inverse.runSimulation();
 
     PetscFinalize(); 
-    MPI_Finalize();
 
     return EXIT_SUCCESS;
 }

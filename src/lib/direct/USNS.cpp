@@ -27,12 +27,12 @@ void DirectProblem:: solveUSNS()
     snap.v.resize(snap.nSnapShot, std::vector<std::vector<double>>
                  (grid.nNodesGlobal, std::vector<double>(dim, 0e0)));
 
-    for(int tItr=0; tItr<timeMax; tItr++){
+    for(int t=0; t<timeMax; t++){
         petsc.setValueZero();
         
          if(pulsatileFlow == ON)
-            if(tItr > pulseBeginItr)
-                grid.dirichlet.assignPulsatileBCs(tItr, dt, T, grid.nDofsGlobal);
+            if(t > pulseBeginItr)
+                grid.dirichlet.assignPulsatileBCs(t, dt, T, grid.nDofsGlobal);
 
         grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
         
@@ -48,9 +48,9 @@ void DirectProblem:: solveUSNS()
                 Flocal.setZero();
 
                 if(grid.cell(ic).phi > 0.999)
-                    matrixAssemblyUSNS(Klocal, Flocal, ic, tItr);
+                    matrixAssemblyUSNS(Klocal, Flocal, ic, t);
                 else
-                    DarcyMatrixAssemblyUSNS(Klocal, Flocal, ic, tItr);
+                    DarcyMatrixAssemblyUSNS(Klocal, Flocal, ic, t);
 
                 petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
                                Klocal, Flocal);
@@ -58,7 +58,7 @@ void DirectProblem:: solveUSNS()
         }
         timer = MPI_Wtime() - timer;
 
-        PetscPrintf(MPI_COMM_WORLD, "\n ****** Time for matrix assembly = %f seconds ****** \n", timer);
+        PetscPrintf(MPI_COMM_WORLD, "\nMatrix assembly = %f seconds\n", timer);
         petsc.currentStatus = ASSEMBLY_OK;
     
         MPI_Barrier(MPI_COMM_WORLD); 
@@ -66,7 +66,7 @@ void DirectProblem:: solveUSNS()
         petsc.solve();
         timer = MPI_Wtime() - timer;
 
-        PetscPrintf(MPI_COMM_WORLD, "\n ****** Time for PETSc solver = %f seconds ****** \n", timer);
+        PetscPrintf(MPI_COMM_WORLD, "\nPETSc solver = %f seconds \n", timer);
 
         VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
         VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
@@ -77,16 +77,26 @@ void DirectProblem:: solveUSNS()
             petsc.solution[id] = arraySolnTmp[id];
 
         VecRestoreArray(vecSEQ, &arraySolnTmp);
-        updateValiables(tItr);
+        updateValiables(t);
 
         if(snap.isSnapShot == ON){
-            if(snap.snapTimeBeginItr >= tItr && (snapCount < snap.nSnapShot))
-                snap.takeSnapShot(grid.node.v, snapCount, grid.node.nNodesGlobal, dim);
-            snapCount++;
+            if(t >= snap.snapTimeBeginItr && (snapCount < snap.nSnapShot)){
+                if((t - snap.snapTimeBeginItr) % snap.snapInterval == 0){
+                    snap.takeSnapShot(grid.node.v, snapCount, grid.node.nNodesGlobal, dim);
+                    if(mpi.myId == 0){
+                        std::string vtuFile;
+                        vtuFile = outputDir + "/data/reference" + to_string(snapCount) + ".vtu";
+                        grid.vtu.exportSnapShotVTU(vtuFile, grid.node, grid.cell, snap, snapCount);
+                    }
+                    snapCount++;
+                }
+            }
+            if(snapCount >= snap.nSnapShot) 
+                break;
         }
 
         if(mpi.myId == 0){
-            double timeNow = tItr * dt;
+            double timeNow = t * dt;
             printf("\n TIME = %f \n", timeNow);
         }
         MPI_Barrier(MPI_COMM_WORLD);
@@ -96,7 +106,7 @@ void DirectProblem:: solveUSNS()
     VecDestroy(&vecSEQ);
 }
 
-void DirectProblem::updateValiables(const int tItr)
+void DirectProblem::updateValiables(const int t)
 {
     for(int in=0; in<grid.node.nNodesGlobal; in++){
         int n1 = 0;
@@ -117,10 +127,10 @@ void DirectProblem::updateValiables(const int tItr)
 
     if(mpi.myId == 0){
         std::string vtuFile;
-        vtuFile = outputDir + "/velocity/velocity" + to_string(tItr) + ".vtu";
-        grid.outputVTU.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::VELOCITY);
-        vtuFile = outputDir + "/pressure/pressure" + to_string(tItr) + ".vtu";
-        grid.outputVTU.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::PRESSURE);
+        vtuFile = outputDir + "/velocity/velocity" + to_string(t) + ".vtu";
+        grid.vtu.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::VELOCITY);
+        vtuFile = outputDir + "/pressure/pressure" + to_string(t) + ".vtu";
+        grid.vtu.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::PRESSURE);
     }
 }
 

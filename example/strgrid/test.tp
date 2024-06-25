@@ -24,7 +24,7 @@ Boundary
     }
     left{
         type = "v"
-        value = (2.5,0,0)
+        value = (0,0,0)
     }
     right{
         type = "free"
@@ -38,4 +38,6 @@ Boundary
         type = "v"
         value = (0,0,0)
     }
+
+    control = "left"
 }

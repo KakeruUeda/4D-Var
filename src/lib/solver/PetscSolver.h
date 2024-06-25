@@ -34,7 +34,6 @@ class PetscSolver
         PetscInt  *diag_nnz, *offdiag_nnz;
 
         std::vector<double> solution;
-
         int initialize(int sizeLocal, int sizeGlobal);
         void setMatAndVecZero(Cell &cell);
         void setValueZero();
