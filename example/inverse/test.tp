@@ -38,8 +38,11 @@ Data
     nxData = (12, 12, 12)
     lxData = (1.0, 1.0, 1.0)
 
+    nControlNodesInCell = 4
     controlBoundary = "input/straightTube/data12x12x12/controlBoundary.dat"
-    
+    controlCellMap = "input/straightTube/data12x12x12/controlCellMap.dat"
+    controlNodeInCell = "input/straightTube/data12x12x12/controlNodeInCell.dat"
+
     data0 = "input/straightTube/data12x12x12/data0.dat"
     data1 = "input/straightTube/data12x12x12/data1.dat"
     data2 = "input/straightTube/data12x12x12/data2.dat"

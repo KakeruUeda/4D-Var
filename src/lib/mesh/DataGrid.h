@@ -15,6 +15,7 @@ struct VoxelInfo
 {
     std::vector<std::vector<double>> vCFD;
     std::vector<std::vector<double>> vMRI;
+    std::vector<std::vector<double>> ve;
     std::vector<double> center;
     std::vector<int> cellChildren;
 

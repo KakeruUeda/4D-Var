@@ -33,6 +33,8 @@ void DirectProblem::initialize(Config &conf)
     grid.node.v.resize(grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
     grid.node.vPrev.resize(grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
     grid.node.p.resize(grid.node.nNodesGlobal, 0e0);
+    snap.v.resize(snap.nSnapShot, std::vector<std::vector<double>>
+                  (grid.nNodesGlobal, std::vector<double>(dim, 0e0)));
 
     grid.dirichlet.initialize(conf);
     grid.cell.initialize(conf);

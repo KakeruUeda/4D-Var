@@ -19,15 +19,35 @@
 #include "PetscSolver.h"
 MyMPI mpi;
 
-void setControlBoundary(ControlBoundary &controlBoundary, std::vector<int> &controlBoundaryMap,
-                        int nx, int ny, int nz)
+void setControlBoundary(Cell &cell, ControlBoundary &controlBoundary, 
+                        std::vector<int> &controlBoundaryMap,
+                        std::vector<std::vector<int>> &controlNodeInCell,
+                        std::vector<int> &controlCellMap,
+                        int nxNodes, int nyNodes, int nzNodes,
+                        int nxCells, int nyCells, int nzCells)
 {
+   int nNodesInCell = 8;
     if(controlBoundary == ControlBoundary::left){
-        for(int k=0; k<nz; k++){
-            for(int j=0; j<ny; j++){
-                for(int i=0; i<nx; i++){
+        for(int k=0; k<nzNodes; k++){
+            for(int j=0; j<nyNodes; j++){
+                for(int i=0; i<nxNodes; i++){
                     if(i == 0){
-                        controlBoundaryMap.push_back(i + j * nx + k * nx * ny);
+                        controlBoundaryMap.push_back(i+j*nxNodes+k*nxNodes*nyNodes);
+                    }
+                }
+            }
+        }
+        for(int k=0; k<nzCells; k++){
+            for(int j=0; j<nyCells; j++){
+                for(int i=0; i<nxCells; i++){
+                    if(i == 0){
+                        std::vector<int> vecTmp(4, 0);
+                        vecTmp[0] = cell(i+j*nxCells+k*nxCells*nyCells).node[0];
+                        vecTmp[1] = cell(i+j*nxCells+k*nxCells*nyCells).node[2];
+                        vecTmp[2] = cell(i+j*nxCells+k*nxCells*nyCells).node[6];
+                        vecTmp[3] = cell(i+j*nxCells+k*nxCells*nyCells).node[4];
+                        controlNodeInCell.push_back(vecTmp);
+                        controlCellMap.push_back(i+j*nxCells+k*nxCells*nyCells);
                     }
                 }
             }
@@ -86,7 +106,10 @@ int main(int argc, char* argv[])
 
     ControlBoundary controlBoundary = conf.controlBoundary;
     std::vector<int> controlBoundaryMap;
-    setControlBoundary(controlBoundary, controlBoundaryMap, conf.nxNodes, conf.nyNodes, conf.nzNodes);
+    std::vector<std::vector<int>> controlNodeInCell;
+    std::vector<int> controlCellMap;
+    setControlBoundary(grid.cell, controlBoundary, controlBoundaryMap, controlNodeInCell, controlCellMap,
+                       conf.nxNodes, conf.nyNodes, conf.nzNodes, conf.nxCells, conf.nyCells, conf.nzCells);
 
     // Expoort all results to dat file
     if(mpi.myId == 0){
@@ -95,6 +118,8 @@ int main(int argc, char* argv[])
         std::ofstream ofsVelDirichlet(conf.outputDir + "/velocityDirichlet.dat");
         std::ofstream ofsPreDirichlet(conf.outputDir + "/pressureDirichlet.dat");
         std::ofstream ofsControlBoundary(conf.outputDir + "/controlBoundary.dat");
+        std::ofstream ofsControlNodeInCell(conf.outputDir + "/controlNodeInCell.dat");
+        std::ofstream ofsControlCellMap(conf.outputDir + "/controlCellMap.dat");
     
         // Cell dat
         for(int ic=0; ic<conf.nCellsGlobal; ic++){
@@ -104,6 +129,19 @@ int main(int argc, char* argv[])
             ofsCell << std::endl;
         }
         ofsCell.close();
+
+        for(int ic=0; ic<controlNodeInCell.size(); ic++){
+            for(int p=0; p<4; p++){
+                ofsControlNodeInCell << controlNodeInCell[ic][p] << " ";
+            }
+            ofsControlNodeInCell << std::endl;
+        }
+        ofsControlNodeInCell.close();
+
+        for(int ic=0; ic<controlCellMap.size(); ic++){
+            ofsControlCellMap << controlCellMap[ic] << std::endl;
+        }
+        ofsControlCellMap.close();
     
         // Node coordinates dat
         for(int in=0; in<conf.nNodesGlobal; in++){

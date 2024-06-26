@@ -29,11 +29,6 @@ void DirectProblem:: solveUSNS(Application &app)
     }
 
     int snapCount = 0;
-    if(pulsatileFlow == ON){
-        snap.v.resize(snap.nSnapShot, std::vector<std::vector<double>>
-                      (grid.nNodesGlobal, std::vector<double>(dim, 0e0)));
-    }
-
     for(int t=0; t<timeMax; t++){
         petsc.setValueZero();
         

@@ -21,6 +21,7 @@ data(conf.nCellsDataGlobal)
         for(int ic=0; ic<conf.nCellsDataGlobal; ic++){
             data[ic].vCFD.resize(conf.nSnapShot, std::vector<double>(conf.dim, 0e0));
             data[ic].vMRI.resize(conf.nSnapShot, std::vector<double>(conf.dim, 0e0));
+            data[ic].ve.resize(conf.nSnapShot, std::vector<double>(conf.dim, 0e0));
             data[ic].center.resize(conf.dim, 0e0);
         }
     }

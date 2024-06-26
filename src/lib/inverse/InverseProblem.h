@@ -71,12 +71,18 @@ class InverseProblem
         double alpha, resistance;
         double aCF, bCF1, bCF2, gCF;
         int loopMax;
+        int nControlNodesInCell;
         
         void initialize(Config &conf);
         void runSimulation();
 
         void calcCostFunction();
-
+        void GaussIntegralRegTerm1(std::vector<double> &N, std::vector<std::vector<double>> &dNdr,
+                                   std::vector<std::vector<double>> &xCurrent, double &value, 
+                                   const double weight, const int ic, const int t);
+        void GaussIntegralRegTerm2(std::vector<double> &N, std::vector<std::vector<double>> &dNdr,
+                                   std::vector<std::vector<double>> &xCurrent, double &value, 
+                                   const double weight, const int ic, const int t);
     private:
 
 };

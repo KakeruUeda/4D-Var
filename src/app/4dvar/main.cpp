@@ -24,13 +24,13 @@ int main(int argc, char *argv[])
     if(conf->extractFluid == ON)
         conf->setFluidDomain();
 
-
     InverseProblem inverse(*conf);
     inverse.initialize(*conf);
     delete conf;
-    
+
     inverse.runSimulation();
 
+    PetscPrintf(MPI_COMM_WORLD, "\nTerminate\n");
     PetscFinalize(); 
 
     return EXIT_SUCCESS;

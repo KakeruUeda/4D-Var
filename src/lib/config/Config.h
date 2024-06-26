@@ -116,7 +116,10 @@ class Config
         bool isReadingError = false;
 
         // data parameter
+        int nControlNodesInCell;
         std::vector<std::vector<std::vector<double>>> velocityData;
+        std::vector<std::vector<int>> controlNodeInCell;
+        std::vector<int> controlCellMap;
 
         void setSolidBoundary();
         void setFluidDomain();

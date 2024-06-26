@@ -108,7 +108,7 @@ void Config::setFluidDomain()
     std::vector<std::vector<int>> cellTmp = cell;
 
     nCellsGlobal = 0;
-    cell.erase(cell.begin(), cell.end());
+    cell.clear();
     for(int ic=0; ic<nCellsGlobalTmp; ic++){
         if(phi[ic] < 1e-12) continue;
         sortCell.push_back(ic);
@@ -116,9 +116,15 @@ void Config::setFluidDomain()
         nCellsGlobal++;
     }
 
-    std::vector<double> phiTmp = phi;
-    phi.erase(phi.begin(), phi.end());
+    std::vector<std::vector<int>> controlNodeInCellTmp = controlNodeInCell;
+    controlNodeInCell.clear();
+    for(int ic=0; ic<controlNodeInCellTmp.size(); ic++){
+        if(phi[controlCellMap[ic]] < 1e-12) continue;
+        controlNodeInCell.push_back(controlNodeInCellTmp[ic]);
+    }
 
+    std::vector<double> phiTmp = phi;
+    phi.clear();
     int count = 0;
     for(int ic=0; ic<nCellsGlobalTmp; ic++){
         if(phiTmp[ic] < 1e-12) continue;
@@ -147,6 +153,10 @@ void Config::setFluidDomain()
     for(int ic=0; ic<nCellsGlobal; ic++)
         for(int p=0; p<nNodesInCell; p++)
             cell[ic][p] = convertNodeOldToNew[cell[ic][p]];
+
+    for(int ic=0; ic<controlNodeInCell.size(); ic++)
+        for(int p=0; p<nControlNodesInCell; p++)
+            controlNodeInCell[ic][p] = convertNodeOldToNew[controlNodeInCell[ic][p]];
 
     std::vector<std::vector<double>> nodeTmp = node;
     node.erase(node.begin(), node.end());

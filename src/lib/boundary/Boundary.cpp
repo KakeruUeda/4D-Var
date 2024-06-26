@@ -97,6 +97,7 @@ void DirichletBoundary::initializeAdjoint(Config &conf)
     vDirichlet = conf.vDirichlet;
     pDirichlet = conf.pDirichlet;
     controlBoundaryMap = conf.controlBoundaryMap;
+    controlNodeInCell = conf.controlNodeInCell;
 }
 
 void DirichletBoundary::assignDirichletBCs(Node &node, int &dim)

@@ -368,22 +368,12 @@ void Config::readDataParameter()
     std::string str, base_label, label;
     base_label = "/Data"; 
 
-    std::string controlBoundaryFile;
-    label = base_label + "/controlBoundary";
-
-    if(!tp.getInspectedValue(label, controlBoundaryFile))
-        throw std::runtime_error(label + " is not set");
-
-    std::ifstream ifsControlBoundary(controlBoundaryFile);
-    while(getline(ifsControlBoundary, str)){
-        std::istringstream iss(str);
-        getline(iss, str, ' ');
-        controlBoundaryMap.push_back(stoi(str));
-    }
-    ifsControlBoundary.close();
-
     int tmpInt[dim];
     double tmpDouble[dim];
+
+    label = base_label + "/nControlNodesInCell";
+    if(!tp.getInspectedValue(label, nControlNodesInCell))
+        throw std::runtime_error(label + " is not set");
 
     label = base_label + "/nSnapShot";
     if(!tp.getInspectedValue(label, nSnapShot))
@@ -418,6 +408,52 @@ void Config::readDataParameter()
     dzData = lzData / (double)nzData;
 
     nCellsDataGlobal = nxData * nxData * nzData;  
+
+    std::string controlBoundaryFile;
+    label = base_label + "/controlBoundary";
+
+    if(!tp.getInspectedValue(label, controlBoundaryFile))
+        throw std::runtime_error(label + " is not set");
+
+    std::ifstream ifsControlBoundary(controlBoundaryFile);
+    while(getline(ifsControlBoundary, str)){
+        std::istringstream iss(str);
+        getline(iss, str, ' ');
+        controlBoundaryMap.push_back(stoi(str));
+    }
+    ifsControlBoundary.close();
+
+    std::string controlCellMapFile;
+    label = base_label + "/controlBoundary";
+
+    if(!tp.getInspectedValue(label, controlCellMapFile))
+        throw std::runtime_error(label + " is not set");
+
+    std::ifstream ifscontrolCellMap(controlCellMapFile);
+    while(getline(ifscontrolCellMap, str)){
+        std::istringstream iss(str);
+        getline(iss, str, ' ');
+        controlCellMap.push_back(stoi(str));
+    }
+    ifscontrolCellMap.close();
+
+    std::string controlNodeInCellFile;
+    label = base_label + "/controlNodeInCell";
+
+    if(!tp.getInspectedValue(label, controlNodeInCellFile))
+        throw std::runtime_error(label + " is not set");
+
+    std::ifstream ifsControlNodeInCell(controlNodeInCellFile);
+    while(getline(ifsControlNodeInCell, str)){
+        std::istringstream iss(str);
+        std::vector<int> ctrTmp;
+        for(int p=0; p<nControlNodesInCell; p++){
+            getline(iss, str, ' ');
+            ctrTmp.push_back(stod(str));
+        }
+        controlNodeInCell.push_back(ctrTmp);
+    }
+    ifsControlNodeInCell.close();
 
     std::string dataFile;
     int num = 0;
