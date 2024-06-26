@@ -64,7 +64,7 @@ int PetscSolver::initialize(int sizeLocal, int sizeGlobal)
     CHKERRQ(errpetsc);
     errpetsc = PCSetFromOptions(pc);
     CHKERRQ(errpetsc);
-    
+
     currentStatus = SOLVER_EMPTY;
 
     return 0;
@@ -165,7 +165,6 @@ int PetscSolver::solve()
         PetscPrintf(MPI_COMM_WORLD, "\n Divergence... %d iterations. \n", its);
         std::cout <<  reason << std::endl;
         exit(1);
-        return -1;
     }else{
         PetscPrintf(MPI_COMM_WORLD, "\n Convergence in %d iterations. \n", its);
     }

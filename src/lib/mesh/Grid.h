@@ -27,8 +27,7 @@ class Grid
         Cell cell; 
         Node node;
         DirichletBoundary dirichlet;
-        OutputVTU vtu;
-        OutputVTI vti;
+        Output output;
         
         int nx, ny, nz;
         double lx, ly, lz, dx, dy, dz;

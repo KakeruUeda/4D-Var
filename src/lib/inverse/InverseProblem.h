@@ -30,6 +30,15 @@ struct EstimatedVariable
         std::vector<double> u, v ,w;
 };
 
+struct CostFunction
+{
+    double term1,term2,term3,total;
+    std::vector<double> history;
+    void sum(){
+        total = term1 + term2 + term3;
+    }
+};
+
 class Adjoint
 {
     public:
@@ -54,15 +63,19 @@ class InverseProblem
 
         DirectProblem main;
         Adjoint adjoint;
+        CostFunction costFunction;
 
         int timeMax;
         double dt;
         double rho, mu;
         double alpha, resistance;
         double aCF, bCF1, bCF2, gCF;
+        int loopMax;
         
         void initialize(Config &conf);
         void runSimulation();
+
+        void calcCostFunction();
 
     private:
 

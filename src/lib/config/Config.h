@@ -52,6 +52,7 @@ class Config
 
         // CostFunction parameter
         double aCF, bCF1, bCF2, gCF;
+        int loopMax;
 
         // Time parameter
         double dt;
@@ -114,7 +115,8 @@ class Config
         // Error parameter
         bool isReadingError = false;
 
-        // Inverse Parameter
+        // data parameter
+        std::vector<std::vector<std::vector<double>>> velocityData;
 
         void setSolidBoundary();
         void setFluidDomain();

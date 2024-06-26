@@ -1,6 +1,6 @@
 #include "DirectProblem.h"
 
-void DirectProblem:: solveUSNS()
+void DirectProblem:: solveUSNS(Application &app)
 { 
     PetscPrintf(MPI_COMM_WORLD, "\nUNSTEADY NAVIER STOKES SOLVER\n");
     
@@ -23,9 +23,16 @@ void DirectProblem:: solveUSNS()
     petsc.setMatAndVecZero(grid.cell);
     petsc.initialAssembly();
 
+    if(app == Application::FDVAR){
+        pulsatileFlow = OFF;
+        snap.isSnapShot = ON;
+    }
+
     int snapCount = 0;
-    snap.v.resize(snap.nSnapShot, std::vector<std::vector<double>>
-                 (grid.nNodesGlobal, std::vector<double>(dim, 0e0)));
+    if(pulsatileFlow == ON){
+        snap.v.resize(snap.nSnapShot, std::vector<std::vector<double>>
+                      (grid.nNodesGlobal, std::vector<double>(dim, 0e0)));
+    }
 
     for(int t=0; t<timeMax; t++){
         petsc.setValueZero();
@@ -86,7 +93,7 @@ void DirectProblem:: solveUSNS()
                     if(mpi.myId == 0){
                         std::string vtuFile;
                         vtuFile = outputDir + "/data/reference" + to_string(snapCount) + ".vtu";
-                        grid.vtu.exportSnapShotVTU(vtuFile, grid.node, grid.cell, snap, snapCount);
+                        grid.output.exportSnapShotVTU(vtuFile, grid.node, grid.cell, snap, snapCount);
                     }
                     snapCount++;
                 }
@@ -128,9 +135,9 @@ void DirectProblem::updateValiables(const int t)
     if(mpi.myId == 0){
         std::string vtuFile;
         vtuFile = outputDir + "/velocity/velocity" + to_string(t) + ".vtu";
-        grid.vtu.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::VELOCITY);
+        grid.output.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::VELOCITY);
         vtuFile = outputDir + "/pressure/pressure" + to_string(t) + ".vtu";
-        grid.vtu.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::PRESSURE);
+        grid.output.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::PRESSURE);
     }
 }
 

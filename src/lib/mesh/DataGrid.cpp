@@ -14,7 +14,7 @@ data(conf.nCellsDataGlobal)
         yOrigin = conf.yOrigin; 
         zOrigin = conf.zOrigin;
         for(int ic=0; ic<conf.nCellsDataGlobal; ic++){
-            data[ic].v.resize(conf.nSnapShot, std::vector<double>(conf.dim, 0e0));
+            data[ic].vCFD.resize(conf.nSnapShot, std::vector<double>(conf.dim, 0e0));
             data[ic].center.resize(conf.dim, 0e0);
         }
     }else if(conf.app == Application::FDVAR){
@@ -26,8 +26,37 @@ data(conf.nCellsDataGlobal)
     }
 }
 
+void DataGrid::initialize(Config &conf, Node &node, Cell &cell, const int &dim)
+{   
+    for(int t=0; t<conf.nSnapShot; t++){
+        for(int k=0; k<nz; k++){
+            for(int j=0; j<ny; j++){
+                for(int i=0; i<nx; i++){
+                    for(int d=0; d<dim; d++){
+                        data[k * nx * ny + j * nx + i].vMRI[t][d] 
+                        = conf.velocityData[t][k * nx * ny + j * nx + i][d];
+                    }
+                }
+            }
+        }
+    }
 
-void VoxelInfo::setNearCell(Node &node, Cell &cell, const double &length, const int &dim)
+    range = 5e-1 * sqrt(dx*dx + dy*dy + dz*dz);
+    for(int k=0; k<nz; k++){
+        for(int j=0; j<ny; j++){
+            for(int i=0; i<nx; i++){
+                for(int d=0; d<dim; d++){
+                    if(d == 0) data[k * nx * ny + j * nx + i].center[d] = (5e-1 + i) * dx;
+                    if(d == 1) data[k * nx * ny + j * nx + i].center[d] = (5e-1 + j) * dy;
+                    if(d == 2) data[k * nx * ny + j * nx + i].center[d] = (5e-1 + k) * dz;
+                }
+                data[k * nx * ny + j * nx + i].setNearCell(node, cell, range, dim);
+            }
+        }
+    }
+}
+
+void VoxelInfo::setNearCell(Node &node, Cell &cell, const double &range, const int &dim)
 {
     double distance;
     double diff[dim];
@@ -42,7 +71,7 @@ void VoxelInfo::setNearCell(Node &node, Cell &cell, const double &length, const 
                 distance += diff[d] * diff[d]; 
             } 
             distance = sqrt(distance);
-            if(distance < length) flag = true;
+            if(distance < range) flag = true;
         }
         if(flag) cellChildren.push_back(ic);
     }
@@ -90,7 +119,7 @@ void VoxelInfo::averageVelocity(Cell &cell, std::vector<std::vector<double>> &_v
         }
     }
     for(int d=0; d<dim; d++)
-        v[t][d] /= weightIntegral;
+        vCFD[t][d] /= weightIntegral;
 }
 
 void VoxelInfo::gaussIntegral(std::vector<double> &N, std::vector<std::vector<double>> &xCurrent, 
@@ -100,7 +129,7 @@ void VoxelInfo::gaussIntegral(std::vector<double> &N, std::vector<std::vector<do
 {
     for(int d=0; d<dim; d++){
         for(int p=0; p<nNodesInCell; p++){
-            v[t][d] += N[p] * velCurrent[p][d] * detJ * weight;
+            vCFD[t][d] += N[p] * velCurrent[p][d] * detJ * weight;
         }
     }
     for(int p=0; p<nNodesInCell; p++)

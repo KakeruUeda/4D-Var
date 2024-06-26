@@ -246,11 +246,10 @@ void DirectProblem::DarcyMatrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
                     ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
                     ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
                     MathFEM::calc_dxdr(dxdr, dNdr, xCurrent, grid.cell.nNodesInCell);
-            
-                    detJ = dxdr[0][0]*dxdr[1][1]*dxdr[2][2]+dxdr[0][1]*dxdr[1][2]*dxdr[2][0]+dxdr[0][2]*dxdr[1][0]*dxdr[2][1]
-                          -dxdr[0][2]*dxdr[1][1]*dxdr[2][0]-dxdr[0][1]*dxdr[1][0]*dxdr[2][2]-dxdr[0][0]*dxdr[1][2]*dxdr[2][1];
+
+                    detJ = MathCommon::calcDeterminant_3x3(dxdr);
                     weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
-              
+                    
                     MathFEM::calc_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
                     MathFEM::calc_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
 

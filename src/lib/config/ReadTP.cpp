@@ -357,6 +357,10 @@ void Config::readInverseParameter()
     label = base_label + "/gCF";
     if(!tp.getInspectedValue(label, gCF))
         throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/loopMax";
+    if(!tp.getInspectedValue(label, loopMax))
+        throw std::runtime_error(label + " is not set");
 }
 
 void Config::readDataParameter()
@@ -414,6 +418,37 @@ void Config::readDataParameter()
     dzData = lzData / (double)nzData;
 
     nCellsDataGlobal = nxData * nxData * nzData;  
+
+    std::string dataFile;
+    int num = 0;
+    velocityData.resize(nSnapShot);
+
+    while(1){
+        label = base_label + "/data" + std::to_string(num);
+        
+        if(num >= nSnapShot)
+            break;
+        if(!tp.getInspectedValue(label, dataFile))
+            throw std::runtime_error(label + " is not set");
+        
+        std::ifstream ifsData(dataFile);
+        std::vector<std::vector<double>> velocityDataTmp;
+        while(getline(ifsData, str)){
+            int index;
+            std::istringstream iss(str);
+            std::vector<double> dataTmp;
+
+            for(int d=0; d<dim+dim; d++){
+                getline(iss, str, ' ');
+                if(d < dim) continue;
+                dataTmp.push_back(stod(str));
+            }
+            velocityDataTmp.push_back(dataTmp);
+        } 
+        ifsData.close();
+        velocityData[num] = velocityDataTmp;
+        num++;
+    }
 }
 
 void Config::readStructuredGridParameter()
@@ -455,7 +490,7 @@ void Config::readStructuredGridParameter()
 
     lx = tmpDouble[0];
     ly = tmpDouble[1];
-    if(dim == 2)      lz = 0.0;
+    if(dim == 2)  lz = 0.0;
     else if(dim == 3) lz = tmpDouble[2];
 
     dx = lx / (double)nx;
@@ -464,7 +499,6 @@ void Config::readStructuredGridParameter()
 
     nCellsGlobal = nxCells * nyCells * nzCells;
     nNodesGlobal = nxNodes * nyNodes * nzNodes;
-
 
     label = base_label + "/nNodesInCell";
     if (!tp.getInspectedValue(label, nNodesInCell))

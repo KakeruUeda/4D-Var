@@ -13,13 +13,12 @@
 
 struct VoxelInfo
 {
-    std::vector<std::vector<double>> v;
     std::vector<std::vector<double>> vCFD;
     std::vector<std::vector<double>> vMRI;
     std::vector<double> center;
     std::vector<int> cellChildren;
 
-    void setNearCell(Node &node, Cell &cell, const double &length, const int &dim);
+    void setNearCell(Node &node, Cell &cell, const double &range, const int &dim);
     void averageVelocity(Cell &cell, std::vector<std::vector<double>> &_v, 
                          const int &t, const int &nNodesInCell, const int &dim);
     void gaussIntegral(std::vector<double> &N, std::vector<std::vector<double>> &xCurrent, 
@@ -38,6 +37,7 @@ class DataGrid
         double dx, dy, dz; 
         double lx, ly, lz;
         double xOrigin, yOrigin, zOrigin;
+        double range;
 
         int nCellsGlobal;
         int nNodesGlobal;
@@ -57,6 +57,8 @@ class DataGrid
         { return data.size(); }
         inline void resize(int n)
         { data.resize(n); }
+        
+        void initialize(Config &conf, Node &node, Cell &cell, const int &dim);
 
         std::vector<VoxelInfo> data;
 };

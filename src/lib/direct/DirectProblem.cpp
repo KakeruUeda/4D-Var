@@ -39,22 +39,22 @@ void DirectProblem::initialize(Config &conf)
     grid.node.initialize(conf);
 }
 
-void DirectProblem::visualizeDomain()
+void DirectProblem::outputDomain()
 {
     if(mpi.myId > 0) return;
 
     std::string vtuFile;
     vtuFile = outputDir + "/domain/meshPartition.vtu";
-    grid.vtu.exportMeshPartitionVTU(vtuFile, grid.node, grid.cell);
+    grid.output.exportMeshPartitionVTU(vtuFile, grid.node, grid.cell);
 
     vtuFile = outputDir + "/domain/phi.vtu";
-    grid.vtu.exportPhiVTU(vtuFile, grid.node, grid.cell);
+    grid.output.exportPhiVTU(vtuFile, grid.node, grid.cell);
 }
 
 
 void DirectProblem::runSimulation()
 {
     grid.prepareMatrix(petsc, outputDir);
-    visualizeDomain();
-    solveUSNS();
+    outputDomain();
+    solveUSNS(app);
 }

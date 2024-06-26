@@ -28,8 +28,9 @@ int main(int argc, char *argv[])
 
     DirectProblem direct(*conf);
     Postprocess post(*conf);
-    
+
     direct.initialize(*conf);
+    delete conf;
 
     // Solve Unstready Navier Stokes
     direct.runSimulation();

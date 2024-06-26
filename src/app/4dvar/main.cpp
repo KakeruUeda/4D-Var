@@ -24,9 +24,11 @@ int main(int argc, char *argv[])
     if(conf->extractFluid == ON)
         conf->setFluidDomain();
 
-    InverseProblem inverse(*conf);
 
+    InverseProblem inverse(*conf);
     inverse.initialize(*conf);
+    delete conf;
+    
     inverse.runSimulation();
 
     PetscFinalize(); 

@@ -52,8 +52,8 @@ class DirectProblem
 
         void initialize(Config &conf);
         void runSimulation();
-        void visualizeDomain();
-        void solveUSNS();
+        void outputDomain();
+        void solveUSNS(Application &app);
         void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
                                 const int ic, const int t);
         void DarcyMatrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
