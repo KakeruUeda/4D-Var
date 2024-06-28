@@ -424,7 +424,7 @@ void Config::readDataParameter()
     ifsControlBoundary.close();
 
     std::string controlCellMapFile;
-    label = base_label + "/controlBoundary";
+    label = base_label + "/controlCellMap";
 
     if(!tp.getInspectedValue(label, controlCellMapFile))
         throw std::runtime_error(label + " is not set");

@@ -6,19 +6,14 @@ void Node::initialize(Config &conf)
     x.resize(nNodesGlobal, std::vector<double>(conf.dim));
     nDofsOnNode.resize(nNodesGlobal);
     isDirichlet.resize(nNodesGlobal);
-    //isDirichletNew.resize(nNodesGlobal);
     subId.resize(nNodesGlobal);
     map.resize(nNodesGlobal);
-    mapNew.resize(nNodesGlobal);
     dofsMap.resize(nNodesGlobal);
     dofsBCsMap.resize(nNodesGlobal);
-    dofsMapNew.resize(nNodesGlobal);
-    dofsBCsMapNew.resize(nNodesGlobal);
 
     for(int in=0; in<nNodesGlobal; in++){
         nDofsOnNode[in] = conf.dim + 1;
         isDirichlet[in].resize(nDofsOnNode[in], false);
-        //isDirichletNew[in].resize(nDofsOnNode[in], false);
     }
 
     int tmp = 0;
@@ -26,13 +21,9 @@ void Node::initialize(Config &conf)
     for(int in=0; in<nNodesGlobal; in++){
         dofsMap[in].resize(nDofsOnNode[in]);
         dofsBCsMap[in].resize(nDofsOnNode[in]);
-        //dofsMapNew[in].resize(nDofsOnNode[in]);
-        //dofsBCsMapNew[in].resize(nDofsOnNode[in]);
         for(int id=0; id<nDofsOnNode[in]; id++){
             dofsMap[in][id] = tmp;
             dofsBCsMap[in][id] = tmp;
-            //dofsMapNew[in][id] = tmp;
-            //dofsBCsMapNew[in][id] = tmp;
             tmp++;
         }
     }
@@ -82,14 +73,10 @@ void Node::initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap)
     x.resize(nNodesGlobal, std::vector<double>(conf.dim));
     nDofsOnNode.resize(nNodesGlobal);
     isDirichlet.resize(nNodesGlobal);
-    isDirichletNew.resize(nNodesGlobal);
     subId.resize(nNodesGlobal);
     map.resize(nNodesGlobal);
-    mapNew.resize(nNodesGlobal);
     dofsMap.resize(nNodesGlobal);
     dofsBCsMap.resize(nNodesGlobal);
-    dofsMapNew.resize(nNodesGlobal);
-    dofsBCsMapNew.resize(nNodesGlobal);
 
     for(int in=0; in<nNodesGlobal; in++){
         nDofsOnNode[in] = conf.dim + 1;
@@ -101,7 +88,6 @@ void Node::initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap)
 
     for(int in=0; in<nNodesGlobal; in++){
         isDirichlet[in].resize(nDofsOnNode[in], false);
-        isDirichletNew[in].resize(nDofsOnNode[in], false);
     }
 
     int tmp = 0;
@@ -109,13 +95,9 @@ void Node::initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap)
     for(int in=0; in<nNodesGlobal; in++){
         dofsMap[in].resize(nDofsOnNode[in]);
         dofsBCsMap[in].resize(nDofsOnNode[in]);
-        dofsMapNew[in].resize(nDofsOnNode[in]);
-        dofsBCsMapNew[in].resize(nDofsOnNode[in]);
         for(int id=0; id<nDofsOnNode[in]; id++){
             dofsMap[in][id] = tmp;
             dofsBCsMap[in][id] = tmp;
-            dofsMapNew[in][id] = tmp;
-            dofsBCsMapNew[in][id] = tmp;
             tmp++;
         }
     }

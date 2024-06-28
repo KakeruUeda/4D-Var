@@ -97,6 +97,7 @@ void DirichletBoundary::initializeAdjoint(Config &conf)
     vDirichlet = conf.vDirichlet;
     pDirichlet = conf.pDirichlet;
     controlBoundaryMap = conf.controlBoundaryMap;
+    controlCellMap = conf.controlCellMap;
     controlNodeInCell = conf.controlNodeInCell;
 }
 
@@ -124,7 +125,7 @@ void DirichletBoundary::assignDirichletBCs(Node &node, int &dim)
         dofCurrent = 0; 
         count = 0;
         for(int i=0; i<pair.first; i++)
-            dofCurrentTmp += node.nDofsOnNode[i];
+            dofCurrentTmp += node.nDofsOnNodeNew[i];
         for(auto &value : pair.second){
             dofCurrent = dofCurrentTmp + count;
             dirichletBCsValueNew[dofCurrent] = value;
@@ -139,7 +140,7 @@ void DirichletBoundary::assignDirichletBCs(Node &node, int &dim)
         count = 0;
         for(int i=0; i<pair.first; i++)
             dofCurrentTmp += node.nDofsOnNode[i];
-        dofCurrent = dofCurrentTmp + dim ;
+        dofCurrent = dofCurrentTmp + dim;
         dirichletBCsValue[dofCurrent] = pair.second;
         dirichletBCsValueInit[dofCurrent] = pair.second;
     }
@@ -149,8 +150,8 @@ void DirichletBoundary::assignDirichletBCs(Node &node, int &dim)
         dofCurrent = 0; 
         count = 0;
         for(int i=0; i<pair.first; i++)
-            dofCurrentTmp += node.nDofsOnNode[i];
-        dofCurrent = dofCurrentTmp + dim ;
+            dofCurrentTmp += node.nDofsOnNodeNew[i];
+        dofCurrent = dofCurrentTmp + dim;
         dirichletBCsValueNew[dofCurrent] = pair.second;
         dirichletBCsValueNewInit[dofCurrent] = pair.second;
     }

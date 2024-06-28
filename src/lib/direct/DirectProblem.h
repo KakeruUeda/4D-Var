@@ -56,14 +56,13 @@ class DirectProblem
         void solveUSNS(Application &app);
         void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
                                 const int ic, const int t);
-        void DarcyMatrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
-                                const int ic, const int t);
 
     private:
         void setVelocityValue(double (&vel)[3], double (&advel)[3], double (&dvdx)[3][3],
                               std::vector<double> &N, std::vector<std::vector<double>> &dNdx, 
                               const int ic, const int t);
-        void updateValiables(const int t);
+        void updateVariables(const int t);
+        void assigTimeVariables(const int t);
 
 };
 

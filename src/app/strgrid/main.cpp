@@ -43,8 +43,8 @@ void setControlBoundary(Cell &cell, ControlBoundary &controlBoundary,
                     if(i == 0){
                         std::vector<int> vecTmp(4, 0);
                         vecTmp[0] = cell(i+j*nxCells+k*nxCells*nyCells).node[0];
-                        vecTmp[1] = cell(i+j*nxCells+k*nxCells*nyCells).node[2];
-                        vecTmp[2] = cell(i+j*nxCells+k*nxCells*nyCells).node[6];
+                        vecTmp[1] = cell(i+j*nxCells+k*nxCells*nyCells).node[3];
+                        vecTmp[2] = cell(i+j*nxCells+k*nxCells*nyCells).node[7];
                         vecTmp[3] = cell(i+j*nxCells+k*nxCells*nyCells).node[4];
                         controlNodeInCell.push_back(vecTmp);
                         controlCellMap.push_back(i+j*nxCells+k*nxCells*nyCells);

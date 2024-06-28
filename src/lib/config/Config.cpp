@@ -123,6 +123,24 @@ void Config::setFluidDomain()
         controlNodeInCell.push_back(controlNodeInCellTmp[ic]);
     }
 
+    std::vector<int> controlCellMapTmp = controlCellMap;
+    controlCellMap.clear();
+    for(int ic=0; ic<controlCellMapTmp.size(); ic++){
+        if(phi[controlCellMapTmp[ic]] < 1e-12) continue;
+        controlCellMap.push_back(controlCellMapTmp[ic]);
+    }
+
+    int count2 = 0;
+    std::vector<int> convertCellOldToNew(nCellsGlobalTmp, 0);
+    for(int in=0; in<sortCell.size(); in++){
+        convertCellOldToNew[sortCell[in]] = count2;
+        count2++;
+    }
+
+    for(int ic=0; ic<controlCellMap.size(); ic++){
+       controlCellMap[ic] = convertCellOldToNew[controlCellMap[ic]];
+    }
+
     std::vector<double> phiTmp = phi;
     phi.clear();
     int count = 0;

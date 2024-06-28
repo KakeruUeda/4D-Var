@@ -48,12 +48,7 @@ void DirectProblem:: solveUSNS(Application &app)
                 VectorXd  Flocal(nDofsInCell);
                 Klocal.setZero();
                 Flocal.setZero();
-
-                if(grid.cell(ic).phi > 0.999)
-                    matrixAssemblyUSNS(Klocal, Flocal, ic, t);
-                else
-                    DarcyMatrixAssemblyUSNS(Klocal, Flocal, ic, t);
-
+                matrixAssemblyUSNS(Klocal, Flocal, ic, t);
                 petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
                                Klocal, Flocal);
             }
@@ -79,7 +74,10 @@ void DirectProblem:: solveUSNS(Application &app)
             petsc.solution[id] = arraySolnTmp[id];
 
         VecRestoreArray(vecSEQ, &arraySolnTmp);
-        updateValiables(t);
+        updateVariables(t);
+
+        if(app == Application::FDVAR)
+            assigTimeVariables(t);
 
         if(snap.isSnapShot == ON){
             if(t >= snap.snapTimeBeginItr && (snapCount < snap.nSnapShot)){
@@ -108,7 +106,7 @@ void DirectProblem:: solveUSNS(Application &app)
     VecDestroy(&vecSEQ);
 }
 
-void DirectProblem::updateValiables(const int t)
+void DirectProblem::updateVariables(const int t)
 {
     for(int in=0; in<grid.node.nNodesGlobal; in++){
         int n1 = 0;
@@ -133,6 +131,16 @@ void DirectProblem::updateValiables(const int t)
         grid.output.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::VELOCITY);
         vtuFile = outputDir + "/pressure/pressure" + to_string(t) + ".vtu";
         grid.output.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::PRESSURE);
+    }
+}
+
+void DirectProblem::assigTimeVariables(const int t)
+{
+    for(int in=0; in<grid.node.nNodesGlobal; in++){
+        for(int d=0; d<dim; d++){
+            grid.node.vt[t][in][d] = grid.node.v[in][d];
+        }
+        grid.node.pt[t][in] = grid.node.p[in];
     }
 }
 

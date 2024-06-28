@@ -7,7 +7,6 @@ target_sources(direct
         DirectProblem.cpp
         MatrixAssemblySNS.cpp
         MatrixAssemblyUSNS.cpp
-        MatrixPreparation.cpp
         Postprocess.cpp
         USNS.cpp
 )

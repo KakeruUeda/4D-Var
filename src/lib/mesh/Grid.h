@@ -47,6 +47,7 @@ class Grid
             Cell &cell, Node &node);
 
         void prepareMatrix(PetscSolver &petsc, std::string outputDir);
+        void setForSerial();
         void divideWholeGrid();
         void distributeToLocal();
 

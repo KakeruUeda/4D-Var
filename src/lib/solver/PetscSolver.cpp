@@ -30,6 +30,7 @@ int PetscSolver::initialize(int sizeLocal, int sizeGlobal)
     CHKERRQ(errpetsc);
     errpetsc = MatSetSizes(mtx, sizeLocal, sizeLocal, sizeGlobal, sizeGlobal);
     CHKERRQ(errpetsc);
+
     errpetsc = MatSetFromOptions(mtx);
     CHKERRQ(errpetsc);
     errpetsc = MatMPIAIJSetPreallocation(mtx, nnz_max_row, NULL, nnz_max_row, NULL);
@@ -43,10 +44,12 @@ int PetscSolver::initialize(int sizeLocal, int sizeGlobal)
     errpetsc = MatSetOption(mtx, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE);
     CHKERRQ(errpetsc);
 
+
     // Create the KSP context
     errpetsc = KSPCreate(PETSC_COMM_WORLD, &ksp);
     CHKERRQ(errpetsc);
 
+    
     // Set the operators for the KSP context
     errpetsc = KSPSetOperators(ksp, mtx, mtx);
     CHKERRQ(errpetsc);
@@ -64,6 +67,7 @@ int PetscSolver::initialize(int sizeLocal, int sizeGlobal)
     CHKERRQ(errpetsc);
     errpetsc = PCSetFromOptions(pc);
     CHKERRQ(errpetsc);
+    
 
     currentStatus = SOLVER_EMPTY;
 
@@ -97,6 +101,7 @@ void PetscSolver::initialAssembly()
     MatAssemblyEnd(mtx, MAT_FINAL_ASSEMBLY);
     VecAssemblyBegin(rhsVec);
     VecAssemblyEnd(rhsVec);
+    //MatView(mtx, PETSC_VIEWER_STDOUT_WORLD);
 }
 
 void PetscSolver::setValueZero()
@@ -131,7 +136,7 @@ int PetscSolver::solve()
     CHKERRQ(errpetsc);
     errpetsc = MatAssemblyEnd(mtx, MAT_FINAL_ASSEMBLY);
     CHKERRQ(errpetsc);
-    //errpetsc = MatView(mtx,PETSC_VIEWER_STDOUT_WORLD);
+    //errpetsc = MatView(mtx, PETSC_VIEWER_STDOUT_WORLD);
     //CHKERRQ(errpetsc);
     
     errpetsc = VecAssemblyBegin(rhsVec);

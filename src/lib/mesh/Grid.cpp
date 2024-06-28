@@ -105,7 +105,7 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir)
     }
 
     if(mpi.nId == 1){
-        //prepareSerialMatrix();
+        setForSerial();
     }else if(mpi.nId > 1){
         divideWholeGrid();
         distributeToLocal();
@@ -137,39 +137,40 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir)
 
     int size = 0;
     for(int ic=0; ic<cell.nCellsGlobal; ic++){
-        if(cell(ic).subId == mpi.myId){
+        //if(cell(ic).subId == mpi.myId){
             size = 0;
             for(int p=0; p<cell.nNodesInCell; p++){
                 size += node.nDofsOnNodeNew[cell(ic).nodeNew[p]];
             }
             cell(ic).dofsMap.resize(size);
             cell(ic).dofsBCsMap.resize(size);
-
+            int i=0;
+            int j=0;
             for(int p=0; p<cell.nNodesInCell; p++){
-                int i = node.nDofsOnNodeNew[cell(ic).nodeNew[p]] * p;
-                int j = cell(ic).nodeNew[p];
+                j = cell(ic).nodeNew[p];
                 for(int q=0; q<node.nDofsOnNodeNew[cell(ic).nodeNew[p]]; q++){
                     cell(ic).dofsMap[i+q] = node.dofsMapNew[j][q];
                     cell(ic).dofsBCsMap[i+q] = node.dofsBCsMapNew[j][q];
                 }
+                i += node.nDofsOnNodeNew[cell(ic).nodeNew[p]];
             }
-        }
+        //}
     }
 
     // debug
     if(mpi.myId == 0){
+        int i;
         std::ofstream outCellDofsMap(outputDir + "/dat/cellDofsBCsMap.dat");
         for(int ic=0; ic<cell.nCellsGlobal; ic++){
-            if(cell(ic).subId == mpi.myId){
-                for(int p=0; p<cell.nNodesInCell; p++){
-                    int i = node.nDofsOnNodeNew[cell(ic).nodeNew[p]] * p;
-                    for(int q=0; q<node.nDofsOnNodeNew[cell(ic).nodeNew[p]]; q++){
-                        outCellDofsMap << cell(ic).dofsBCsMap[i+q] << " ";
-                    }
-                    outCellDofsMap << "  ";
+            i = 0;
+            for(int p=0; p<cell.nNodesInCell; p++){
+                for(int q=0; q<node.nDofsOnNodeNew[cell(ic).nodeNew[p]]; q++){
+                    outCellDofsMap << cell(ic).dofsBCsMap[i+q] << " ";
                 }
-                outCellDofsMap << std::endl;
+                outCellDofsMap << "  ";
+                i += node.nDofsOnNodeNew[cell(ic).nodeNew[p]];
             }
+            outCellDofsMap << std::endl;
         }
         outCellDofsMap.close();
     }
@@ -202,7 +203,6 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir)
             }
         }
     }
-  
     PetscMalloc1(nDofsLocal,  &petsc.diag_nnz);
     PetscMalloc1(nDofsLocal,  &petsc.offdiag_nnz);
 
@@ -227,6 +227,24 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir)
     petsc.initialize(nDofsLocal, nDofsGlobal);
 }
 
+void Grid::setForSerial()
+{
+    nCellsLocal = cell.nCellsGlobal;
+    nNodesLocal = node.nNodesGlobal;
+    nDofsLocal = nDofsGlobal;
+    rowStart = 0;
+    rowEnd   = nDofsGlobal-1;
+    
+    node.isDirichletNew = node.isDirichlet;
+    node.dofsBCsMapNew = node.dofsBCsMap;
+    node.dofsMapNew = node.dofsMap;
+    node.nDofsOnNodeNew = node.nDofsOnNode;
+    dirichlet.vDirichletNew = dirichlet.vDirichletNew;
+    
+    for(int ic=0; ic<cell.nCellsGlobal; ic++)
+        cell(ic).nodeNew = cell(ic).node;
+}
+
 void Grid::divideWholeGrid()
 {
     std::vector<int> cellId(nCellsGlobal, 0);
@@ -246,7 +264,7 @@ void Grid::divideWholeGrid()
         for(int ic=0; ic<nCellsGlobal; ic++)
             for(int p=0; p<cell.nNodesInCell; p++)
                 eind[ic+p] = 0;
-    
+
         for(int ic=0; ic<nCellsGlobal; ic++){
             eptr[ic+1] = (ic+1) * cell.nNodesInCell;
             for(int p=0; p<cell.nNodesInCell; p++)
@@ -284,7 +302,6 @@ void Grid::divideWholeGrid()
         if(eptr) delete[] eptr;
         if(eind) delete[] eind;
     }
-
     MPI_Barrier(MPI_COMM_WORLD);
 
     MPI_Bcast(&cellId[0], nCellsGlobal, MPI_INT, 0, MPI_COMM_WORLD);
@@ -292,7 +309,6 @@ void Grid::divideWholeGrid()
 
     for(int ic=0; ic<nCellsGlobal; ic++)
         cell(ic).subId = cellId[ic];
-
     for(int in=0; in<nNodesGlobal; in++)
         node.subId[in] = nodeId[in];
 
@@ -300,9 +316,7 @@ void Grid::divideWholeGrid()
     nNodesLocal = count(nodeId.begin(), nodeId.end(), mpi.myId);
 
     printf("nCellsLocal =  %5d \t numOfId = %5d \t myId = %5d \n", nCellsLocal, mpi.nId, mpi.myId);
-  
     MPI_Barrier(MPI_COMM_WORLD);
-
     printf("nNodesLocal =  %5d \t numOfId = %5d \t myId = %5d \n", nNodesLocal, mpi.nId, mpi.myId);
 
 }

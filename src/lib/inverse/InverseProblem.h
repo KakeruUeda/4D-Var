@@ -44,9 +44,19 @@ class Adjoint
     public:
         Adjoint(Config &conf):
         grid(conf){}
-
+        
         Grid grid;
         PetscSolver petsc;
+       
+        void solveAdjointEquation(DirectProblem &main, std::string outputDir, 
+                                  std::vector<std::vector<std::vector<double>>> &feedbackForce);
+        void matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal, 
+                                       std::vector<std::vector<std::vector<double>>> &feedbackForce,
+                                       int &st, const int ic, const int t);
+        void boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,  
+                              const int ic, const int ib);
+        void updateVariables(std::string output, const int dim, const int t);
+
 };
 
 class InverseProblem
@@ -72,6 +82,8 @@ class InverseProblem
         double aCF, bCF1, bCF2, gCF;
         int loopMax;
         int nControlNodesInCell;
+
+        std::vector<std::vector<std::vector<double>>> feedbackForce;
         
         void initialize(Config &conf);
         void runSimulation();
@@ -83,6 +95,17 @@ class InverseProblem
         void GaussIntegralRegTerm2(std::vector<double> &N, std::vector<std::vector<double>> &dNdr,
                                    std::vector<std::vector<double>> &xCurrent, double &value, 
                                    const double weight, const int ic, const int t);
+        void calcFeedbackForce();
+        void calcEdgeValue(std::vector<std::vector<std::vector<std::vector<double>>>> &vEX, const int t);
+        void calcInterpolatedFeeback(std::vector<std::vector<double>> &xCurrent, double (&feedback)[3], 
+                                     std::vector<std::vector<std::vector<std::vector<double>>>> &vEX, 
+                                     double (&point)[3]);
+        void feedbackGaussIntegral(std::vector<double> &N, double (&feedback)[3], 
+                                   const double detJ, const double weight, const int ic, const int t);
+        void calcFeedbackForce2();
+        void feedbackGaussIntegral2(std::vector<double> &N, std::vector<std::vector<double>> &xCurrent,
+                                    std::vector<std::vector<double>> &velCurrent, const double detJ,
+                                    const double weight, const int voxelId, const int cellId, const int t);
     private:
 
 };

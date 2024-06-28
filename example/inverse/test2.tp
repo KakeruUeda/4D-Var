@@ -1,24 +1,24 @@
 Base
 {
     dim = 3
-    outputDir = "straightTube"
+    outputDir = "square"
     numOfOMP = 1
 }
 
 Grid
 {
     type = "Structured"
-    extractFluid = "ON"
+    extractFluid = "OFF"
     nNodesInCell = 8
-    node = "input/straightTube/data12x12x12/node.dat"
-    cell = "input/straightTube/data12x12x12/cell.dat"
-    image = "input/straightTube/data12x12x12/image.dat"
+    node = "input/square/node.dat"
+    cell = "input/square/cell.dat"
+    image = "input/square/image.dat"
 }
 
 Boundary
 {
-    velocityDirichlet = "input/straightTube/data12x12x12/velocityDirichlet.dat"
-    pressureDirichlet = "input/straightTube/data12x12x12/pressureDirichlet.dat"
+    velocityDirichlet = "input/square/velocityDirichletZero.dat"
+    pressureDirichlet = "input/square/pressureDirichlet.dat"
 }
 
 Inverse
@@ -39,9 +39,9 @@ Data
     lxData = (1.0, 1.0, 1.0)
 
     nControlNodesInCell = 4
-    controlBoundary = "input/straightTube/data12x12x12/controlBoundary.dat"
-    controlCellMap = "input/straightTube/data12x12x12/controlCellMap.dat"
-    controlNodeInCell = "input/straightTube/data12x12x12/controlNodeInCell.dat"
+    controlBoundary = "input/square/controlBoundary.dat"
+    controlCellMap = "input/square/controlCellMap.dat"
+    controlNodeInCell = "input/square/controlNodeInCell.dat"
 
     data0 = "input/straightTube/data12x12x12/data0.dat"
     data1 = "input/straightTube/data12x12x12/data1.dat"
@@ -69,6 +69,7 @@ TimeParameter
     pulseBeginItr = 100
     T = 1.0
 }
+
 
 DarcyParameter
 {

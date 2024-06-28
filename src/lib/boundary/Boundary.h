@@ -30,6 +30,7 @@ class DirichletBoundary
         std::map<int, double> pDirichletNew;
 
         std::vector<int> controlBoundaryMap;
+        std::vector<int> controlCellMap;
         std::vector<std::vector<int>> controlNodeInCell;
         
         void initialize(Config &conf);
