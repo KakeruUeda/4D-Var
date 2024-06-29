@@ -30,6 +30,9 @@ alpha(conf.alpha), resistance(conf.resistance)
 
 void DirectProblem::initialize(Config &conf)
 {
+    nu = mu / rho;
+    Re = 1e0 / nu; 
+
     grid.node.v.resize(grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
     grid.node.vPrev.resize(grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
     grid.node.p.resize(grid.node.nNodesGlobal, 0e0);
@@ -39,16 +42,23 @@ void DirectProblem::initialize(Config &conf)
     grid.dirichlet.initialize(conf);
     grid.cell.initialize(conf);
     grid.node.initialize(conf);
+   
+    grid.prepareMatrix(petsc, outputDir, timeMax);
+
+    petsc.solution.resize(grid.nDofsGlobal);
+    grid.dirichlet.dirichletBCsValue.resize(grid.nDofsGlobal, 0e0);
+    grid.dirichlet.dirichletBCsValueNew.resize(grid.nDofsGlobal, 0e0);
+    grid.dirichlet.dirichletBCsValueInit.resize(grid.nDofsGlobal, 0e0);
+    grid.dirichlet.dirichletBCsValueNewInit.resize(grid.nDofsGlobal, 0e0);
 }
 
 void DirectProblem::outputDomain()
 {
     if(mpi.myId > 0) return;
-
     std::string vtuFile;
+
     vtuFile = outputDir + "/domain/meshPartition.vtu";
     grid.output.exportMeshPartitionVTU(vtuFile, grid.node, grid.cell);
-
     vtuFile = outputDir + "/domain/phi.vtu";
     grid.output.exportPhiVTU(vtuFile, grid.node, grid.cell);
 }
@@ -56,7 +66,6 @@ void DirectProblem::outputDomain()
 
 void DirectProblem::runSimulation()
 {
-    grid.prepareMatrix(petsc, outputDir);
     outputDomain();
     solveUSNS(app);
 }

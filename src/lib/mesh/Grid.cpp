@@ -57,9 +57,9 @@ double Grid::structuredGridCoordinateSet(const double dx, const double dy, const
 }
 
 
-void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir)
+void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int timeMax)
 {
-    for(auto &pair : dirichlet.vDirichlet){
+    for(auto &pair : dirichlet.vDirichlet[0]){
         int count = 0;
         for(auto &value : pair.second){
             node.isDirichlet[pair.first][count] = true;
@@ -67,7 +67,7 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir)
         }
     }
 
-    for(auto &pair : dirichlet.pDirichlet)
+    for(auto &pair : dirichlet.pDirichlet[0])
         node.isDirichlet[pair.first][dim] = true;
 
     for(int in=0; in<node.nNodesGlobal; in++)
@@ -108,7 +108,7 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir)
         setForSerial();
     }else if(mpi.nId > 1){
         divideWholeGrid();
-        distributeToLocal();
+        distributeToLocal(timeMax);
     }
 
     // debug
@@ -322,7 +322,7 @@ void Grid::divideWholeGrid()
 }
 
 
-void Grid::distributeToLocal()
+void Grid::distributeToLocal(const int timeMax)
 {
     int kk = 0;
     std::vector<int> nodeListLocal(nNodesLocal);
@@ -366,6 +366,8 @@ void Grid::distributeToLocal()
 
     int n1;
     int count;
+
+    /*
     for(auto &pair : dirichlet.vDirichlet){
         std::vector<double> vecTmp;
         n1 = node.mapNew[pair.first];
@@ -378,11 +380,35 @@ void Grid::distributeToLocal()
         dirichlet.vDirichletNew[n1] = vecTmp;
     }
 
-    for(auto &pair : dirichlet.pDirichlet){
+    for(auto &pair : dirichlet.pDirichlet[0]){
         n1 = node.mapNew[pair.first];
         dirichlet.pDirichletNew[n1] = pair.second;
         node.isDirichletNew[n1][dim] = true;
     }
+    */
+
+   dirichlet.vDirichletNew.resize(timeMax);
+   dirichlet.pDirichletNew.resize(timeMax);
+   
+   for(int t=0; t<timeMax; t++){
+        for(auto &pair : dirichlet.vDirichlet[t]){
+            std::vector<double> vecTmp;
+            n1 = node.mapNew[pair.first];
+            count = 0;
+            for(auto &value : pair.second){
+                vecTmp.push_back(value);
+                if(t == 0) node.isDirichletNew[n1][count] = true;
+                count++;
+            }
+            dirichlet.vDirichletNew[t][n1] = vecTmp;
+        }
+
+        for(auto &pair : dirichlet.pDirichlet[t]){
+            n1 = node.mapNew[pair.first];
+            dirichlet.pDirichletNew[t][n1] = pair.second;
+            if(t == 0) node.isDirichletNew[n1][dim] = true;
+        }
+   }
 
     for(int in=0; in<node.nNodesGlobal; in++)
         for(int id=0; id<node.nDofsOnNodeNew[in]; id++)

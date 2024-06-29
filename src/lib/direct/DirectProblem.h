@@ -54,6 +54,8 @@ class DirectProblem
         void runSimulation();
         void outputDomain();
         void solveUSNS(Application &app);
+        void solveUSNS(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
+                       std::vector<std::map<int, double>> &pDirichletTmp);
         void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
                                 const int ic, const int t);
 

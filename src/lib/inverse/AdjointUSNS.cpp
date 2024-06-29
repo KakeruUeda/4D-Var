@@ -12,20 +12,15 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
     VecScatter  ctx;
     VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ);
 
-    petsc.solution.resize(grid.nDofsGlobal);
-    grid.dirichlet.dirichletBCsValue.resize(grid.nDofsGlobal, 0e0);
-    grid.dirichlet.dirichletBCsValueNew.resize(grid.nDofsGlobal, 0e0);
-    grid.dirichlet.dirichletBCsValueInit.resize(grid.nDofsGlobal, 0e0);
-    grid.dirichlet.dirichletBCsValueNewInit.resize(grid.nDofsGlobal, 0e0);
-
-    grid.dirichlet.assignDirichletBCs(grid.node, main.dim);
-
     petsc.setMatAndVecZero(grid.cell);
     petsc.initialAssembly();
 
     int st = 0;
     for(int t=0; t<main.timeMax; t++){
         petsc.setValueZero();
+        grid.dirichlet.assignDirichletBCs(grid.dirichlet.vDirichletNew, 
+                                          grid.dirichlet.pDirichletNew, 
+                                          grid.node, main.dim, t);
         //grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
 
         MPI_Barrier(MPI_COMM_WORLD);

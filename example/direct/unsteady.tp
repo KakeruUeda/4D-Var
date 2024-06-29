@@ -10,15 +10,15 @@ Grid
     type = "Structured"
     extractFluid = "ON"
     nNodesInCell = 8
-    node = "input/straightTube/64x32x32/node.dat"
-    cell = "input/straightTube/64x32x32/cell.dat"
-    image = "input/straightTube/64x32x32/image.dat"
+    node = "input/straightTube/node.dat"
+    cell = "input/straightTube/cell.dat"
+    image = "input/straightTube/image.dat"
 }
 
 Boundary
 {
-    velocityDirichlet = "input/straightTube/64x32x32/velocityDirichletPoiseuille.dat"
-    pressureDirichlet = "input/straightTube/64x32x32/pressureDirichlet.dat"
+    velocityDirichlet = "input/straightTube/velocityDirichlet.dat"
+    pressureDirichlet = "input/straightTube/pressureDirichlet.dat"
 }
 
 PysicalParameter
@@ -35,15 +35,6 @@ TimeParameter
     pulseBeginItr = 100
     T = 1.0
 }
-
-//TimeParameter
-//{
-//    dt = 0.01
-//    timeMax = 1000
-//    pulsatileFlow = "ON"
-//    pulseBeginItr = -1
-//    T = 1.0
-//}
 
 DarcyParameter
 {
@@ -62,17 +53,5 @@ Postprocess
     nxData = (12, 12, 12)
     lxData = (1.0, 1.0, 1.0)
 }
-
-//Postprocess
-//{
-//    isSnapShot = "ON"
-//    nSnapShot = 3
-//    snapInterval = 5
-//    snapTimeBeginItr = 10
-//    nNodesInDataCell = 8
-//    origin = (1.0, 0.0, 0.0)
-//    nxData = (12, 12, 12)
-//    lxData = (1.0, 1.0, 1.0)
-//}
 
 

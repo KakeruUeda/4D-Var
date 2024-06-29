@@ -24,10 +24,10 @@ class DirichletBoundary
         std::vector<double> dirichletBCsValueInit;
         std::vector<double> dirichletBCsValueNewInit;
 
-        std::map<int, std::vector<double>> vDirichlet;
-        std::map<int, double> pDirichlet;
-        std::map<int, std::vector<double>> vDirichletNew;
-        std::map<int, double> pDirichletNew;
+        std::vector<std::map<int, std::vector<double>>> vDirichlet;
+        std::vector<std::map<int, double>> pDirichlet;
+        std::vector<std::map<int, std::vector<double>>> vDirichletNew;
+        std::vector<std::map<int, double>> pDirichletNew;
 
         std::vector<int> controlBoundaryMap;
         std::vector<int> controlCellMap;
@@ -36,8 +36,10 @@ class DirichletBoundary
         void initialize(Config &conf);
         void initializeAdjoint(Config &conf);
 
-        void assignDirichletBCs(Node &node, int &dim);
-        void assignPulsatileBCs(const double &t, const double &dt, 
+        void assignDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
+                                std::vector<std::map<int, double>> &pDirichletNew, Node &node, 
+                                int &dim, const int t);
+        void assignPulsatileBCs(const int &t, const double &dt, 
                                 const double &T, const int &nDofsGlobal);
         void applyDirichletBCs(Cell &cell, PetscSolver &petsc);
     

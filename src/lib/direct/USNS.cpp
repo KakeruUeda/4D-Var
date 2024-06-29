@@ -1,24 +1,13 @@
 #include "DirectProblem.h"
 
-void DirectProblem:: solveUSNS(Application &app)
+void DirectProblem::solveUSNS(Application &app)
 { 
     PetscPrintf(MPI_COMM_WORLD, "\nUNSTEADY NAVIER STOKES SOLVER\n");
-    
-    nu = mu / rho;
-    Re = 1e0 / nu;  
 
     PetscScalar *arraySolnTmp;
     Vec  vecSEQ;
     VecScatter  ctx;
     VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ);
-
-    petsc.solution.resize(grid.nDofsGlobal);
-    grid.dirichlet.dirichletBCsValue.resize(grid.nDofsGlobal, 0e0);
-    grid.dirichlet.dirichletBCsValueNew.resize(grid.nDofsGlobal, 0e0);
-    grid.dirichlet.dirichletBCsValueInit.resize(grid.nDofsGlobal, 0e0);
-    grid.dirichlet.dirichletBCsValueNewInit.resize(grid.nDofsGlobal, 0e0);
-
-    grid.dirichlet.assignDirichletBCs(grid.node, dim);
 
     petsc.setMatAndVecZero(grid.cell);
     petsc.initialAssembly();
@@ -31,8 +20,103 @@ void DirectProblem:: solveUSNS(Application &app)
     int snapCount = 0;
     for(int t=0; t<timeMax; t++){
         petsc.setValueZero();
-
+        grid.dirichlet.assignDirichletBCs(grid.dirichlet.vDirichletNew, 
+                                          grid.dirichlet.pDirichletNew, 
+                                          grid.node, dim, t);
          if(pulsatileFlow == ON)
+            if(t > pulseBeginItr)
+                grid.dirichlet.assignPulsatileBCs(t, dt, T, grid.nDofsGlobal);
+
+        grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
+        
+        MPI_Barrier(MPI_COMM_WORLD);
+        double timer = MPI_Wtime();
+        
+        for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
+            if(grid.cell(ic).subId == mpi.myId){
+                int nDofsInCell = grid.cell(ic).dofsMap.size();
+                MatrixXd  Klocal(nDofsInCell, nDofsInCell);
+                VectorXd  Flocal(nDofsInCell);
+                Klocal.setZero();
+                Flocal.setZero();
+                matrixAssemblyUSNS(Klocal, Flocal, ic, t);
+                petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
+                               grid.cell(ic).dofsBCsMap, Klocal, Flocal);
+            }
+        }
+        timer = MPI_Wtime() - timer;
+
+        PetscPrintf(MPI_COMM_WORLD, "\nMatrix assembly = %f seconds\n", timer);
+        petsc.currentStatus = ASSEMBLY_OK;
+    
+        MPI_Barrier(MPI_COMM_WORLD); 
+        timer = MPI_Wtime();
+        petsc.solve();
+        timer = MPI_Wtime() - timer;
+
+        PetscPrintf(MPI_COMM_WORLD, "\nPETSc solver = %f seconds \n", timer);
+
+        VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
+        VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
+        VecGetArray(vecSEQ, &arraySolnTmp);
+
+        // update solution vector
+        for(int id=0; id<grid.nDofsGlobal; id++)
+            petsc.solution[id] = arraySolnTmp[id];
+
+        VecRestoreArray(vecSEQ, &arraySolnTmp);
+        updateVariables(t);
+
+        if(app == Application::FDVAR)
+            assignTimeVariables(t);
+
+        if(snap.isSnapShot == ON){
+            if(t >= snap.snapTimeBeginItr && (snapCount < snap.nSnapShot)){
+                if((t - snap.snapTimeBeginItr) % snap.snapInterval == 0){
+                    snap.takeSnapShot(grid.node.v, snapCount, grid.node.nNodesGlobal, dim);
+                    if(mpi.myId == 0){
+                        std::string vtuFile;
+                        vtuFile = outputDir + "/data/reference" + to_string(snapCount) + ".vtu";
+                        grid.output.exportSnapShotVTU(vtuFile, grid.node, grid.cell, snap, snapCount);
+                    }
+                    snapCount++;
+                }
+            }
+            if(snapCount >= snap.nSnapShot) 
+                break;
+        }
+
+        if(mpi.myId == 0){
+            double timeNow = t * dt;
+            printf("\n TIME = %f \n", timeNow);
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+
+    VecScatterDestroy(&ctx);
+    VecDestroy(&vecSEQ);
+}
+
+void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
+                              std::vector<std::map<int, double>> &pDirichletTmp)
+{ 
+    PetscPrintf(MPI_COMM_WORLD, "\nUNSTEADY NAVIER STOKES SOLVER\n");
+
+    PetscScalar *arraySolnTmp;
+    Vec  vecSEQ;
+    VecScatter  ctx;
+    VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ); 
+
+    petsc.setMatAndVecZero(grid.cell);
+    petsc.initialAssembly();
+
+    int snapCount = 0;
+    for(int t=0; t<timeMax; t++){
+        petsc.setValueZero();
+        grid.dirichlet.assignDirichletBCs(grid.dirichlet.vDirichletNew, 
+                                          grid.dirichlet.pDirichletNew, 
+                                          grid.node, dim, t);
+        if(pulsatileFlow == ON)
             if(t > pulseBeginItr)
                 grid.dirichlet.assignPulsatileBCs(t, dt, T, grid.nDofsGlobal);
 
@@ -153,3 +237,5 @@ void SnapShot::takeSnapShot(std::vector<std::vector<double>> &_v,
         }
     }
 }
+
+

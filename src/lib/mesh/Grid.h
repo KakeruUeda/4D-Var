@@ -46,10 +46,10 @@ class Grid
             const int nNodesInCell, const int dim, 
             Cell &cell, Node &node);
 
-        void prepareMatrix(PetscSolver &petsc, std::string outputDir);
+        void prepareMatrix(PetscSolver &petsc, std::string outputDir, const int timeMax);
         void setForSerial();
         void divideWholeGrid();
-        void distributeToLocal();
+        void distributeToLocal(const int timeMax);
 
     private:
         int structuredGridNodeSet(

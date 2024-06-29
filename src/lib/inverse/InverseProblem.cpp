@@ -2,10 +2,7 @@
 
 InverseProblem::InverseProblem(Config &conf):
 app(conf.app), main(conf), adjoint(conf), data(conf),
-dim(conf.dim), outputDir(conf.outputDir), 
-nOMP(conf.nOMP), timeMax(conf.timeMax),
-rho(conf.rho), mu(conf.mu), dt(conf.dt),
-alpha(conf.alpha), resistance(conf.resistance),
+dim(conf.dim), outputDir(conf.outputDir), nOMP(conf.nOMP),
 aCF(conf.aCF), bCF1(conf.bCF1), bCF2(conf.bCF2), gCF(conf.gCF),
 loopMax(conf.loopMax), nControlNodesInCell(conf.nControlNodesInCell),
 planeDir(conf.planeDir)
@@ -32,29 +29,39 @@ planeDir(conf.planeDir)
 void InverseProblem::initialize(Config &conf)
 {
     PetscPrintf(MPI_COMM_WORLD, "\n*** Main initialize ***\n\n");
+    main.nu = main.mu / main.rho;
+    main.Re = 1e0 / main.nu; 
     main.grid.node.v.resize(main.grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
     main.grid.node.vPrev.resize(main.grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
-    main.grid.node.vt.resize(timeMax, std::vector<std::vector<double>>(adjoint.grid.node.nNodesGlobal, std::vector<double>(dim, 0e0)));
+    main.grid.node.vt.resize(main.timeMax, std::vector<std::vector<double>>(adjoint.grid.node.nNodesGlobal, std::vector<double>(dim, 0e0)));
     main.grid.node.p.resize(main.grid.node.nNodesGlobal, 0e0);
-    main.grid.node.pt.resize(timeMax, std::vector<double>(main.grid.node.nNodesGlobal, 0e0));
+    main.grid.node.pt.resize(main.timeMax, std::vector<double>(main.grid.node.nNodesGlobal, 0e0));
     main.snap.v.resize(main.snap.nSnapShot, std::vector<std::vector<double>>(main.grid.nNodesGlobal, std::vector<double>(dim, 0e0)));
     main.grid.dirichlet.initialize(conf);
     main.grid.cell.initialize(conf);
     main.grid.node.initialize(conf);
-    main.grid.prepareMatrix(main.petsc, main.outputDir);
+    main.grid.prepareMatrix(main.petsc, main.outputDir, main.timeMax);
 
     PetscPrintf(MPI_COMM_WORLD, "\n*** Adjoint initialize ***\n\n");
+    adjoint.nu = adjoint.mu / adjoint.rho;
+    adjoint.Re = 1e0 / adjoint.nu; 
     adjoint.grid.node.v.resize(adjoint.grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
     adjoint.grid.node.vPrev.resize(adjoint.grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
-    adjoint.grid.node.vt.resize(timeMax, std::vector<std::vector<double>>(adjoint.grid.node.nNodesGlobal, std::vector<double>(dim, 0e0)));
+    adjoint.grid.node.vt.resize(adjoint.timeMax, std::vector<std::vector<double>>(adjoint.grid.node.nNodesGlobal, std::vector<double>(dim, 0e0)));
     adjoint.grid.node.p.resize(adjoint.grid.node.nNodesGlobal, 0e0);
-    adjoint.grid.node.pt.resize(timeMax, std::vector<double>(adjoint.grid.node.nNodesGlobal, 0e0));
+    adjoint.grid.node.pt.resize(adjoint.timeMax, std::vector<double>(adjoint.grid.node.nNodesGlobal, 0e0));
     adjoint.grid.node.lambda.resize(adjoint.grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
-    adjoint.grid.node.lambdat.resize(timeMax, std::vector<std::vector<double>>(adjoint.grid.node.nNodesGlobal, std::vector<double>(dim, 0e0)));
+    adjoint.grid.node.lambdat.resize(adjoint.timeMax, std::vector<std::vector<double>>(adjoint.grid.node.nNodesGlobal, std::vector<double>(dim, 0e0)));
     adjoint.grid.dirichlet.initializeAdjoint(conf);
     adjoint.grid.cell.initializeAdjoint(conf);
     adjoint.grid.node.initializeAdjoint(conf, adjoint.grid.dirichlet.controlBoundaryMap);
-    adjoint.grid.prepareMatrix(adjoint.petsc, outputDir);
+    adjoint.grid.prepareMatrix(adjoint.petsc, outputDir, adjoint.timeMax);
+
+    adjoint.petsc.solution.resize(adjoint.grid.nDofsGlobal);
+    adjoint.grid.dirichlet.dirichletBCsValue.resize(adjoint.grid.nDofsGlobal, 0e0);
+    adjoint.grid.dirichlet.dirichletBCsValueNew.resize(adjoint.grid.nDofsGlobal, 0e0);
+    adjoint.grid.dirichlet.dirichletBCsValueInit.resize(adjoint.grid.nDofsGlobal, 0e0);
+    adjoint.grid.dirichlet.dirichletBCsValueNewInit.resize(adjoint.grid.nDofsGlobal, 0e0);
 
     data.initialize(conf, main.grid.node, main.grid.cell, dim);
 
@@ -71,8 +78,13 @@ void InverseProblem::runSimulation()
         if(loop != 0) main.solveUSNS(app);
         calcCostFunction();
         calcFeedbackForce();
+
         adjoint.solveAdjointEquation(main, outputDir, feedbackForce);
         calcOptimalCondition();
+
+        double alpha;
+        alpha = armijoCriteria(costFunction.total);
+        PetscPrintf(MPI_COMM_WORLD, "\nalpha = %f\n", alpha);
     }
 }
 
@@ -106,7 +118,7 @@ void InverseProblem::calcCostFunction()
                 data(ic).ve[t][d] = data(ic).vCFD[t][d] - data(ic).vMRI[t][d];
                 dev += data(ic).ve[t][d] * data(ic).ve[t][d];
             }
-            costFunction.term1 += 5e-1 * alpha * dev * volume;
+            costFunction.term1 += 5e-1 * aCF * dev * volume;
         }
     }
 
@@ -173,19 +185,15 @@ void InverseProblem::GaussIntegralRegTerm1(std::vector<double> &N, std::vector<s
                                            const double weight, const int ic, const int t)
 {
     double dxdr[2][2]; 
-    std::vector<std::vector<double>> dNdx;
-    dNdx.resize(nControlNodesInCell, std::vector<double>(dim-1, 0e0));
-
     MathFEM::calc_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
     double detJ = dxdr[0][0]*dxdr[1][1] - dxdr[0][1]*dxdr[1][0];
-    MathFEM::calc_dNdx2D(dNdx, dNdr, dxdr, nControlNodesInCell);
 
-    double u[dim] = {0e0, 0e0, 0e0};
+    double u[3] = {0e0, 0e0, 0e0};
 
     for(int p=0; p<nControlNodesInCell; p++){
         int index = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
         for(int d=0; d<dim; d++){
-            u[d] = main.snap.v[t][index][d];
+            u[d] += N[p] * main.snap.v[t][index][d];
         }
     }
 
@@ -205,19 +213,19 @@ void InverseProblem::GaussIntegralRegTerm2(std::vector<double> &N, std::vector<s
     double detJ = dxdr[0][0]*dxdr[1][1] - dxdr[0][1]*dxdr[1][0];
     MathFEM::calc_dNdx2D(dNdx, dNdr, dxdr, nControlNodesInCell);
 
-    double dudx[dim][dim-1] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
+    double dudx[3][2] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
 
     for(int p=0; p<nControlNodesInCell; p++){
         int index = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
-        for(int d1=0; d1<dim; d1++){
-            for(int d2=0; d2<dim-1; d2++){
+        for(int d1=0; d1<3; d1++){
+            for(int d2=0; d2<2; d2++){
                 dudx[d1][d2] = dNdx[p][d2] * main.snap.v[t][index][d1];
             }
         }
     }
 
-    for(int d1=0; d1<dim; d1++){
-        for(int d2=0; d2<dim-1; d2++){
+    for(int d1=0; d1<3; d1++){
+        for(int d2=0; d2<2; d2++){
             value += dudx[d1][d2] * detJ * weight;
         }
     }
@@ -436,12 +444,11 @@ void InverseProblem::calcOptimalCondition()
     xCurrent2D.resize(nControlNodesInCell, std::vector<double>(dim-1, 0e0));
 
     Gauss gauss(2);
-    double dxdr[2][2];
-    double value[4][3];
 
     for(int t=0; t<main.timeMax; t++){
         // term1
         for(int ic=0; ic<adjoint.grid.dirichlet.controlNodeInCell.size(); ic++){
+            double value[4][3];
             for(int p=0; p<nControlNodesInCell; p++){
                 for(int d=0; d<dim-1; d++){
                     int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
@@ -458,14 +465,15 @@ void InverseProblem::calcOptimalCondition()
             }
             for(int p=0; p<nControlNodesInCell; p++){
                 int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
-                for(int d=0; d<dim-1; d++){
+                for(int d=0; d<dim; d++){
                     gradWholeNode[t][in][d] += bCF1 * value[p][d];
                 }
             }
         }
 
-        // term1
+        // term2
         for(int ic=0; ic<adjoint.grid.dirichlet.controlNodeInCell.size(); ic++){
+            double value[4][3];
             for(int p=0; p<nControlNodesInCell; p++){
                 for(int d=0; d<dim-1; d++){
                     int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
@@ -482,29 +490,62 @@ void InverseProblem::calcOptimalCondition()
             }
             for(int p=0; p<nControlNodesInCell; p++){
                 int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
-                for(int d=0; d<dim-1; d++){
-                    gradWholeNode[t][in][d] += bCF1 * value[p][d];
+                for(int d=0; d<dim; d++){
+                    gradWholeNode[t][in][d] += bCF2 * value[p][d];
                 }
             }
         }
+
+        // term3
+        for(int ic=0; ic<adjoint.grid.dirichlet.controlNodeInCell.size(); ic++){
+            double value[4][3];
+            for(int p=0; p<nControlNodesInCell; p++){
+                for(int d=0; d<dim-1; d++){
+                    int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
+                    xCurrent2D[p][d] = main.grid.node.x[in][planeDir[d]];
+                }
+            }
+            for(int i1=0; i1<2; i1++){
+                for(int i2=0; i2<2; i2++){
+                    double weight = gauss.weight[i1] * gauss.weight[i2];
+                    ShapeFunction2D::C2D4_N(N2D, gauss.point[i1], gauss.point[i2]);
+                    ShapeFunction2D::C2D4_dNdr(dNdr2D, gauss.point[i1], gauss.point[i2]);
+                    GaussIntegralOpttimalConditionTerm3(N2D, dNdr2D, xCurrent2D, value, weight, ic, t);
+                }
+            }
+            for(int p=0; p<nControlNodesInCell; p++){
+                int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
+                for(int d=0; d<dim; d++){
+                    gradWholeNode[t][in][d] += value[p][d];
+                }
+            }
+        }
+
+        for(int ib=0; ib<adjoint.grid.dirichlet.controlBoundaryMap.size(); ib++){
+            int in = adjoint.grid.dirichlet.controlBoundaryMap[ib];
+            for(int d=0; d<dim; d++){
+                grad[t][ib][d] = gradWholeNode[t][in][d];
+            }
+        }
+
     }
 
 }
 
-void InverseProblem::GaussIntegralOpttimalConditionTerm1(std::vector<double> &N2D, std::vector<std::vector<double>> &dNdr2D, 
-                                                         std::vector<std::vector<double>> &xCurrent2D, 
+void InverseProblem::GaussIntegralOpttimalConditionTerm1(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
+                                                         std::vector<std::vector<double>> &xCurrent, 
                                                          double (&value)[4][3], const double weight, 
                                                          const int ic, const int t)
 {
     double vel[3] = {0e0, 0e0, 0e0};
     double dxdr[2][2]; 
-    MathFEM::calc_dxdr2D(dxdr, dNdr2D, xCurrent2D, nControlNodesInCell);
+    MathFEM::calc_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
     double detJ = dxdr[0][0]*dxdr[1][1] - dxdr[0][1]*dxdr[1][0];
 
     for(int p=0; p<nControlNodesInCell; p++){
         int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
         for(int d=0; d<3; d++){
-            vel[d] += N2D[p] * main.grid.node.vt[t][in][planeDir[d]];
+            vel[d] += N[p] * main.grid.node.vt[t][in][d];
         }
     }
     for(int p=0; p<nControlNodesInCell; p++){
@@ -514,30 +555,30 @@ void InverseProblem::GaussIntegralOpttimalConditionTerm1(std::vector<double> &N2
     }
     for(int p=0; p<nControlNodesInCell; p++){
         for(int d=0; d<3; d++){
-            value[p][d] += vel[d] * N2D[p] * detJ * weight;
+            value[p][d] += vel[d] * N[p] * detJ * weight;
         }
     }
 }
 
-void InverseProblem::GaussIntegralOpttimalConditionTerm2(std::vector<double> &N2D, std::vector<std::vector<double>> &dNdr2D, 
-                                                         std::vector<std::vector<double>> &xCurrent2D, 
+void InverseProblem::GaussIntegralOpttimalConditionTerm2(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
+                                                         std::vector<std::vector<double>> &xCurrent, 
                                                          double (&value)[4][3], const double weight, 
                                                          const int ic, const int t)
 {
     double dxdr[2][2]; 
     double dudx[3][2] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
-    std::vector<std::vector<double>> dNdx2D;
-    dNdx2D.resize(nControlNodesInCell, std::vector<double>(2, 0e0));
+    std::vector<std::vector<double>> dNdx;
+    dNdx.resize(nControlNodesInCell, std::vector<double>(2, 0e0));
 
-    MathFEM::calc_dxdr2D(dxdr, dNdr2D, xCurrent2D, nControlNodesInCell);
+    MathFEM::calc_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
     double detJ = dxdr[0][0]*dxdr[1][1] - dxdr[0][1]*dxdr[1][0];
-    MathFEM::calc_dNdx2D(dNdx2D, dNdr2D, dxdr, nControlNodesInCell);
+    MathFEM::calc_dNdx2D(dNdx, dNdr, dxdr, nControlNodesInCell);
 
     for(int p=0; p<nControlNodesInCell; p++){
         int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
         for(int d1=0; d1<3; d1++){
             for(int d2=0; d2<2; d2++){
-                dudx[d1][d2] = dNdx2D[p][d2] * main.grid.node.vt[t][in][planeDir[d1]];
+                dudx[d1][d2] = dNdx[p][d2] * main.grid.node.vt[t][in][d1];
             }
         }
     }
@@ -549,9 +590,89 @@ void InverseProblem::GaussIntegralOpttimalConditionTerm2(std::vector<double> &N2
     for(int p=0; p<nControlNodesInCell; p++){
         for(int d1=0; d1<3; d1++){
             for(int d2=0; d2<2; d2++){
-                value[p][d1] += dudx[d1][d2] * N2D[p]* detJ * weight;
+                value[p][d1] += dudx[d1][d2] * N[p]* detJ * weight;
             }
         }
     }
 }
 
+void InverseProblem::GaussIntegralOpttimalConditionTerm3(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
+                                                         std::vector<std::vector<double>> &xCurrent, 
+                                                         double (&value)[4][3], const double weight, 
+                                                         const int ic, const int t)
+{
+    double gpValue[3] = {0e0, 0e0, 0e0};
+    double dxdr[2][2]; 
+    MathFEM::calc_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
+    double detJ = dxdr[0][0]*dxdr[1][1] - dxdr[0][1]*dxdr[1][0];
+
+    for(int p=0; p<nControlNodesInCell; p++){
+        int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
+        for(int d=0; d<3; d++){
+            gpValue[d] -= N[p] * adjoint.grid.node.lambdat[t][in][d];
+        }
+    }
+    for(int p=0; p<nControlNodesInCell; p++){
+        for(int d=0; d<3; d++){
+            value[p][d] = 0e0;
+        }
+    }
+    for(int p=0; p<nControlNodesInCell; p++){
+        for(int d=0; d<3; d++){
+            value[p][d] += gpValue[d] * N[p] * detJ * weight;
+        }
+    }
+}
+
+double InverseProblem::armijoCriteria(const double fk)
+{
+    int n = adjoint.grid.dirichlet.controlBoundaryMap.size();
+    const double c1 = 1e-2;
+    double alpha = 1e0;
+
+    std::vector<std::map<int, std::vector<double>>> vDirichletTmp;
+    vDirichletTmp.resize(adjoint.timeMax);
+    
+    std::vector<std::map<int, double>> pDirichletTmp;
+    pDirichletTmp = adjoint.grid.dirichlet.pDirichlet;
+
+    /*
+    while(10){
+        for(int t=0; t<adjoint.timeMax; t++){
+            for(int ib=0; ib<n; ib++){
+                int in = controlBoundaryMap[ib]
+                std::vector<double> vecTmp
+                for(int d=0; d<dim; d++){
+                    double value = X[t][ib][d] + alpha * (-grad[t][ib][d]);
+                    vecTmp.push_back(value);
+                }
+                vDirichletTmp[t][ib] = vecTmp;
+            }
+        }
+
+        main.solveUSNS(vDirichletTmp, vDirichletTmp);
+        main.main_NavierStokes(bd_u_tmp,bd_p_tmp);
+        calcCostFunction();
+
+        double lk = costFunction.total;
+
+        double tmp = 0e0;
+        for(int ic=0;ic<n;ic++){
+            for(int j=0;j<2;j++) tmp += -grad(ic,j)*grad(ic,j);
+        }
+        double l_tmp= fk + c1 * tmp * alpha;
+
+        // printf("Almijo %e %e %e\n",fk,lk,l_tmp);
+
+        if (lk <= l_tmp){
+            break;
+        }
+        else{
+            alpha = alpha * 5e-1;
+            printf("Almijo %e %e %e %e\n",fk,lk,l_tmp,alpha);
+        }
+    }
+    */
+
+    return alpha;
+}

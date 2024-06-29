@@ -21,6 +21,7 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
     for(int p=0; p<grid.cell.nNodesInCell; p++)
         for(int d=0; d<dim; d++)
             xCurrent[p][d] = grid.node.x[grid.cell(ic).node[p]][d];
+            
     double he = fabs(xCurrent[1][0] - xCurrent[0][0]);
     double f = resistance * alpha * (1e0 - grid.cell(ic).phi) / (alpha + grid.cell(ic).phi);
     double detJ, weight;
@@ -62,7 +63,7 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
                             K[ii][jj] = 0e0;
             
                             for(int k=0;k<3;k++){
-                                K[ii][jj] += dNdx[ii][k] * dNdx[jj][k];
+                                K[ii][jj] += dNdx[ii][k] *dNdx[jj][k];
                             }
 
                             // MASS TERM

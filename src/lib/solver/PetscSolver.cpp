@@ -101,7 +101,6 @@ void PetscSolver::initialAssembly()
     MatAssemblyEnd(mtx, MAT_FINAL_ASSEMBLY);
     VecAssemblyBegin(rhsVec);
     VecAssemblyEnd(rhsVec);
-    //MatView(mtx, PETSC_VIEWER_STDOUT_WORLD);
 }
 
 void PetscSolver::setValueZero()
@@ -122,7 +121,7 @@ void PetscSolver::setValue(std::vector<int> &lhsRow, std::vector<int> &lhsColumn
     int size3 = rhs.size();
     MatrixXdRM Klocal2 = Klocal;
     VecSetValues(rhsVec, size3, &rhs[0], &Flocal[0], ADD_VALUES);
-    MatSetValues(mtx,    size1, &lhsRow[0], size2, &lhsColumn[0], &Klocal(0, 0), ADD_VALUES);
+    MatSetValues(mtx,    size1, &lhsRow[0], size2, &lhsColumn[0], &Klocal2(0, 0), ADD_VALUES);
 }
 
 void PetscSolver::setMatValue(std::vector<int> &lhsRow, std::vector<int> &lhsColumn, MatrixXd &Klocal)
@@ -130,7 +129,7 @@ void PetscSolver::setMatValue(std::vector<int> &lhsRow, std::vector<int> &lhsCol
     int size1 = lhsRow.size();
     int size2 = lhsColumn.size();
     MatrixXdRM Klocal2 = Klocal;
-    MatSetValues(mtx, size1, &lhsRow[0], size2, &lhsColumn[0], &Klocal(0, 0), ADD_VALUES);
+    MatSetValues(mtx, size1, &lhsRow[0], size2, &lhsColumn[0], &Klocal2(0, 0), ADD_VALUES);
 }
 
 void PetscSolver::setVecValue(std::vector<int> &rhs, VectorXd &Flocal)

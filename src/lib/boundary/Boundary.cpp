@@ -88,39 +88,48 @@ void StructuredBoundaryFace::setDirichletInfo(std::vector<std::string> bdType,
 
 void DirichletBoundary::initialize(Config &conf)
 {
-    vDirichlet = conf.vDirichlet;
-    pDirichlet = conf.pDirichlet;
+    vDirichlet.resize(conf.timeMax);
+    pDirichlet.resize(conf.timeMax);
+    for(int t=0; t<conf.timeMax; t++){
+        vDirichlet[t] = conf.vDirichlet;
+        pDirichlet[t] = conf.pDirichlet;
+    }
 }
 
 void DirichletBoundary::initializeAdjoint(Config &conf)
 {
-    vDirichlet = conf.vDirichlet;
-    pDirichlet = conf.pDirichlet;
+    vDirichlet.resize(conf.timeMax);
+    pDirichlet.resize(conf.timeMax);
+    for(int t=0; t<conf.timeMax; t++){
+        vDirichlet[t] = conf.vDirichlet;
+        pDirichlet[t] = conf.pDirichlet;
+    }
     controlBoundaryMap = conf.controlBoundaryMap;
     controlCellMap = conf.controlCellMap;
     controlNodeInCell = conf.controlNodeInCell;
 }
 
-void DirichletBoundary::assignDirichletBCs(Node &node, int &dim)
-{
+void DirichletBoundary::assignDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
+                                           std::vector<std::map<int, double>> &pDirichletNew, Node &node, 
+                                           int &dim, const int t)
+{         
     int dofCurrentTmp, dofCurrent;
     int count;
 
-    for(auto &pair : vDirichlet){
+    for(auto &pair : vDirichletNew[0]){
         dofCurrentTmp = 0;
         dofCurrent = 0; 
         count = 0;
         for(int i=0; i<pair.first; i++)
-            dofCurrentTmp += node.nDofsOnNode[i];
+            dofCurrentTmp += node.nDofsOnNodeNew[i];
         for(auto &value : pair.second){
             dofCurrent = dofCurrentTmp + count;
-            dirichletBCsValue[dofCurrent] = value;
-            dirichletBCsValueInit[dofCurrent] = value;
+            dirichletBCsValueNewInit[dofCurrent] = value;
             count++;
         }
     }
 
-    for(auto &pair : vDirichletNew){
+    for(auto &pair : vDirichletNew[t]){
         dofCurrentTmp = 0;
         dofCurrent = 0; 
         count = 0;
@@ -129,35 +138,32 @@ void DirichletBoundary::assignDirichletBCs(Node &node, int &dim)
         for(auto &value : pair.second){
             dofCurrent = dofCurrentTmp + count;
             dirichletBCsValueNew[dofCurrent] = value;
-            dirichletBCsValueNewInit[dofCurrent] = value;
             count++;
         }
     }
 
-    for(auto &pair : pDirichlet){
-        dofCurrentTmp = 0;
-        dofCurrent = 0; 
-        count = 0;
-        for(int i=0; i<pair.first; i++)
-            dofCurrentTmp += node.nDofsOnNode[i];
-        dofCurrent = dofCurrentTmp + dim;
-        dirichletBCsValue[dofCurrent] = pair.second;
-        dirichletBCsValueInit[dofCurrent] = pair.second;
-    }
-
-    for(auto &pair : pDirichletNew){
+    for(auto &pair : pDirichletNew[0]){
         dofCurrentTmp = 0;
         dofCurrent = 0; 
         count = 0;
         for(int i=0; i<pair.first; i++)
             dofCurrentTmp += node.nDofsOnNodeNew[i];
         dofCurrent = dofCurrentTmp + dim;
-        dirichletBCsValueNew[dofCurrent] = pair.second;
         dirichletBCsValueNewInit[dofCurrent] = pair.second;
+    }
+
+    for(auto &pair : pDirichletNew[t]){
+        dofCurrentTmp = 0;
+        dofCurrent = 0; 
+        count = 0;
+        for(int i=0; i<pair.first; i++)
+            dofCurrentTmp += node.nDofsOnNodeNew[i];
+        dofCurrent = dofCurrentTmp + dim;
+        dirichletBCsValueInit[dofCurrent] = pair.second;
     }
 }
 
-void DirichletBoundary::assignPulsatileBCs(const double &t, const double &dt, 
+void DirichletBoundary::assignPulsatileBCs(const int &t, const double &dt, 
                                            const double &T, const int &nDofsGlobal)
 {
     double timeNow = t * dt;
