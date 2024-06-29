@@ -258,12 +258,12 @@ void Config::readControlBoundaryParameter()
         controlBoundary = ControlBoundary::left;
     if(str == "right")
         controlBoundary = ControlBoundary::right;
-    if(str == "upper")
-        controlBoundary = ControlBoundary::upper;
-    if(str == "bottom")
-        controlBoundary = ControlBoundary::bottom;
     if(str == "top")
         controlBoundary = ControlBoundary::top;
+    if(str == "bottom")
+        controlBoundary = ControlBoundary::bottom;
+    if(str == "front")
+        controlBoundary = ControlBoundary::front;
     if(str == "back")
         controlBoundary = ControlBoundary::back;
 }
@@ -340,8 +340,34 @@ void Config::readInverseParameter()
 {
     std::string str, base_label, label;
     base_label = "/Inverse"; 
+    
+    label = base_label + "/ControlBoundary";
 
-    std::string controlBoundaryFile;
+    if(!tp.getInspectedValue(label, str))
+        throw std::runtime_error(label + " is not set");
+
+    planeDir.resize(2, 0);
+    
+    if(str == "left"){
+        controlBoundary = ControlBoundary::left;
+        planeDir[0] = 1, planeDir[1] = 2;
+    }else if(str == "right"){
+        controlBoundary = ControlBoundary::right;
+        planeDir[0] = 1, planeDir[1] = 2;
+    }else if(str == "top"){
+        controlBoundary = ControlBoundary::top;
+        planeDir[0] = 0, planeDir[1] = 2;
+    }else if(str == "bottom"){
+        controlBoundary = ControlBoundary::bottom;
+        planeDir[0] = 0, planeDir[1] = 2;
+    }else if(str == "front"){
+        controlBoundary = ControlBoundary::front;
+        planeDir[0] = 0, planeDir[1] = 1;
+    }else if(str == "back"){
+        controlBoundary = ControlBoundary::back;
+        planeDir[0] = 0, planeDir[1] = 1;
+    }
+
     label = base_label + "/aCF";
     if(!tp.getInspectedValue(label, aCF))
         throw std::runtime_error(label + " is not set");

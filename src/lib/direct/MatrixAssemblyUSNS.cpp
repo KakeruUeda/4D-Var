@@ -62,7 +62,7 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
                             K[ii][jj] = 0e0;
             
                             for(int k=0;k<3;k++){
-                                K[ii][jj] += dNdx[ii][k]*dNdx[jj][k];
+                                K[ii][jj] += dNdx[ii][k] * dNdx[jj][k];
                             }
 
                             // MASS TERM

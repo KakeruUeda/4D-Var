@@ -31,7 +31,7 @@ void DirectProblem:: solveUSNS(Application &app)
     int snapCount = 0;
     for(int t=0; t<timeMax; t++){
         petsc.setValueZero();
-        
+
          if(pulsatileFlow == ON)
             if(t > pulseBeginItr)
                 grid.dirichlet.assignPulsatileBCs(t, dt, T, grid.nDofsGlobal);
@@ -50,7 +50,7 @@ void DirectProblem:: solveUSNS(Application &app)
                 Flocal.setZero();
                 matrixAssemblyUSNS(Klocal, Flocal, ic, t);
                 petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
-                               Klocal, Flocal);
+                               grid.cell(ic).dofsBCsMap, Klocal, Flocal);
             }
         }
         timer = MPI_Wtime() - timer;
@@ -77,7 +77,7 @@ void DirectProblem:: solveUSNS(Application &app)
         updateVariables(t);
 
         if(app == Application::FDVAR)
-            assigTimeVariables(t);
+            assignTimeVariables(t);
 
         if(snap.isSnapShot == ON){
             if(t >= snap.snapTimeBeginItr && (snapCount < snap.nSnapShot)){
@@ -134,7 +134,7 @@ void DirectProblem::updateVariables(const int t)
     }
 }
 
-void DirectProblem::assigTimeVariables(const int t)
+void DirectProblem::assignTimeVariables(const int t)
 {
     for(int in=0; in<grid.node.nNodesGlobal; in++){
         for(int d=0; d<dim; d++){

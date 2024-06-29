@@ -26,7 +26,7 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
     int st = 0;
     for(int t=0; t<main.timeMax; t++){
         petsc.setValueZero();
-        grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
+        //grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
 
         MPI_Barrier(MPI_COMM_WORLD);
         double timer = MPI_Wtime();
@@ -39,7 +39,7 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
                 Klocal.setZero();
                 Flocal.setZero();
                 matrixAssemblyAdjointUSNS(main, Klocal, Flocal, feedbackForce, st, ic, t);
-                petsc.setValue(grid.cell(ic).dofsBCsMap, 
+                petsc.setValue(grid.cell(ic).dofsMap, grid.cell(ic).dofsMap,
                                grid.cell(ic).dofsMap, Klocal, Flocal);
             }
         }
@@ -48,16 +48,14 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
             if(grid.cell(ic).subId == mpi.myId){
                 int nDofsInCell = grid.cell(ic).dofsMap.size();
                 MatrixXd  Klocal(nDofsInCell, nDofsInCell);
-                VectorXd  Flocal(nDofsInCell);
                 Klocal.setZero();
-                Flocal.setZero();
-                boundaryIntegral(main, Klocal, Flocal, ic, ib);
-                petsc.setValue(grid.cell(ic).dofsBCsMap, 
-                               grid.cell(ic).dofsMap, Klocal, Flocal);
+                boundaryIntegral(main, Klocal, ic, ib);
+                petsc.setMatValue(grid.cell(ic).dofsMap, 
+                                  grid.cell(ic).dofsMap, Klocal);
             }
         }
-        timer = MPI_Wtime() - timer;
 
+        timer = MPI_Wtime() - timer;
         PetscPrintf(MPI_COMM_WORLD, "\nAdjoint Matrix assembly = %f seconds\n", timer);
         petsc.currentStatus = ASSEMBLY_OK;
     
@@ -94,7 +92,7 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
     VecDestroy(&vecSEQ);
 }
 
-void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal, 
+void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, 
                                const int ic, const int ib)
 {
     int IU, ILU, ILV, ILW;
@@ -113,7 +111,6 @@ void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &
     xCurrent2D.resize(nControlNodesInCell, std::vector<double>(main.dim-1, 0e0));
 
     Gauss gauss(2);
-    int planeDir[2] = {1, 2};
     double value;
 
     for(int p=0; p<nControlNodesInCell; p++){
@@ -140,21 +137,12 @@ void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &
         }
     }
 
+    /*
+    int tmp = ss[3];
+    ss[3] = ss[4];
+    ss[4] = tmp;
+    */
 
-    if(mpi.myId == 1){
-        for(int p=0; p<nControlNodesInCell; p++){
-           // std::cout << grid.dirichlet.controlNodeInCell[ib][p] << " ";
-        }
-       // std::cout << std::endl;
-    }
-
-    if(mpi.myId == 0){
-        for(int p=0; p<nControlNodesInCell; p++){
-            //std::cout << ss[p] << " ";
-        }
-       // std::cout << std::endl;
-    }
-    
     for(int i1=0; i1<2; i1++){
         for(int i2=0; i2<2; i2++){
             ShapeFunction2D::C2D4_N(N2D, gauss.point[i1], gauss.point[i2]);
@@ -177,17 +165,15 @@ void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &
                     JLU = JU + 4;
                     JLV = JU + 5;
                     JLW = JU + 6;
-                    Klocal(IU, JLU) += N2D[ii] * N2D[jj] * detJ * weight;
-                    Klocal(IV, JLV) += N2D[ii] * N2D[jj] * detJ * weight;
-                    Klocal(IW, JLW) += N2D[ii] * N2D[jj] * detJ * weight;
-
-                    Klocal(ILU, JU) += N2D[jj] * N2D[ii] * detJ * weight; 
-                    Klocal(ILV, JV) += N2D[jj] * N2D[ii] * detJ * weight; 
-                    Klocal(ILW, JW) += N2D[jj] * N2D[ii] * detJ * weight; 
-
-                    //Klocal(ILU, ILU) += N2D[jj] * N2D[ii] * detJ * weight;
-                    //Klocal(ILV, ILV) += N2D[jj] * N2D[ii] * detJ * weight; 
-                    //Klocal(ILW, ILW) += N2D[jj] * N2D[ii] * detJ * weight;  
+                    Klocal(IU, JLU) -= N2D[ii] * N2D[jj] * detJ * weight;
+                    Klocal(IV, JLV) -= N2D[ii] * N2D[jj] * detJ * weight;
+                    Klocal(IW, JLW) -= N2D[ii] * N2D[jj] * detJ * weight;
+                    Klocal(ILU, JU) -= N2D[ii] * N2D[jj] * detJ * weight; 
+                    Klocal(ILV, JV) -= N2D[ii] * N2D[jj] * detJ * weight; 
+                    Klocal(ILW, JW) -= N2D[ii] * N2D[jj] * detJ * weight; 
+                    //Klocal(ILU, ILU) -= N2D[jj] * N2D[ii] * detJ * weight;
+                    //Klocal(ILV, ILV) -= N2D[jj] * N2D[ii] * detJ * weight; 
+                    //Klocal(ILW, ILW) -= N2D[jj] * N2D[ii] * detJ * weight;  
                 }
             }
             
@@ -208,9 +194,10 @@ void Adjoint::updateVariables(std::string outputDir, const int dim, const int t)
             grid.node.v[in][d] = petsc.solution[n1+d];
         grid.node.p[in] = petsc.solution[n1+dim];
 
-        if(grid.node.nDofsOnNode[in] > dim+1)
+        if(grid.node.nDofsOnNodeNew[grid.node.mapNew[in]] > dim+1){
             for(int d=0; d<dim; d++)
                 grid.node.lambda[in][d] = petsc.solution[n1+dim+1+d];
+        }
     }
 
     for(int in=0; in<grid.node.nNodesGlobal; in++){

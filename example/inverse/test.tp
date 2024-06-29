@@ -23,6 +23,7 @@ Boundary
 
 Inverse
 {
+    controlBoundary = "left"
     aCF = 1e0
     bCF1 = 1e-8
     bCF2 = 1e-4

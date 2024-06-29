@@ -114,15 +114,29 @@ void PetscSolver::setValueZero()
     VecAssemblyEnd(rhsVec);
 }
 
-void PetscSolver::setValue(std::vector<int> dofsBCsMap, std::vector<int> dofsMap, 
-                           MatrixXd& Klocal, VectorXd& Flocal)
+void PetscSolver::setValue(std::vector<int> &lhsRow, std::vector<int> &lhsColumn,
+                           std::vector<int> &rhs, MatrixXd &Klocal, VectorXd &Flocal)
 {
-    int size1 = dofsBCsMap.size();
-    int size2 = dofsBCsMap.size();
+    int size1 = lhsRow.size();
+    int size2 = lhsColumn.size();
+    int size3 = rhs.size();
     MatrixXdRM Klocal2 = Klocal;
+    VecSetValues(rhsVec, size3, &rhs[0], &Flocal[0], ADD_VALUES);
+    MatSetValues(mtx,    size1, &lhsRow[0], size2, &lhsColumn[0], &Klocal(0, 0), ADD_VALUES);
+}
 
-    VecSetValues(rhsVec, size1, &dofsBCsMap[0], &Flocal[0], ADD_VALUES);
-    MatSetValues(mtx,    size1, &dofsBCsMap[0], size1, &dofsMap[0], &Klocal2(0, 0), ADD_VALUES);
+void PetscSolver::setMatValue(std::vector<int> &lhsRow, std::vector<int> &lhsColumn, MatrixXd &Klocal)
+{
+    int size1 = lhsRow.size();
+    int size2 = lhsColumn.size();
+    MatrixXdRM Klocal2 = Klocal;
+    MatSetValues(mtx, size1, &lhsRow[0], size2, &lhsColumn[0], &Klocal(0, 0), ADD_VALUES);
+}
+
+void PetscSolver::setVecValue(std::vector<int> &rhs, VectorXd &Flocal)
+{
+    int size = rhs.size();
+    VecSetValues(rhsVec, size, &rhs[0], &Flocal[0], ADD_VALUES);
 }
 
 int PetscSolver::solve()

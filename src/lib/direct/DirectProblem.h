@@ -62,7 +62,7 @@ class DirectProblem
                               std::vector<double> &N, std::vector<std::vector<double>> &dNdx, 
                               const int ic, const int t);
         void updateVariables(const int t);
-        void assigTimeVariables(const int t);
+        void assignTimeVariables(const int t);
 
 };
 

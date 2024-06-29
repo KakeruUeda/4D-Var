@@ -38,8 +38,10 @@ class PetscSolver
         void setMatAndVecZero(Cell &cell);
         void setValueZero();
         void initialAssembly();
-        void setValue(std::vector<int> dofsBCsMap, std::vector<int> dofsMap, 
-                      MatrixXd& Klocal, VectorXd& Flocal);
+        void setValue(std::vector<int> &lhsRow, std::vector<int> &lhsColumn,
+                      std::vector<int> &rhs, MatrixXd &Klocal, VectorXd &Flocal);
+        void setMatValue(std::vector<int> &lhsRow, std::vector<int> &lhsColumn, MatrixXd &Klocal);
+        void setVecValue(std::vector<int> &rhs, VectorXd &Flocal);
         int solve();
 };
 

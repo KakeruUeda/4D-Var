@@ -28,8 +28,8 @@ enum class GridType
 
 enum class ControlBoundary
 {
-    left = 0, right = 1, upper = 2, bottom = 3,
-    top = 4, back = 5
+    left = 0, right = 1, top = 2, bottom = 3,
+    front = 4, back = 5
 };
 
 class Config
@@ -104,6 +104,7 @@ class Config
         std::map<int, double> pDirichlet;
 
         std::vector<int> controlBoundaryMap;
+        std::vector<int> planeDir;
 
         // For cell and node data
         std::vector<std::vector<double>> node;

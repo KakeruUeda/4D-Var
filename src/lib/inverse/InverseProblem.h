@@ -43,17 +43,20 @@ class Adjoint
 {
     public:
         Adjoint(Config &conf):
-        grid(conf){}
+        grid(conf), planeDir(conf.planeDir)
+        {}
         
         Grid grid;
         PetscSolver petsc;
        
+       std::vector<int> planeDir;
+
         void solveAdjointEquation(DirectProblem &main, std::string outputDir, 
                                   std::vector<std::vector<std::vector<double>>> &feedbackForce);
         void matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal, 
                                        std::vector<std::vector<std::vector<double>>> &feedbackForce,
                                        int &st, const int ic, const int t);
-        void boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,  
+        void boundaryIntegral(DirectProblem &main, MatrixXd &Klocal,
                               const int ic, const int ib);
         void updateVariables(std::string output, const int dim, const int t);
 
@@ -83,7 +86,11 @@ class InverseProblem
         int loopMax;
         int nControlNodesInCell;
 
+        std::vector<int> planeDir;
         std::vector<std::vector<std::vector<double>>> feedbackForce;
+        std::vector<std::vector<std::vector<double>>> gradWholeNode;
+        std::vector<std::vector<std::vector<double>>> grad;
+        
         
         void initialize(Config &conf);
         void runSimulation();
@@ -106,6 +113,16 @@ class InverseProblem
         void feedbackGaussIntegral2(std::vector<double> &N, std::vector<std::vector<double>> &xCurrent,
                                     std::vector<std::vector<double>> &velCurrent, const double detJ,
                                     const double weight, const int voxelId, const int cellId, const int t);
+
+        void calcOptimalCondition();
+        void GaussIntegralOpttimalConditionTerm1(std::vector<double> &N2D, std::vector<std::vector<double>> &dNdr2D, 
+                                                 std::vector<std::vector<double>> &xCurrent2D, 
+                                                 double (&value)[4][3], const double weight, 
+                                                 const int ic, const int t);
+        void GaussIntegralOpttimalConditionTerm2(std::vector<double> &N2D, std::vector<std::vector<double>> &dNdr2D, 
+                                                 std::vector<std::vector<double>> &xCurrent2D, 
+                                                 double (&value)[4][3], const double weight, 
+                                                 const int ic, const int t);
     private:
 
 };

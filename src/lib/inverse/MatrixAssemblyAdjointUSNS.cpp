@@ -166,9 +166,9 @@ void Adjoint::matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, V
            
                             // ADVECTION TERM
                             for(int mm=0; mm<3; mm++){
-                                Klocal(IP, JU) += 5e-1 * tau * dNdx[ii][0] * advel[mm] * dNdx[jj][mm] * detJ * weight;
-                                Klocal(IP, JV) += 5e-1 * tau * dNdx[ii][1] * advel[mm] * dNdx[jj][mm] * detJ * weight;
-                                Klocal(IP, JW) += 5e-1 * tau * dNdx[ii][2] * advel[mm] * dNdx[jj][mm] * detJ * weight;
+                                Klocal(IP, JU) += 5e-1 * tau * dNdx[ii][0] * vel[mm] * dNdx[jj][mm] * detJ * weight;
+                                Klocal(IP, JV) += 5e-1 * tau * dNdx[ii][1] * vel[mm] * dNdx[jj][mm] * detJ * weight;
+                                Klocal(IP, JW) += 5e-1 * tau * dNdx[ii][2] * vel[mm] * dNdx[jj][mm] * detJ * weight;
                             }
 
                             // PRESSURE TERM
@@ -250,9 +250,9 @@ void Adjoint::matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, V
                 IU = s[ii];
                 IV = IU + 1;
                 IW = IU + 2;
-                Flocal(IU) += feedbackForce[st][grid.cell(ic).node[ii]][0];
-                Flocal(IV) += feedbackForce[st][grid.cell(ic).node[ii]][1];
-                Flocal(IW) += feedbackForce[st][grid.cell(ic).node[ii]][2];
+                Flocal(IU) -= feedbackForce[st][grid.cell(ic).node[ii]][0];
+                Flocal(IV) -= feedbackForce[st][grid.cell(ic).node[ii]][1];
+                Flocal(IW) -= feedbackForce[st][grid.cell(ic).node[ii]][2];
             }
         }
 
