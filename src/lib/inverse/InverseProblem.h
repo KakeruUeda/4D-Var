@@ -19,6 +19,7 @@
 #include "Config.h"
 #include "Gauss.h"
 #include "Tool.h"
+#include "Spline.h"
 #include "ShapeFunction.h"
 #include "MathFEM.h"
 #include "DirectProblem.h"
@@ -60,10 +61,9 @@ class Adjoint
         std::vector<int> planeDir;
 
         void solveAdjointEquation(DirectProblem &main, std::string outputDir, 
-                                  std::vector<std::vector<std::vector<double>>> &feedbackForce,  
+                                  std::vector<std::vector<std::vector<double>>> &feedbackForceT,  
                                   const int nData, const int loop);
-        void matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal, 
-                                       std::vector<std::vector<std::vector<double>>> &feedbackForce,
+        void matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
                                        const int ic, const int t);
         void boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
                               const int ic, const int ib);
@@ -93,6 +93,7 @@ class InverseProblem
 
         std::vector<int> planeDir;
         std::vector<std::vector<std::vector<double>>> feedbackForce;
+        std::vector<std::vector<std::vector<double>>> feedbackForceT;
         std::vector<std::vector<std::vector<double>>> gradWholeNode;
         std::vector<std::vector<std::vector<double>>> grad;
         std::vector<std::vector<std::vector<double>>> X;
@@ -113,6 +114,7 @@ class InverseProblem
         void calcInterpolatedFeeback(std::vector<std::vector<double>> &xCurrent, double (&feedback)[3], 
                                      std::vector<std::vector<std::vector<std::vector<double>>>> &vEX, 
                                      double (&point)[3]);
+        void calcTimeInterpolatedFeedbackForce();
         void feedbackGaussIntegral(std::vector<double> &N, double (&feedback)[3], 
                                    const double detJ, const double weight, const int ic, const int t);
         void calcFeedbackForce2();

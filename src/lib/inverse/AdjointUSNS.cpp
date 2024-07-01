@@ -1,7 +1,7 @@
 #include "InverseProblem.h"
 
 void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
-                                   std::vector<std::vector<std::vector<double>>> &feedbackForce,
+                                   std::vector<std::vector<std::vector<double>>> &feedbackForceT,
                                    const int nData, const int loop)
 {
     PetscPrintf(MPI_COMM_WORLD, "\nADJOINT SOLVER\n");
@@ -32,7 +32,7 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
                 VectorXd  Flocal(nDofsInCell);
                 Klocal.setZero();
                 Flocal.setZero();
-                matrixAssemblyAdjointUSNS(main, Klocal, Flocal, feedbackForce, ic, t);
+                matrixAssemblyAdjointUSNS(main, Klocal, Flocal, ic, t);
                 petsc.setValue(grid.cell(ic).dofsMap, grid.cell(ic).dofsMap,
                                grid.cell(ic).dofsMap, Klocal, Flocal);
             }
@@ -51,6 +51,20 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
             }
         }
 
+        for(int in=0; in<grid.node.nNodesGlobal; in++){
+            int n = grid.node.mapNew[in];
+            int size = grid.node.dofsMapNew[n].size();
+            VectorXd  Flocal(size);
+            Flocal.setZero();
+            if(grid.node.subId[in] == mpi.myId){
+                Flocal(0) -= feedbackForceT[t][in][0];
+                Flocal(1) -= feedbackForceT[t][in][1];
+                Flocal(2) -= feedbackForceT[t][in][2];
+                petsc.setVecValue(grid.node.dofsMapNew[n], Flocal);
+            }
+        }
+
+        /*
         if(t % main.snap.snapInterval == 0){
             for(int in=0; in<grid.node.nNodesGlobal; in++){
                 int n = grid.node.mapNew[in];
@@ -66,6 +80,7 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
             }
             st--;
         }
+        */
 
         //timer = MPI_Wtime() - timer;
         //PetscPrintf(MPI_COMM_WORLD, "\nAdjoint Matrix assembly = %f seconds\n", timer);

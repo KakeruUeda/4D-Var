@@ -33,11 +33,10 @@ void DirectProblem::initialize(Config &conf)
     nu = mu / rho;
     Re = 1e0 / nu; 
 
-    grid.node.v.resize(grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
-    grid.node.vPrev.resize(grid.node.nNodesGlobal, std::vector<double>(dim, 0e0));
-    grid.node.p.resize(grid.node.nNodesGlobal, 0e0);
-    snap.v.resize(snap.nSnapShot, std::vector<std::vector<double>>
-                  (grid.nNodesGlobal, std::vector<double>(dim, 0e0)));
+    VecTool::resize(grid.node.v, grid.node.nNodesGlobal, dim);
+    VecTool::resize(grid.node.vPrev, grid.node.nNodesGlobal, dim);
+    VecTool::resize(grid.node.p, grid.node.nNodesGlobal);
+    VecTool::resize(snap.v, snap.nSnapShot, grid.node.nNodesGlobal, dim);
 
     grid.dirichlet.initialize(conf);
     grid.cell.initialize(conf);
@@ -45,11 +44,11 @@ void DirectProblem::initialize(Config &conf)
    
     grid.prepareMatrix(petsc, outputDir, timeMax);
 
-    petsc.solution.resize(grid.nDofsGlobal);
-    grid.dirichlet.dirichletBCsValue.resize(grid.nDofsGlobal, 0e0);
-    grid.dirichlet.dirichletBCsValueNew.resize(grid.nDofsGlobal, 0e0);
-    grid.dirichlet.dirichletBCsValueInit.resize(grid.nDofsGlobal, 0e0);
-    grid.dirichlet.dirichletBCsValueNewInit.resize(grid.nDofsGlobal, 0e0);
+    VecTool::resize(petsc.solution, grid.nDofsGlobal);
+    VecTool::resize(grid.dirichlet.dirichletBCsValue, grid.nDofsGlobal);
+    VecTool::resize(grid.dirichlet.dirichletBCsValueNew, grid.nDofsGlobal);
+    VecTool::resize(grid.dirichlet.dirichletBCsValueInit, grid.nDofsGlobal);
+    VecTool::resize(grid.dirichlet.dirichletBCsValueNewInit, grid.nDofsGlobal);
 }
 
 void DirectProblem::outputDomain()

@@ -1,7 +1,6 @@
 #include "InverseProblem.h"
 
 void Adjoint::matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal, 
-                                        std::vector<std::vector<std::vector<double>>> &feedbackForce,
                                         const int ic, const int t)
 {
     int n1, n2, n3;

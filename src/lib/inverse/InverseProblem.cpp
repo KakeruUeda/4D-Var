@@ -70,6 +70,7 @@ void InverseProblem::initialize(Config &conf)
     VecTool::resize(adjoint.grid.dirichlet.dirichletBCsValueInit, adjoint.grid.nDofsGlobal);
     VecTool::resize(adjoint.grid.dirichlet.dirichletBCsValueNewInit, adjoint.grid.nDofsGlobal);
     VecTool::resize(feedbackForce, main.snap.nSnapShot, main.grid.node.nNodesGlobal, dim);
+    VecTool::resize(feedbackForceT, main.timeMax, main.grid.node.nNodesGlobal, dim);
     VecTool::resize(gradWholeNode, main.timeMax, main.grid.node.nNodesGlobal, dim);
     VecTool::resize(grad, main.timeMax, adjoint.grid.dirichlet.controlBoundaryMap.size(), dim);
     VecTool::resize(X, main.timeMax, adjoint.grid.dirichlet.controlBoundaryMap.size(), dim);
@@ -85,9 +86,11 @@ void InverseProblem::runSimulation()
         if(loop != 0) main.solveUSNS(app);
         calcCostFunction();
         calcFeedbackForce();
+        calcTimeInterpolatedFeedbackForce();
         output(loop);
         
-        adjoint.solveAdjointEquation(main, outputDir, feedbackForce, data.nData, loop);
+        adjoint.solveAdjointEquation(main, outputDir, feedbackForceT, 
+                                     data.nData, loop);
         calcOptimalCondition();
 
         double alpha;
@@ -102,8 +105,13 @@ void InverseProblem::output(const int loop)
 
     for(int t=0; t<main.snap.nSnapShot; t++){
         std::string vtuFile;
-        vtuFile = outputDir + "/feedback/feedback_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+        vtuFile = outputDir + "/feedback/feedbackForce_" + to_string(loop) + "_" + to_string(t) + ".vtu";
         main.grid.output.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, feedbackForce[t]);
+    }
+    for(int t=0; t<main.timeMax; t++){
+        std::string vtuFile;
+        vtuFile = outputDir + "/feedback/feedbackForceT_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+        main.grid.output.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, feedbackForceT[t]);
     }
 }
 
@@ -150,8 +158,6 @@ void InverseProblem::calcCostFunction()
     xCurrent2D.resize(nControlNodesInCell, std::vector<double>(dim-1, 0e0));
 
     Gauss gauss(2);
-    int planeDir[2] = {1, 2};
-    double value;
 
     // term2
     for(int t=0; t<main.snap.nSnapShot; t++){
@@ -371,6 +377,42 @@ void InverseProblem::feedbackGaussIntegral(std::vector<double> &N, double (&feed
         for(int p=0; p<main.grid.cell.nNodesInCell; p++){
             int in = main.grid.cell(ic).node[p];
             feedbackForce[t][in][d] += aCF * N[p] * feedback[d] * detJ * weight;
+        }
+    }
+}
+
+void InverseProblem::calcTimeInterpolatedFeedbackForce()
+{
+    for(int in=0; in<adjoint.grid.node.nNodesGlobal; in++){
+        std::vector<double> x, y1, y2, y3;
+        for(int t=0; t<main.snap.nSnapShot; t++){
+            double n = t * main.dt * main.snap.snapInterval;
+            x.push_back(n);
+            y1.push_back(feedbackForce[t][in][0]);
+            y2.push_back(feedbackForce[t][in][1]);  
+            y3.push_back(feedbackForce[t][in][2]); 
+        }
+        Spline splineX;
+        Spline splineY;
+        Spline splineZ;
+        splineX.setPoints(x, y1);
+        splineY.setPoints(x, y2);
+        splineZ.setPoints(x, y3);
+        for(int t=0; t<adjoint.timeMax; t++){
+            double n = t * main.dt;
+            if(t == 0){
+                feedbackForceT[t][in][0] = feedbackForce[0][in][0];
+                feedbackForceT[t][in][1] = feedbackForce[0][in][1];
+                feedbackForceT[t][in][2] = feedbackForce[0][in][2];
+            }else if(t == adjoint.timeMax - 1){
+                feedbackForceT[t][in][0] = feedbackForce[main.snap.nSnapShot - 1][in][0];
+                feedbackForceT[t][in][1] = feedbackForce[main.snap.nSnapShot - 1][in][1];
+                feedbackForceT[t][in][2] = feedbackForce[main.snap.nSnapShot - 1][in][2];
+            }else{
+                feedbackForceT[t][in][0] = splineX(n);
+                feedbackForceT[t][in][1] = splineY(n);
+                feedbackForceT[t][in][2] = splineZ(n);
+            }
         }
     }
 }
