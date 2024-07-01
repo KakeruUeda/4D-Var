@@ -4,11 +4,13 @@ DataGrid::DataGrid(Config &conf) :
 nx(conf.nxData), ny(conf.nyData), nz(conf.nzData),
 lx(conf.lxData), ly(conf.lyData), lz(conf.lzData),
 dx(conf.dxData), dy(conf.dyData), dz(conf.dzData),
-nSnapShot(conf.nSnapShot), snapInterval(conf.snapInterval),
+nData(conf.nData), nSnapShot(conf.nSnapShot), 
+snapInterval(conf.snapInterval),
 nCellsGlobal(conf.nCellsDataGlobal), 
 nNodesInCell(conf.nNodesInCellData), 
 data(conf.nCellsDataGlobal)
 {
+    std::cout << conf.nData << " " << nData << std::endl;
     if(conf.app == Application::USNS){
         xOrigin = conf.xOrigin; 
         yOrigin = conf.yOrigin; 

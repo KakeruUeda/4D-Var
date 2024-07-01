@@ -480,9 +480,9 @@ void Config::readDataParameter()
         controlNodeInCell.push_back(ctrTmp);
     }
     ifsControlNodeInCell.close();
-
-    std::string dataFile;
+    
     int num = 0;
+    std::string dataFile;
     velocityData.resize(nSnapShot);
 
     while(1){
@@ -511,6 +511,8 @@ void Config::readDataParameter()
         velocityData[num] = velocityDataTmp;
         num++;
     }
+
+    nData = num;
 }
 
 void Config::readStructuredGridParameter()

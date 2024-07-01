@@ -18,6 +18,7 @@
 #include "PetscSolver.h"
 #include "Config.h"
 #include "Gauss.h"
+#include "Tool.h"
 #include "ShapeFunction.h"
 #include "MathFEM.h"
 #include "DirectProblem.h"
@@ -59,13 +60,14 @@ class Adjoint
         std::vector<int> planeDir;
 
         void solveAdjointEquation(DirectProblem &main, std::string outputDir, 
-                                  std::vector<std::vector<std::vector<double>>> &feedbackForce);
+                                  std::vector<std::vector<std::vector<double>>> &feedbackForce,  
+                                  const int nData, const int loop);
         void matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal, 
                                        std::vector<std::vector<std::vector<double>>> &feedbackForce,
-                                       int &st, const int ic, const int t);
-        void boundaryIntegral(DirectProblem &main, MatrixXd &Klocal,
+                                       const int ic, const int t);
+        void boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
                               const int ic, const int ib);
-        void updateVariables(std::string output, const int dim, const int t);
+        void updateVariables(std::string output, const int dim, const int t, const int loop);
 
 };
 
@@ -93,11 +95,12 @@ class InverseProblem
         std::vector<std::vector<std::vector<double>>> feedbackForce;
         std::vector<std::vector<std::vector<double>>> gradWholeNode;
         std::vector<std::vector<std::vector<double>>> grad;
-        
+        std::vector<std::vector<std::vector<double>>> X;
         
         void initialize(Config &conf);
         void runSimulation();
 
+        void output(const int loop);
         void calcCostFunction();
         void GaussIntegralRegTerm1(std::vector<double> &N, std::vector<std::vector<double>> &dNdr,
                                    std::vector<std::vector<double>> &xCurrent, double &value, 
@@ -118,18 +121,18 @@ class InverseProblem
                                     const double weight, const int voxelId, const int cellId, const int t);
 
         void calcOptimalCondition();
-        void GaussIntegralOpttimalConditionTerm1(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
-                                                 std::vector<std::vector<double>> &xCurrent, 
-                                                 double (&value)[4][3], const double weight, 
-                                                 const int ic, const int t);
-        void GaussIntegralOpttimalConditionTerm2(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
-                                                 std::vector<std::vector<double>> &xCurrent, 
-                                                 double (&value)[4][3], const double weight, 
-                                                 const int ic, const int t);
-        void GaussIntegralOpttimalConditionTerm3(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
-                                                 std::vector<std::vector<double>> &xCurrent, 
-                                                 double (&value)[4][3], const double weight, 
-                                                 const int ic, const int t);
+        void GaussIntegralOptimalConditionTerm1(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
+                                                std::vector<std::vector<double>> &xCurrent, 
+                                                double (&value)[4][3], const double weight, 
+                                                const int ic, const int t);
+        void GaussIntegralOptimalConditionTerm2(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
+                                                std::vector<std::vector<double>> &xCurrent, 
+                                                double (&value)[4][3], const double weight, 
+                                                const int ic, const int t);
+        void GaussIntegralOptimalConditionTerm3(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
+                                                std::vector<std::vector<double>> &xCurrent, 
+                                                double (&value)[4][3], const double weight, 
+                                                const int ic, const int t);
         double armijoCriteria(const double fk);
     
     private:

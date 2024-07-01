@@ -17,8 +17,6 @@ void Config::setApplication(std::string appName)
     else
         if(mpi.myId == 0)
             std::cout << "Unknown appName" << std::endl;
-
-    return;
 }
 
 void Config::tryOpenConfigFile(std::string inputFile)
@@ -28,7 +26,7 @@ void Config::tryOpenConfigFile(std::string inputFile)
         if ((error = tp.read(inputFile)) != TP_NO_ERROR)
             throw std::runtime_error("Open error");
     }
-    catch (const std::runtime_error& e){
+    catch(const std::runtime_error& e){
 		if(mpi.myId == 0) 
             std::cout << e.what() << std::endl;
 		if(mpi.myId == 0) 

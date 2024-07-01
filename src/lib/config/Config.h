@@ -80,6 +80,7 @@ class Config
         int snapTimeBeginItr;
 
         // DataGrid parameter
+        int nData;
         double xOrigin, yOrigin, zOrigin;
         int nxData, nyData, nzData;
         double lxData, lyData, lzData;

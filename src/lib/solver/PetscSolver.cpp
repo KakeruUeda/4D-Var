@@ -167,7 +167,6 @@ int PetscSolver::solve()
     errpetsc = VecZeroEntries(solnVec);
     CHKERRQ(errpetsc);
   
-    PetscPrintf(MPI_COMM_WORLD, "\n KSP solve \n");
     errpetsc = KSPSolve(ksp, rhsVec, solnVec);
     CHKERRQ(errpetsc);
   
@@ -184,7 +183,7 @@ int PetscSolver::solve()
         std::cout <<  reason << std::endl;
         exit(1);
     }else{
-        PetscPrintf(MPI_COMM_WORLD, "\n Convergence in %d iterations. \n", its);
+        //PetscPrintf(MPI_COMM_WORLD, "\n Convergence in %d iterations. \n", its);
     }
 
     return 0;

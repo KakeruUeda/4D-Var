@@ -107,6 +107,8 @@ void DirichletBoundary::initializeAdjoint(Config &conf)
     controlBoundaryMap = conf.controlBoundaryMap;
     controlCellMap = conf.controlCellMap;
     controlNodeInCell = conf.controlNodeInCell;
+    nControlCellsGlobal = controlCellMap.size();
+    nControlNodesGlobal = controlBoundaryMap.size();
 }
 
 void DirichletBoundary::assignDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
@@ -159,7 +161,7 @@ void DirichletBoundary::assignDirichletBCs(std::vector<std::map<int, std::vector
         for(int i=0; i<pair.first; i++)
             dofCurrentTmp += node.nDofsOnNodeNew[i];
         dofCurrent = dofCurrentTmp + dim;
-        dirichletBCsValueInit[dofCurrent] = pair.second;
+        dirichletBCsValueNew[dofCurrent] = pair.second;
     }
 }
 

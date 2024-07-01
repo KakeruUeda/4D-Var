@@ -18,6 +18,7 @@ class DirichletBoundary
         virtual ~DirichletBoundary(){}
 
         int nNodesVelocity, nNodesPressure;
+        int nControlCellsGlobal, nControlNodesGlobal;
         
         std::vector<double> dirichletBCsValue;
         std::vector<double> dirichletBCsValueNew;

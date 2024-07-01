@@ -2,15 +2,20 @@
 
 void DirectProblem::solveUSNS(Application &app)
 { 
-    PetscPrintf(MPI_COMM_WORLD, "\nUNSTEADY NAVIER STOKES SOLVER\n");
+    PetscPrintf(MPI_COMM_WORLD, "\nMAIN SOLVER\n");
 
     PetscScalar *arraySolnTmp;
     Vec  vecSEQ;
     VecScatter  ctx;
     VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ);
-
+    
     petsc.setMatAndVecZero(grid.cell);
     petsc.initialAssembly();
+    
+    for(int id=0; id<grid.nDofsGlobal; id++){
+        grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
+        grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
+    }
 
     if(app == Application::FDVAR){
         pulsatileFlow = OFF;
@@ -44,17 +49,16 @@ void DirectProblem::solveUSNS(Application &app)
                                grid.cell(ic).dofsBCsMap, Klocal, Flocal);
             }
         }
-        timer = MPI_Wtime() - timer;
+        
+        //petsc.currentStatus = ASSEMBLY_OK;
+        //timer = MPI_Wtime() - timer;
+        //PetscPrintf(MPI_COMM_WORLD, "\nMatrix assembly = %f seconds\n", timer);
+        //MPI_Barrier(MPI_COMM_WORLD); 
+        //timer = MPI_Wtime();
 
-        PetscPrintf(MPI_COMM_WORLD, "\nMatrix assembly = %f seconds\n", timer);
-        petsc.currentStatus = ASSEMBLY_OK;
-    
-        MPI_Barrier(MPI_COMM_WORLD); 
-        timer = MPI_Wtime();
         petsc.solve();
-        timer = MPI_Wtime() - timer;
-
-        PetscPrintf(MPI_COMM_WORLD, "\nPETSc solver = %f seconds \n", timer);
+        //timer = MPI_Wtime() - timer;
+        //PetscPrintf(MPI_COMM_WORLD, "\nPETSc solver = %f seconds \n", timer);
 
         VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
         VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
@@ -74,11 +78,6 @@ void DirectProblem::solveUSNS(Application &app)
             if(t >= snap.snapTimeBeginItr && (snapCount < snap.nSnapShot)){
                 if((t - snap.snapTimeBeginItr) % snap.snapInterval == 0){
                     snap.takeSnapShot(grid.node.v, snapCount, grid.node.nNodesGlobal, dim);
-                    if(mpi.myId == 0){
-                        std::string vtuFile;
-                        vtuFile = outputDir + "/data/reference" + to_string(snapCount) + ".vtu";
-                        grid.output.exportSnapShotVTU(vtuFile, grid.node, grid.cell, snap, snapCount);
-                    }
                     snapCount++;
                 }
             }
@@ -88,7 +87,7 @@ void DirectProblem::solveUSNS(Application &app)
 
         if(mpi.myId == 0){
             double timeNow = t * dt;
-            printf("\n TIME = %f \n", timeNow);
+            printf("Main Solver : Time = %f \n", timeNow);
         }
         MPI_Barrier(MPI_COMM_WORLD);
     }
@@ -100,30 +99,34 @@ void DirectProblem::solveUSNS(Application &app)
 void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
                               std::vector<std::map<int, double>> &pDirichletTmp)
 { 
-    PetscPrintf(MPI_COMM_WORLD, "\nUNSTEADY NAVIER STOKES SOLVER\n");
+    PetscPrintf(MPI_COMM_WORLD, "\n(ALMIJO) MAIN SOLVER\n");
 
     PetscScalar *arraySolnTmp;
     Vec  vecSEQ;
     VecScatter  ctx;
     VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ); 
-
+    
     petsc.setMatAndVecZero(grid.cell);
     petsc.initialAssembly();
+
+    for(int id=0; id<grid.nDofsGlobal; id++){
+        grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
+        grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
+    }   
 
     int snapCount = 0;
     for(int t=0; t<timeMax; t++){
         petsc.setValueZero();
-        grid.dirichlet.assignDirichletBCs(grid.dirichlet.vDirichletNew, 
-                                          grid.dirichlet.pDirichletNew, 
+        grid.dirichlet.assignDirichletBCs(vDirichletTmp, pDirichletTmp, 
                                           grid.node, dim, t);
         if(pulsatileFlow == ON)
             if(t > pulseBeginItr)
                 grid.dirichlet.assignPulsatileBCs(t, dt, T, grid.nDofsGlobal);
 
         grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
-        
-        MPI_Barrier(MPI_COMM_WORLD);
-        double timer = MPI_Wtime();
+
+        //MPI_Barrier(MPI_COMM_WORLD);
+        //double timer = MPI_Wtime();
         
         for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
             if(grid.cell(ic).subId == mpi.myId){
@@ -137,17 +140,16 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
                                grid.cell(ic).dofsBCsMap, Klocal, Flocal);
             }
         }
-        timer = MPI_Wtime() - timer;
+        //petsc.currentStatus = ASSEMBLY_OK;
+        //timer = MPI_Wtime() - timer;
+        //PetscPrintf(MPI_COMM_WORLD, "\nMatrix assembly = %f seconds\n", timer);
+        //MPI_Barrier(MPI_COMM_WORLD); 
+        //timer = MPI_Wtime();
 
-        PetscPrintf(MPI_COMM_WORLD, "\nMatrix assembly = %f seconds\n", timer);
-        petsc.currentStatus = ASSEMBLY_OK;
-    
-        MPI_Barrier(MPI_COMM_WORLD); 
-        timer = MPI_Wtime();
         petsc.solve();
-        timer = MPI_Wtime() - timer;
 
-        PetscPrintf(MPI_COMM_WORLD, "\nPETSc solver = %f seconds \n", timer);
+        //timer = MPI_Wtime() - timer;
+        //PetscPrintf(MPI_COMM_WORLD, "\nPETSc solver = %f seconds \n", timer);
 
         VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
         VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
@@ -160,18 +162,10 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
         VecRestoreArray(vecSEQ, &arraySolnTmp);
         updateVariables(t);
 
-        if(app == Application::FDVAR)
-            assignTimeVariables(t);
-
         if(snap.isSnapShot == ON){
             if(t >= snap.snapTimeBeginItr && (snapCount < snap.nSnapShot)){
                 if((t - snap.snapTimeBeginItr) % snap.snapInterval == 0){
                     snap.takeSnapShot(grid.node.v, snapCount, grid.node.nNodesGlobal, dim);
-                    if(mpi.myId == 0){
-                        std::string vtuFile;
-                        vtuFile = outputDir + "/data/reference" + to_string(snapCount) + ".vtu";
-                        grid.output.exportSnapShotVTU(vtuFile, grid.node, grid.cell, snap, snapCount);
-                    }
                     snapCount++;
                 }
             }
@@ -181,7 +175,7 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
 
         if(mpi.myId == 0){
             double timeNow = t * dt;
-            printf("\n TIME = %f \n", timeNow);
+            printf("(Almijo) Main Solver : Time = %f \n", timeNow);
         }
         MPI_Barrier(MPI_COMM_WORLD);
     }

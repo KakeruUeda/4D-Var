@@ -64,7 +64,6 @@ void Node::initializeNew()
             tmp++;
         }
     }
-
 }
 
 void Node::initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap)

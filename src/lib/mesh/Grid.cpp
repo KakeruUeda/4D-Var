@@ -135,7 +135,14 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
         outDofsBCsMapNew.close();
     }
 
-    int size = 0;
+    for(int in=0; in<node.nNodesGlobal; in++){
+        for(int id=0; id<node.nDofsOnNodeNew[in]; id++){
+            node.dofsMapNew1D.push_back(node.dofsMapNew[in][id]);
+            node.dofsBCsMapNew1D.push_back(node.dofsBCsMapNew[in][id]);
+        }
+    }
+
+    int size;
     for(int ic=0; ic<cell.nCellsGlobal; ic++){
         //if(cell(ic).subId == mpi.myId){
             size = 0;
@@ -144,13 +151,12 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
             }
             cell(ic).dofsMap.resize(size);
             cell(ic).dofsBCsMap.resize(size);
-            int i=0;
-            int j=0;
+            int i = 0; int j = 0;
             for(int p=0; p<cell.nNodesInCell; p++){
                 j = cell(ic).nodeNew[p];
                 for(int q=0; q<node.nDofsOnNodeNew[cell(ic).nodeNew[p]]; q++){
-                    cell(ic).dofsMap[i+q] = node.dofsMapNew[j][q];
-                    cell(ic).dofsBCsMap[i+q] = node.dofsBCsMapNew[j][q];
+                    cell(ic).dofsMap[i + q] = node.dofsMapNew[j][q];
+                    cell(ic).dofsBCsMap[i + q] = node.dofsBCsMapNew[j][q];
                 }
                 i += node.nDofsOnNodeNew[cell(ic).nodeNew[p]];
             }
@@ -366,26 +372,6 @@ void Grid::distributeToLocal(const int timeMax)
 
     int n1;
     int count;
-
-    /*
-    for(auto &pair : dirichlet.vDirichlet){
-        std::vector<double> vecTmp;
-        n1 = node.mapNew[pair.first];
-        count = 0;
-        for(auto &value : pair.second){
-            vecTmp.push_back(value);
-            node.isDirichletNew[n1][count] = true;
-            count++;
-        }
-        dirichlet.vDirichletNew[n1] = vecTmp;
-    }
-
-    for(auto &pair : dirichlet.pDirichlet[0]){
-        n1 = node.mapNew[pair.first];
-        dirichlet.pDirichletNew[n1] = pair.second;
-        node.isDirichletNew[n1][dim] = true;
-    }
-    */
 
    dirichlet.vDirichletNew.resize(timeMax);
    dirichlet.pDirichletNew.resize(timeMax);

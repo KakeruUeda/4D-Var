@@ -40,6 +40,8 @@ class DataGrid
         double xOrigin, yOrigin, zOrigin;
         double range;
 
+        int nData;
+
         int nCellsGlobal;
         int nNodesGlobal;
         int nNodesInCell;
