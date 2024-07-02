@@ -48,6 +48,8 @@ class DirectProblem
         int pulseBeginItr;
         double T;
 
+        double NRtolerance;
+
         // Darcy parameter
         double alpha, resistance;
 
@@ -57,6 +59,8 @@ class DirectProblem
         void solveUSNS(Application &app);
         void solveUSNS(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
                        std::vector<std::map<int, double>> &pDirichletTmp);
+        void calcInitialCondition(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
+                                  std::vector<std::map<int, double>> &pDirichletTmp);
         void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
                                 const int ic, const int t);
 
@@ -66,10 +70,10 @@ class DirectProblem
                               const int ic, const int t);
         void updateVariables(const int t);
         void assignTimeVariables(const int t);
+        void outputSolution(const int t);
+        void setVariablesZero();
 
 };
-
-
 
 #endif
 

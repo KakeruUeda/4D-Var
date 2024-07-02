@@ -17,11 +17,11 @@ void MathFEM::calc_dNdx2D(std::vector<std::vector<double>> &dNdx, std::vector<st
   double drdx[2][2];
   MathCommon::calcInverseMatrix_2x2(drdx, dxdr);
 
-  for(int p=0;p<numOfNodeInElm;p++){
-    for(int i=0; i<2; i++){
-      dNdx[p][i] = 0e0;
-      for(int j=0; j<2; j++) dNdx[p][i] += dNdr[p][j] * drdx[j][i];
-    }
+  for(int p=0; p<numOfNodeInElm; p++){
+      for(int i=0; i<2; i++){
+          dNdx[p][i] = 0e0;
+          for(int j=0; j<2; j++) dNdx[p][i] += dNdr[p][j] * drdx[j][i];
+      }
   }
 }
 

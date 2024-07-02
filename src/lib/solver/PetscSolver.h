@@ -43,6 +43,7 @@ class PetscSolver
         void setMatValue(std::vector<int> &lhsRow, std::vector<int> &lhsColumn, MatrixXd &Klocal);
         void setVecValue(std::vector<int> &rhs, VectorXd &Flocal);
         int solve();
+        double vectorNorm(const int num);
 };
 
 #endif

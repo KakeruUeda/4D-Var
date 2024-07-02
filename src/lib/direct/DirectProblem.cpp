@@ -1,10 +1,9 @@
 #include "DirectProblem.h"
 
 DirectProblem::DirectProblem(Config &conf) : 
-app(conf.app),
-dim(conf.dim), outputDir(conf.outputDir), 
+app(conf.app), dim(conf.dim), outputDir(conf.outputDir), 
 nOMP(conf.nOMP), grid(conf), snap(conf),
-rho(conf.rho), mu(conf.mu), dt(conf.dt),
+rho(conf.rho), mu(conf.mu), dt(conf.dt), NRtolerance(conf.NRtolerance),
 timeMax(conf.timeMax), pulsatileFlow(conf.pulsatileFlow), 
 pulseBeginItr(conf.pulseBeginItr), T(conf.T),
 alpha(conf.alpha), resistance(conf.resistance)  

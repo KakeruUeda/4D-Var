@@ -69,6 +69,8 @@ class Adjoint
                               const int ic, const int ib);
         void updateVariables(std::string output, const int dim, const int t, const int loop);
 
+    private:
+        void setVariablesZero(const int dim);
 };
 
 class InverseProblem
@@ -136,6 +138,7 @@ class InverseProblem
                                                 double (&value)[4][3], const double weight, 
                                                 const int ic, const int t);
         double armijoCriteria(const double fk);
+        void updataControlVariables(DirectProblem &main, const int alpha);
     
     private:
 

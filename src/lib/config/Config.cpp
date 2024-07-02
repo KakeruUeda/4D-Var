@@ -14,9 +14,7 @@ void Config::setApplication(std::string appName)
     else if(appName == "USNS")     app = Application::USNS;
     else if(appName == "TDVAR")    app = Application::TDVAR;
     else if(appName == "FDVAR")    app = Application::FDVAR;
-    else
-        if(mpi.myId == 0)
-            std::cout << "Unknown appName" << std::endl;
+    else if (mpi.myId == 0)        std::cout << "Unknown appName" << std::endl;
 }
 
 void Config::tryOpenConfigFile(std::string inputFile)
@@ -95,6 +93,15 @@ void Config::setSolidBoundary()
             for(int p=0; p<nNodesInCell; p++){
                 std::vector<double> vecTmp(dim, 0e0);
                 vDirichlet[cell[ic][p]] = vecTmp;
+            }
+        }
+    }
+
+    for(int ic=0; ic<nCellsGlobal; ic++){
+        if(phi[ic] < 1e-12){
+            for(int p=0; p<nNodesInCell; p++){
+                std::vector<double> vecTmp(dim, 0e0);
+                vDirichletWall[cell[ic][p]] = vecTmp;
             }
         }
     }
@@ -181,9 +188,11 @@ void Config::setFluidDomain()
         node.push_back(nodeTmp[sortNode[in]]);
 
     std::map<int, std::vector<double>> vDirichletTmp = vDirichlet;
+    std::map<int, std::vector<double>> vDirichletWallTmp = vDirichletWall;
     std::map<int, double> pDirichletTmp = pDirichlet;
 
     vDirichlet.clear();
+    vDirichletWall.clear();
     pDirichlet.clear();
 
     for(int in=0; in<sortNode.size(); in++){
@@ -193,6 +202,16 @@ void Config::setFluidDomain()
         if(it != vDirichletTmp.end()){
             int keyNew = convertNodeOldToNew[key];
             vDirichlet[keyNew] = vDirichletTmp[key];
+        }
+    }
+
+    for(int in=0; in<sortNode.size(); in++){
+        if(vDirichletWallTmp.size() == 0) break;
+        int key = sortNode[in];
+        auto it = vDirichletWallTmp.find(key);
+        if(it != vDirichletWallTmp.end()){
+            int keyNew = convertNodeOldToNew[key];
+            vDirichletWall[keyNew] = vDirichletWallTmp[key];
         }
     }
 

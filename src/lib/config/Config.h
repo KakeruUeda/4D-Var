@@ -50,6 +50,8 @@ class Config
         // Physical parameter
         double rho, mu, Re;
 
+        double NRtolerance;
+
         // CostFunction parameter
         double aCF, bCF1, bCF2, gCF;
         int loopMax;
@@ -102,6 +104,7 @@ class Config
         std::vector<std::vector<double>> vDirichletValue;
         std::vector<double> pDirichletValue;
         std::map<int, std::vector<double>> vDirichlet;
+        std::map<int, std::vector<double>> vDirichletWall;
         std::map<int, double> pDirichlet;
 
         std::vector<int> controlBoundaryMap;
@@ -140,7 +143,8 @@ class Config
         void readStructuredGridParameter();
         void readStructuredBoundaryParameter();
         void readBasicParameter();           
-        void readPysicalParameter(); 
+        void readPysicalParameter();
+        void readNRParameter();
         void readDarcyParameter();    
         void readTimeParameter();         
         void readImageParameter();

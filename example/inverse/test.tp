@@ -28,13 +28,14 @@ Inverse
     bCF1 = 1e-8
     bCF2 = 1e-4
     gCF = 1e-4
-    loopMAX = 1
+    loopMAX = 2
 }
 
 Data
 {
     nSnapShot = 10
     snapInterval = 5
+    snapTimeBeginItr = 0
     nNodesInDataCell = 8
     nxData = (12, 12, 12)
     lxData = (1.0, 1.0, 1.0)
@@ -60,6 +61,11 @@ PysicalParameter
 {   
     rho = 200
     mu = 1   
+}
+
+NRParameter
+{
+    NRtolerance = 1e-5
 }
 
 TimeParameter

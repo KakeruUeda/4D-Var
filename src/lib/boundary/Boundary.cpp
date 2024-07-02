@@ -89,9 +89,11 @@ void StructuredBoundaryFace::setDirichletInfo(std::vector<std::string> bdType,
 void DirichletBoundary::initialize(Config &conf)
 {
     vDirichlet.resize(conf.timeMax);
+    vDirichletWall.resize(conf.timeMax);
     pDirichlet.resize(conf.timeMax);
     for(int t=0; t<conf.timeMax; t++){
         vDirichlet[t] = conf.vDirichlet;
+        vDirichletWall[t] = conf.vDirichletWall;
         pDirichlet[t] = conf.pDirichlet;
     }
 }
@@ -99,11 +101,14 @@ void DirichletBoundary::initialize(Config &conf)
 void DirichletBoundary::initializeAdjoint(Config &conf)
 {
     vDirichlet.resize(conf.timeMax);
+    vDirichletWall.resize(conf.timeMax);
     pDirichlet.resize(conf.timeMax);
     for(int t=0; t<conf.timeMax; t++){
         vDirichlet[t] = conf.vDirichlet;
+        vDirichletWall[t] = conf.vDirichletWall;
         pDirichlet[t] = conf.pDirichlet;
     }
+
     controlBoundaryMap = conf.controlBoundaryMap;
     controlCellMap = conf.controlCellMap;
     controlNodeInCell = conf.controlNodeInCell;
@@ -155,6 +160,38 @@ void DirichletBoundary::assignDirichletBCs(std::vector<std::map<int, std::vector
     }
 
     for(auto &pair : pDirichletNew[t]){
+        dofCurrentTmp = 0;
+        dofCurrent = 0; 
+        count = 0;
+        for(int i=0; i<pair.first; i++)
+            dofCurrentTmp += node.nDofsOnNodeNew[i];
+        dofCurrent = dofCurrentTmp + dim;
+        dirichletBCsValueNew[dofCurrent] = pair.second;
+    }
+}
+
+
+void DirichletBoundary::assignConstantDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
+                                                   std::vector<std::map<int, double>> &pDirichletNew, Node &node, 
+                                                   int &dim, const int t)
+{         
+    int dofCurrentTmp, dofCurrent;
+    int count;
+
+    for(auto &pair : vDirichletNew[0]){
+        dofCurrentTmp = 0;
+        dofCurrent = 0; 
+        count = 0;
+        for(int i=0; i<pair.first; i++)
+            dofCurrentTmp += node.nDofsOnNodeNew[i];
+        for(auto &value : pair.second){
+            dofCurrent = dofCurrentTmp + count;
+            dirichletBCsValueNew[dofCurrent] = value;
+            count++;
+        }
+    }
+
+    for(auto &pair : pDirichletNew[0]){
         dofCurrentTmp = 0;
         dofCurrent = 0; 
         count = 0;

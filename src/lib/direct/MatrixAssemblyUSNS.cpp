@@ -7,16 +7,18 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
     int IU,IV,IW,IP;
     int JU,JV,JW,JP;
     int nGaussPoint = 2;
-    
-    std::vector<std::vector<double>> xCurrent(grid.cell.nNodesInCell,
-                                              std::vector<double>(dim, 0e0));
-    std::vector<double> N(grid.cell.nNodesInCell, 0e0);
-    std::vector<std::vector<double>> dNdr(grid.cell.nNodesInCell,
-                                     std::vector<double>(dim, 0e0));
-    std::vector<std::vector<double>> dNdx(grid.cell.nNodesInCell,
-                                     std::vector<double>(dim, 0e0));
-    std::vector<std::vector<double>> K(grid.cell.nNodesInCell,
-                                     std::vector<double>(grid.cell.nNodesInCell, 0e0));
+
+    std::vector<double> N;
+    std::vector<std::vector<double>> xCurrent;
+    std::vector<std::vector<double>> dNdr;
+    std::vector<std::vector<double>> dNdx;
+    std::vector<std::vector<double>> K;
+
+    VecTool::resize(xCurrent, grid.cell.nNodesInCell, dim);
+    VecTool::resize(N, grid.cell.nNodesInCell);
+    VecTool::resize(dNdr, grid.cell.nNodesInCell, dim);
+    VecTool::resize(dNdx, grid.cell.nNodesInCell, dim);
+    VecTool::resize(K, grid.cell.nNodesInCell, grid.cell.nNodesInCell);
     
     for(int p=0; p<grid.cell.nNodesInCell; p++)
         for(int d=0; d<dim; d++)
@@ -36,13 +38,17 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
                 MathFEM::calc_dxdr(dxdr, dNdr, xCurrent, grid.cell.nNodesInCell);
                 detJ = MathCommon::calcDeterminant_3x3(dxdr);
                 weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
+
                 MathFEM::calc_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
                 MathFEM::calc_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
+
                 double vel[3] = {0e0, 0e0, 0e0};
                 double advel[3] {0e0, 0e0, 0e0};
                 double dvdx[3][3] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
+
                 setVelocityValue(vel, advel, dvdx, N, dNdx, ic, t);
                 double tau = MathFEM::calc_tau(advel, he, Re, dt);
+
                 for(int ii=0; ii<grid.cell.nNodesInCell; ii++){  
                     IU = 4 * ii;
                     IV = IU + 1;
@@ -77,7 +83,7 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
                         Klocal(IV, JW) += 5e-1 * dNdx[ii][2] * dNdx[jj][1] / Re * detJ * weight;
                         Klocal(IW, JU) += 5e-1 * dNdx[ii][0] * dNdx[jj][2] / Re * detJ * weight;
                         Klocal(IW, JV) += 5e-1 * dNdx[ii][1] * dNdx[jj][2] / Re * detJ * weight;
-                        
+
                         // ADVECTION TERM
                         for(int mm=0; mm<3; mm++){
                             Klocal(IU, JU) += 5e-1 * N[ii] * advel[mm] * dNdx[jj][mm] * detJ * weight;
@@ -123,6 +129,7 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
                             Klocal(IV, JP) += tau * dNdx[ii][mm] * advel[mm] * dNdx[jj][1] * detJ * weight;
                             Klocal(IW, JP) += tau * dNdx[ii][mm] * advel[mm] * dNdx[jj][2] * detJ * weight;
                         }
+
                         // PSPG TERM
                         // MASS TERM 
                         Klocal(IP, JU) += tau * dNdx[ii][0] * N[jj] / dt * detJ * weight;
@@ -204,7 +211,6 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
             }
         }
     }
-
 }
 
 
@@ -212,40 +218,16 @@ void DirectProblem::setVelocityValue(double (&vel)[3], double (&advel)[3], doubl
                                      std::vector<double> &N, std::vector<std::vector<double>> &dNdx, 
                                      const int ic, const int t)
 {
-    if(t == 0){
-        for(int d=0; d<dim; d++){
-            advel[d] = 0e0;
-            vel[d] = 0e0;
-            for(int e=0; e<dim; e++){
-                dvdx[d][e] = 0e0;
-            }
+    for(int d=0; d<dim; d++){
+        for(int p=0; p<grid.cell.nNodesInCell; p++){
+            advel[d] += N[p] * (1.5 * grid.node.v[grid.cell(ic).node[p]][d] - 0.5 * grid.node.vPrev[grid.cell(ic).node[p]][d]);
+            vel[d] += N[p] * grid.node.v[grid.cell(ic).node[p]][d];
         }
-    }else if(t == 1){
-        for(int d=0; d<dim; d++){
+    }
+    for(int d=0; d<dim; d++){
+        for(int e=0; e<dim; e++){
             for(int p=0; p<grid.cell.nNodesInCell; p++){
-                advel[d] += N[p] * 1.5 * grid.node.v[grid.cell(ic).node[p]][d];
-                vel[d] += N[p] * grid.node.v[grid.cell(ic).node[p]][d];
-            }
-        }
-        for(int d=0; d<dim; d++){
-            for(int e=0; e<dim; e++){
-                for(int p=0; p<grid.cell.nNodesInCell; p++){
-                    dvdx[d][e] += dNdx[p][e] * grid.node.v[grid.cell(ic).node[p]][d];
-                }
-            }
-        }
-    }else{
-        for(int d=0; d<dim; d++){
-            for(int p=0; p<grid.cell.nNodesInCell; p++){
-                advel[d] += N[p] * (1.5 * grid.node.v[grid.cell(ic).node[p]][d] - 0.5 * grid.node.vPrev[grid.cell(ic).node[p]][d]);
-                vel[d] += N[p] * grid.node.v[grid.cell(ic).node[p]][d];
-            }
-        }
-        for(int d=0; d<dim; d++){
-            for(int e=0; e<dim; e++){
-                for(int p=0; p<grid.cell.nNodesInCell; p++){
-                    dvdx[d][e] += dNdx[p][e] * grid.node.v[grid.cell(ic).node[p]][d];
-                }
+                dvdx[d][e] += dNdx[p][e] * grid.node.v[grid.cell(ic).node[p]][d];
             }
         }
     }

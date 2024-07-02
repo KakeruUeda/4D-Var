@@ -188,3 +188,12 @@ int PetscSolver::solve()
 
     return 0;
 }
+
+double PetscSolver::vectorNorm(const int num)
+{
+    double norm = 0e0;
+    for(int i=0; i<num; i++){
+        norm += solution[i] * solution[i];
+    }
+    return sqrt(norm);
+}

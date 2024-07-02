@@ -17,8 +17,6 @@ void Config::readBasicParameter()
     label = base_label + "/numOfOMP";
     if(!tp.getInspectedValue(label, nOMP))
         throw std::runtime_error(label + " is not set");
-
-    return;
 }
 
 void Config::readPysicalParameter()
@@ -33,8 +31,16 @@ void Config::readPysicalParameter()
     label = base_label + "/mu";
     if (!tp.getInspectedValue(label, mu))
         throw std::runtime_error(label + " is not set");
+}
 
-    return;
+void Config::readNRParameter()
+{
+    std::string str, base_label, label;
+
+    base_label = "/NRParameter";
+    label = base_label + "/NRtolerance";
+    if (!tp.getInspectedValue(label, NRtolerance))
+        throw std::runtime_error(label + " is not set");
 }
 
 
@@ -71,8 +77,6 @@ void Config::readTimeParameter()
     label = base_label + "/T";
     if (!tp.getInspectedValue(label, T))
         throw std::runtime_error(label + " is not set");
-    
-    return;
 }
 
 void Config::readDarcyParameter()
@@ -407,6 +411,10 @@ void Config::readDataParameter()
 
     label = base_label + "/snapInterval";
     if(!tp.getInspectedValue(label, snapInterval))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/snapTimeBeginItr";
+    if(!tp.getInspectedValue(label, snapTimeBeginItr))
         throw std::runtime_error(label + " is not set");
 
     label = base_label + "/nNodesInDataCell";

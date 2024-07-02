@@ -59,6 +59,7 @@ double Grid::structuredGridCoordinateSet(const double dx, const double dy, const
 
 void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int timeMax)
 {
+    // change
     for(auto &pair : dirichlet.vDirichlet[0]){
         int count = 0;
         for(auto &value : pair.second){
@@ -374,6 +375,7 @@ void Grid::distributeToLocal(const int timeMax)
     int count;
 
    dirichlet.vDirichletNew.resize(timeMax);
+   dirichlet.vDirichletWallNew.resize(timeMax);
    dirichlet.pDirichletNew.resize(timeMax);
    
    for(int t=0; t<timeMax; t++){
@@ -387,6 +389,18 @@ void Grid::distributeToLocal(const int timeMax)
                 count++;
             }
             dirichlet.vDirichletNew[t][n1] = vecTmp;
+        }
+        // change
+        for(auto &pair : dirichlet.vDirichletWall[t]){
+            std::vector<double> vecTmp;
+            n1 = node.mapNew[pair.first];
+            //count = 0;
+            for(auto &value : pair.second){
+                vecTmp.push_back(value);
+                //if(t == 0) node.isDirichletNew[n1][count] = true;
+                //count++;
+            }
+            dirichlet.vDirichletWallNew[t][n1] = vecTmp;
         }
 
         for(auto &pair : dirichlet.pDirichlet[t]){
