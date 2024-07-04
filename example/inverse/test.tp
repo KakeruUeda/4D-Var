@@ -24,11 +24,11 @@ Boundary
 Inverse
 {
     controlBoundary = "left"
-    aCF = 1e0
-    bCF1 = 1e-8
-    bCF2 = 1e-4
+    aCF = 1e2
+    bCF1 = 0e0
+    bCF2 = 0e0
     gCF = 1e-4
-    loopMAX = 2
+    loopMAX = 300
 }
 
 Data

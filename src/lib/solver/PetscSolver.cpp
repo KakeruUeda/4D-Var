@@ -119,6 +119,12 @@ void PetscSolver::setValue(std::vector<int> &lhsRow, std::vector<int> &lhsColumn
     int size1 = lhsRow.size();
     int size2 = lhsColumn.size();
     int size3 = rhs.size();
+    //PetscScalar v[size1 * size1];
+    //for(int i=0; i<size1; i++){
+    //    for(int j=0; j<size1; j++){
+    //        v[j + i * size1] = Klocal(i, j);
+    //    }
+    //}
     MatrixXdRM Klocal2 = Klocal;
     VecSetValues(rhsVec, size3, &rhs[0], &Flocal[0], ADD_VALUES);
     MatSetValues(mtx,    size1, &lhsRow[0], size2, &lhsColumn[0], &Klocal2(0, 0), ADD_VALUES);

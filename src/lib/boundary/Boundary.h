@@ -48,6 +48,7 @@ class DirichletBoundary
         void assignPulsatileBCs(const int &t, const double &dt, 
                                 const double &T, const int &nDofsGlobal);
         void applyDirichletBCs(Cell &cell, PetscSolver &petsc);
+        void applyDirichletBCsAdjoint(Cell &cell, PetscSolver &petsc);
     
     private:
 };

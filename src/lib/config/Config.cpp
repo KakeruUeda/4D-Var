@@ -97,11 +97,20 @@ void Config::setSolidBoundary()
         }
     }
 
+    bool flag;
     for(int ic=0; ic<nCellsGlobal; ic++){
+        flag = false;
         if(phi[ic] < 1e-12){
-            for(int p=0; p<nNodesInCell; p++){
-                std::vector<double> vecTmp(dim, 0e0);
-                vDirichletWall[cell[ic][p]] = vecTmp;
+            for(int ic2=0; ic2<controlCellMap.size(); ic2++){
+                if(ic == controlCellMap[ic2]){
+                    flag = true;
+                }
+            }
+            if(flag == false){
+                for(int p=0; p<nNodesInCell; p++){
+                    std::vector<double> vecTmp(dim, 0e0);
+                    vDirichletWall[cell[ic][p]] = vecTmp;
+                }
             }
         }
     }

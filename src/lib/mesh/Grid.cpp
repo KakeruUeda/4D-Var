@@ -59,7 +59,7 @@ double Grid::structuredGridCoordinateSet(const double dx, const double dy, const
 
 void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int timeMax)
 {
-    // change
+    std::cout << "1" << std::endl;
     for(auto &pair : dirichlet.vDirichlet[0]){
         int count = 0;
         for(auto &value : pair.second){
@@ -75,6 +75,20 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
         for(int id=0; id<node.nDofsOnNode[in]; id++)
             if(node.isDirichlet[in][id])
                 node.dofsBCsMap[in][id] = -1;
+
+    //// add //////////////////////////////////////
+    for(auto &pair : dirichlet.vDirichletWall[0]){
+        int count = 0;
+        for(auto &value : pair.second){
+            node.isDirichletWall[pair.first][count] = true;
+            count++;
+        }
+    }
+    for(int in=0; in<node.nNodesGlobal; in++)
+        for(int id=0; id<node.nDofsOnNode[in]; id++)
+            if(node.isDirichletWall[in][id])
+                node.dofsBCsMapWall[in][id] = -1;
+    ////////////////////////////////////////////////
 
     nDofsGlobal = 0;
     for(int in=0; in<node.nNodesGlobal; in++)
@@ -163,6 +177,28 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
             }
         //}
     }
+
+    /// add ///
+    for(int ic=0; ic<cell.nCellsGlobal; ic++){
+        if(cell(ic).subId == mpi.myId){
+            size = 0;
+            for(int p=0; p<cell.nNodesInCell; p++){
+                size += node.nDofsOnNodeNew[cell(ic).nodeNew[p]];
+            }
+            cell(ic).dofsMapWall.resize(size);
+            cell(ic).dofsBCsMapWall.resize(size);
+            int i = 0; int j = 0;
+            for(int p=0; p<cell.nNodesInCell; p++){
+                j = cell(ic).nodeNew[p];
+                for(int q=0; q<node.nDofsOnNodeNew[cell(ic).nodeNew[p]]; q++){
+                    cell(ic).dofsMapWall[i + q] = node.dofsMapWallNew[j][q];
+                    cell(ic).dofsBCsMapWall[i + q] = node.dofsBCsMapWallNew[j][q];
+                }
+                i += node.nDofsOnNodeNew[cell(ic).nodeNew[p]];
+            }
+        }
+    }
+    //////////
 
     // debug
     if(mpi.myId == 0){
@@ -375,8 +411,11 @@ void Grid::distributeToLocal(const int timeMax)
     int count;
 
    dirichlet.vDirichletNew.resize(timeMax);
-   dirichlet.vDirichletWallNew.resize(timeMax);
    dirichlet.pDirichletNew.resize(timeMax);
+
+   /// add ///
+    dirichlet.vDirichletWallNew.resize(timeMax);
+    //////////
    
    for(int t=0; t<timeMax; t++){
         for(auto &pair : dirichlet.vDirichlet[t]){
@@ -390,18 +429,19 @@ void Grid::distributeToLocal(const int timeMax)
             }
             dirichlet.vDirichletNew[t][n1] = vecTmp;
         }
-        // change
+        /// add ///
         for(auto &pair : dirichlet.vDirichletWall[t]){
             std::vector<double> vecTmp;
             n1 = node.mapNew[pair.first];
-            //count = 0;
+            count = 0;
             for(auto &value : pair.second){
                 vecTmp.push_back(value);
-                //if(t == 0) node.isDirichletNew[n1][count] = true;
-                //count++;
+                if(t == 0) node.isDirichletWallNew[n1][count] = true;
+                count++;
             }
             dirichlet.vDirichletWallNew[t][n1] = vecTmp;
         }
+        //////////
 
         for(auto &pair : dirichlet.pDirichlet[t]){
             n1 = node.mapNew[pair.first];
@@ -414,6 +454,13 @@ void Grid::distributeToLocal(const int timeMax)
         for(int id=0; id<node.nDofsOnNodeNew[in]; id++)
             if(node.isDirichletNew[in][id])
                 node.dofsBCsMapNew[in][id] = -1;
+
+    /// add ///
+    for(int in=0; in<node.nNodesGlobal; in++)
+        for(int id=0; id<node.nDofsOnNodeNew[in]; id++)
+            if(node.isDirichletWallNew[in][id])
+                node.dofsBCsMapWallNew[in][id] = -1;
+    ///////////
 
     rowStart = 0;
     for(int in=0; in<nodeStart; in++)

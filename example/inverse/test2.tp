@@ -17,13 +17,14 @@ Grid
 
 Boundary
 {
-    velocityDirichlet = "input/square/velocityDirichletZero.dat"
+    velocityDirichlet = "input/square/velocityDirichlet.dat"
     pressureDirichlet = "input/square/pressureDirichlet.dat"
 }
 
 Inverse
 {
-    aCF = 1e0
+    controlBoundary = "left"
+    aCF = 1e3
     bCF1 = 1e-8
     bCF2 = 1e-4
     gCF = 1e-4
@@ -34,6 +35,7 @@ Data
 {
     nSnapShot = 10
     snapInterval = 5
+    snapTimeBeginItr = 0
     nNodesInDataCell = 8
     nxData = (12, 12, 12)
     lxData = (1.0, 1.0, 1.0)

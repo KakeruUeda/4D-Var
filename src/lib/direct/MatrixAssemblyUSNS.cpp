@@ -59,15 +59,17 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
                         JV = JU + 1;
                         JW = JU + 2;
                         JP = JU + 3;
+                        
                         K[ii][jj] = 0e0;
-
                         for(int k=0;k<3;k++){
                             K[ii][jj] += dNdx[ii][k] *dNdx[jj][k];
                         }
+
                         // MASS TERM
                         Klocal(IU, JU) += N[ii] * N[jj] / dt * detJ * weight;
                         Klocal(IV, JV) += N[ii] * N[jj] / dt * detJ * weight;
                         Klocal(IW, JW) += N[ii] * N[jj] / dt * detJ * weight;
+
                          // DIFFUSION TERM
                         for(int mm=0; mm<3; mm++){
                             if(mm == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}

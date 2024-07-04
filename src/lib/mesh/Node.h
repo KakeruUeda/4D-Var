@@ -29,6 +29,12 @@ class Node
         std::vector<std::vector<double>> type;
         std::vector<std::vector<double>> x;
 
+        /// add ///
+        std::vector<std::vector<int>> dofsMapWall, dofsBCsMapWall;
+        std::vector<std::vector<int>> dofsMapWallNew, dofsBCsMapWallNew;
+        std::vector<std::vector<bool>> isDirichletWall, isDirichletWallNew;
+        ///////////
+
         // Main variable
         std::vector<std::vector<double>> v, vPrev;
         std::vector<double> p;

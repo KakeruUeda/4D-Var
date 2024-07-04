@@ -18,6 +18,9 @@ struct CellInfo
         std::vector<int> dofsMap, dofsBCsMap;
         std::vector<std::vector<double>> x;
 
+        /// add ///
+        std::vector<int> dofsMapWall, dofsBCsMapWall;
+
         inline void setArrayZero(int n);
 };
 

@@ -267,7 +267,7 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
         assignTimeVariables(t);
         outputSolution(t);
         
-        if((t - snap.snapTimeBeginItr) % snap.snapInterval == 0){
+        if((t - snap.snapTimeBeginItr) % snap.snapInterval == 0){;
             snap.takeSnapShot(grid.node.v, snapCount, grid.node.nNodesGlobal, dim);
             snapCount++;
         }

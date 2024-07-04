@@ -129,7 +129,7 @@ void InverseProblem::output(const int loop)
     for(int t=0; t<main.snap.nSnapShot; t++){
         if(mpi.myId == 0){
             std::string vtiFile;
-            vtiFile = outputDir + "/data/data_" + to_string(loop) + to_string(t) + ".vti";
+            vtiFile = outputDir + "/data/data_" + to_string(loop) + "_" + to_string(t) + ".vti";
             main.grid.output.exportVelocityDataVTI(vtiFile, data, t, main.dim);
         }
     }
@@ -145,7 +145,13 @@ void InverseProblem::calcCostFunction()
         for(int ic=0; ic<data.nCellsGlobal; ic++){
             for(int d=0; d<dim; d++){           
                 data(ic).vCFD[t][d] = 0e0;
+                data(ic).ve[t][d] = 0e0;
             }
+        }
+    }
+
+    for(int t=0; t<main.snap.nSnapShot; t++){
+        for(int ic=0; ic<data.nCellsGlobal; ic++){
             data(ic).averageVelocity(main.grid.cell, main.snap.v[t],
                            t, main.grid.cell.nNodesInCell, main.dim);
         }
@@ -158,7 +164,7 @@ void InverseProblem::calcCostFunction()
             double volume = data.dx * data.dy * data.dz;
             double deltaT = main.dt * main.snap.snapInterval;
             for(int d=0; d<dim; d++){
-                data(ic).ve[t][d] = data(ic).vCFD[t][d] - data(ic).vMRI[t][d];
+                data(ic).ve[t][d] = data(ic).vMRI[t][d] - data(ic).vCFD[t][d];
                 dev += data(ic).ve[t][d] * data(ic).ve[t][d];
             }
             costFunction.term1 += 5e-1 * aCF * dev * volume * deltaT;
@@ -345,7 +351,7 @@ void InverseProblem::calcEdgeValue(std::vector<std::vector<std::vector<std::vect
             for(int i=0; i<data.nx; i++){
                 for(int d=0; d<dim; d++){
                     vEX[k+1][j+1][i+1][d] 
-                    = data(k, j, i).vMRI[t][d];
+                    = data(k, j, i).ve[t][d];
                 }
             }
         }
@@ -577,6 +583,11 @@ void InverseProblem::calcOptimalCondition()
         for(int ic=0; ic<adjoint.grid.dirichlet.controlNodeInCell.size(); ic++){
             double value[4][3];
             for(int p=0; p<nControlNodesInCell; p++){
+                for(int d=0; d<3; d++){
+                    value[p][d] = 0e0;
+                }
+            }
+            for(int p=0; p<nControlNodesInCell; p++){
                 for(int d=0; d<dim-1; d++){
                     int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
                     xCurrent2D[p][d] = main.grid.node.x[in][planeDir[d]];
@@ -688,11 +699,6 @@ void InverseProblem::GaussIntegralOptimalConditionTerm3(std::vector<double> &N, 
     }
     for(int p=0; p<nControlNodesInCell; p++){
         for(int d=0; d<3; d++){
-            value[p][d] = 0e0;
-        }
-    }
-    for(int p=0; p<nControlNodesInCell; p++){
-        for(int d=0; d<3; d++){
             value[p][d] += lgp[d] * N[p] * detJ * weight;
         }
     }
@@ -702,7 +708,7 @@ double InverseProblem::armijoCriteria(const double fk)
 {
     int n = adjoint.grid.dirichlet.controlBoundaryMap.size();
     const double c1 = 1e-2;
-    double alpha = 1e5;
+    double alpha = 1e0;
 
     std::vector<std::map<int, std::vector<double>>> vDirichletTmp;
     std::vector<std::map<int, std::vector<double>>> vDirichletNewTmp;
@@ -711,6 +717,12 @@ double InverseProblem::armijoCriteria(const double fk)
     
     std::vector<std::map<int, double>> pDirichletNewTmp;
     pDirichletNewTmp = adjoint.grid.dirichlet.pDirichletNew;
+
+    for(int t=0; t<main.timeMax; t++){
+        std::string vtuFile;
+        vtuFile = outputDir + "/feedback/grad_" + to_string(t) + ".vtu";
+        main.grid.output.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, gradWholeNode[t]);
+    }
  
     while(10){
         for(int t=0; t<adjoint.timeMax; t++){

@@ -244,3 +244,35 @@ void DirichletBoundary::applyDirichletBCs(Cell &cell, PetscSolver &petsc)
     VecAssemblyBegin(petsc.rhsVec);
     VecAssemblyEnd(petsc.rhsVec);
 }
+
+void DirichletBoundary::applyDirichletBCsAdjoint(Cell &cell, PetscSolver &petsc)
+{
+    std::vector<int> vecTmp;
+
+    for(int ic=0; ic<cell.nCellsGlobal; ic++){
+        if(cell(ic).subId == mpi.myId){
+            int nDofsInCell = cell(ic).dofsMapWall.size();
+            PetscScalar  FlocalTmp[nDofsInCell];
+            PetscScalar  KlocalTmp[nDofsInCell * nDofsInCell];
+
+            for(int i=0; i<nDofsInCell; i++)  FlocalTmp[i] = 0e0;
+            for(int i=0; i<nDofsInCell*nDofsInCell; i++)  KlocalTmp[i] = 0e0;
+
+            vecTmp = cell(ic).dofsMapWall;
+            for(int i=0; i<nDofsInCell; i++){
+                if(cell(ic).dofsBCsMapWall[i] == -1){
+                    KlocalTmp[i + i * nDofsInCell] = 1;
+                    FlocalTmp[i] = dirichletBCsValueNew[cell(ic).dofsMapWall[i]];
+                }
+            }
+            MatSetValues(petsc.mtx, nDofsInCell, &vecTmp[0], nDofsInCell, &vecTmp[0], KlocalTmp, INSERT_VALUES);
+            VecSetValues(petsc.rhsVec, nDofsInCell, &vecTmp[0], FlocalTmp, INSERT_VALUES);
+        }
+    }
+
+    MatAssemblyBegin(petsc.mtx, MAT_FLUSH_ASSEMBLY);
+    MatAssemblyEnd(petsc.mtx, MAT_FLUSH_ASSEMBLY);
+
+    VecAssemblyBegin(petsc.rhsVec);
+    VecAssemblyEnd(petsc.rhsVec);
+}

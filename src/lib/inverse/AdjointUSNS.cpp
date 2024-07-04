@@ -24,7 +24,10 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
     //for(int t=timeMax-1; t>=0; t--){
     for(int t=0; t<timeMax; t++){
         petsc.setValueZero();
-
+        grid.dirichlet.assignDirichletBCs(grid.dirichlet.vDirichletWallNew, 
+                                          grid.dirichlet.pDirichletNew, 
+                                          grid.node, main.dim, t);
+        grid.dirichlet.applyDirichletBCsAdjoint(grid.cell, petsc);
         //MPI_Barrier(MPI_COMM_WORLD);
         //double timer = MPI_Wtime();
         for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
@@ -35,8 +38,8 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
                 Klocal.setZero();
                 Flocal.setZero();
                 matrixAssemblyAdjointUSNS(main, Klocal, Flocal, ic, t);
-                petsc.setValue(grid.cell(ic).dofsMap, grid.cell(ic).dofsMap,
-                               grid.cell(ic).dofsMap, Klocal, Flocal);
+                petsc.setValue(grid.cell(ic).dofsBCsMapWall, grid.cell(ic).dofsMap,
+                               grid.cell(ic).dofsBCsMapWall, Klocal, Flocal);
             }
         }
 
@@ -49,20 +52,20 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
                 Klocal.setZero();
                 Flocal.setZero();
                 boundaryIntegral(main, Klocal, Flocal, ic, ib);
-                petsc.setMatValue(grid.cell(ic).dofsMap, grid.cell(ic).dofsMap, Klocal);
+                petsc.setMatValue(grid.cell(ic).dofsBCsMapWall, grid.cell(ic).dofsMap, Klocal);
             }
         }
     
         for(int in=0; in<grid.node.nNodesGlobal; in++){
             int n = grid.node.mapNew[in];
-            int size = grid.node.dofsMapNew[n].size();
+            int size = grid.node.dofsBCsMapNew[n].size();
             VectorXd  Flocal(size);
             Flocal.setZero();
             if(grid.node.subId[in] == mpi.myId){
                 Flocal(0) -= feedbackForceT[t][in][0];
                 Flocal(1) -= feedbackForceT[t][in][1];
                 Flocal(2) -= feedbackForceT[t][in][2];
-                petsc.setVecValue(grid.node.dofsMapNew[n], Flocal);
+                petsc.setVecValue(grid.node.dofsBCsMapWallNew[n], Flocal);
             }
         }
 
@@ -164,9 +167,9 @@ void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &
     double value;
 
     for(int p=0; p<nControlNodesInCell; p++){
-        int index = grid.dirichlet.controlNodeInCell[ib][p];
+        int n = grid.dirichlet.controlNodeInCell[ib][p];
         for(int d=0; d<main.dim-1; d++){
-            xCurrent2D[p][d] = main.grid.node.x[index][planeDir[d]];
+            xCurrent2D[p][d] = main.grid.node.x[n][planeDir[d]];
         }
     }
 
@@ -232,6 +235,9 @@ void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &
                     Klocal(ILW, ILW) -= N2D[ii] * N2D[jj] * detJ * weight; 
                     */
                 }
+                //`Flocal(ILU) += 5e-1 * N2D[ii] * wgp[0] * detJ * weight;
+                //Flocal(ILV) += 5e-1 * N2D[ii] * wgp[1] * detJ * weight;
+                //Flocal(ILW) += 5e-1 * N2D[ii] * wgp[2] * detJ * weight;
             }
             
         }
