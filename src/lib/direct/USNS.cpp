@@ -8,10 +8,18 @@ void DirectProblem::solveUSNS(Application &app)
     Vec  vecSEQ;
     VecScatter  ctx;
     VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ);
-    
+
     petsc.setMatAndVecZero(grid.cell);
     petsc.initialAssembly();
     
+    for(int in=0; in<grid.node.nNodesGlobal; in++){
+        for(int d=0; d<dim; d++){
+            grid.node.v[in][d] = 0e0;
+            grid.node.vPrev[in][d] = 0e0;
+        }
+        grid.node.p[in] = 0e0;
+    }
+
     for(int id=0; id<grid.nDofsGlobal; id++){
         grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
         grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
@@ -289,10 +297,6 @@ void DirectProblem::updateVariables(const int t)
         int n1 = 0;
         for(int i=0; i<grid.node.mapNew[in]; i++)
             n1 += grid.node.nDofsOnNode[i];
-
-        for(int d=0; d<dim; d++)
-            grid.node.vPrev[in][d] = 0e0;
-        grid.node.p[in] = 0e0;
 
         for(int d=0; d<dim; d++)
             grid.node.vPrev[in][d] = grid.node.v[in][d];

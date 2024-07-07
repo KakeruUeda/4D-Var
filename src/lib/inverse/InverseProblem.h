@@ -57,14 +57,27 @@ class Adjoint
         double dt;
         double rho, mu, nu, Re;
         double alpha, resistance;
+
+        double vk[3], vk1[3], vk2[3];
+        double advk1[3], advk2[3];
+        double dvkdx[3][3], dvk1dx[3][3], dvk2dx[3][3];
+        double wk1[3], wk2[3];
+        double dwk1dx[3][3], dwk2dx[3][3];
         
         std::vector<int> planeDir;
 
         void solveAdjointEquation(DirectProblem &main, std::string outputDir, 
                                   std::vector<std::vector<std::vector<double>>> &feedbackForceT,  
                                   const int nData, const int loop);
+        void solveAdjoint_DO(DirectProblem &main, std::string outputDir,
+                             std::vector<std::vector<std::vector<double>>> &feedbackForceT,
+                             const int nData, const int loop);
+        void setValue(DirectProblem &main, std::vector<double> &N, 
+                      std::vector<std::vector<double>> &dNdx, const int ic, const int t);
         void matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
                                        const int ic, const int t);
+        void matrixAssemblyAdjoint_DO(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
+                                      const int ic, const int t);
         void boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
                               const int ic, const int ib);
         void updateVariables(std::string output, const int dim, const int t, const int loop);
@@ -104,6 +117,7 @@ class InverseProblem
         void runSimulation();
 
         void output(const int loop);
+        void initialGuess();
         void calcCostFunction();
         void GaussIntegralRegTerm1(std::vector<double> &N, std::vector<std::vector<double>> &dNdr,
                                    std::vector<std::vector<double>> &xCurrent, double &value, 
@@ -138,7 +152,7 @@ class InverseProblem
                                                 double (&value)[4][3], const double weight, 
                                                 const int ic, const int t);
         double armijoCriteria(const double fk);
-        void updataControlVariables(DirectProblem &main, const int alpha);
+        void updataControlVariables(DirectProblem &main, const double alpha);
     
     private:
 

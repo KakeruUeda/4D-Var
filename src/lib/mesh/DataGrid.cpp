@@ -10,7 +10,6 @@ nCellsGlobal(conf.nCellsDataGlobal),
 nNodesInCell(conf.nNodesInCellData), 
 data(conf.nCellsDataGlobal)
 {
-    std::cout << conf.nData << " " << nData << std::endl;
     if(conf.app == Application::USNS){
         xOrigin = conf.xOrigin; 
         yOrigin = conf.yOrigin; 
@@ -48,15 +47,22 @@ void DataGrid::initialize(Config &conf, Node &node, Cell &cell, const int &dim)
     for(int k=0; k<nz; k++){
         for(int j=0; j<ny; j++){
             for(int i=0; i<nx; i++){
-                for(int d=0; d<dim; d++){
-                    if(d == 0) data[k * nx * ny + j * nx + i].center[d] = (5e-1 + i) * dx;
-                    if(d == 1) data[k * nx * ny + j * nx + i].center[d] = (5e-1 + j) * dy;
-                    if(d == 2) data[k * nx * ny + j * nx + i].center[d] = (5e-1 + k) * dz;
-                }
+                data[k * nx * ny + j * nx + i].center[0] = (5e-1 + i) * dx;
+                data[k * nx * ny + j * nx + i].center[1] = (5e-1 + j) * dy;
+                data[k * nx * ny + j * nx + i].center[2] = (5e-1 + k) * dz;
                 data[k * nx * ny + j * nx + i].setNearCell(node, cell, range, dim);
             }
         }
     }
+    
+    for(int k=0; k<nz; k++){
+        for(int j=0; j<ny; j++){
+            for(int i=0; i<nx; i++){
+                data[k * nx * ny + j * nx + i].setCellOnCenterPoint(node, cell, dim);
+            }
+        }
+    }
+
 }
 
 void VoxelInfo::setNearCell(Node &node, Cell &cell, const double &range, const int &dim)
@@ -78,6 +84,115 @@ void VoxelInfo::setNearCell(Node &node, Cell &cell, const double &range, const i
         }
         if(flag) cellChildren.push_back(ic);
     }
+}
+
+void VoxelInfo::setCellOnCenterPoint(Node &node, Cell &cell, const int &dim)
+{
+    double distance;
+    std::vector<double> diff(dim);
+    std::vector<double> minDiff(dim);
+    std::vector<double> point(dim);
+
+    double dx, dy, dz;
+    
+    double minDistance = 1e12;
+    isIncluded = true;
+
+    std::vector<std::vector<double>> xCurrent;
+    VecTool::resize(xCurrent, cell.nNodesInCell, dim);
+
+    for(int ic=0; ic<cell.nCellsGlobal; ic++){
+        for(int p=0; p<cell.nNodesInCell; p++){
+            for(int d=0; d<dim; d++){
+                xCurrent[p][d] = cell(ic).x[p][d];
+            }
+        }
+        dx = fabs(xCurrent[0][0] - xCurrent[1][0]);
+        dy = fabs(xCurrent[0][1] - xCurrent[3][1]);
+        dz = fabs(xCurrent[0][2] - xCurrent[4][2]);
+        std::vector<double> N(cell.nNodesInCell, 0e0);
+        ShapeFunction3D::C3D8_N(N, 0e0, 0e0, 0e0);
+        for(int d=0; d<dim; d++){
+            point[d] = 0e0;
+            for(int p=0; p<cell.nNodesInCell; p++){
+                point[d] += N[p] * node.x[cell(ic).node[p]][d];
+            }
+        }
+        distance = 0e0;
+        for(int d=0; d<dim; d++){
+            diff[d] = fabs(point[d] - center[d]);
+            distance += diff[d] * diff[d];
+        }
+        distance = sqrt(distance);
+        if(distance < minDistance){
+            minDistance = distance;
+            centerCell = ic;
+            for(int d=0; d<dim; d++){
+                minDiff[d] = diff[d];
+            }
+        } 
+    }
+    if(minDiff[0] > dx/2e0) isIncluded = false;
+    if(minDiff[1] > dy/2e0) isIncluded = false;
+    if(minDiff[2] > dz/2e0) isIncluded = false;
+
+}
+
+void VoxelInfo::interpolate(Node &node, Cell &cell, std::vector<std::vector<double>> &_v, 
+                            const int &t, const int &dim)
+{
+    if(isIncluded == false) return;
+
+    std::vector<std::vector<double>> xCurrent;
+    VecTool::resize(xCurrent, cell.nNodesInCell, dim);
+
+    for(int p=0; p<cell.nNodesInCell; p++){
+        for(int d=0; d<dim; d++){
+            xCurrent[p][d] = cell(centerCell).x[p][d];
+        }
+    }
+    
+    double dx = fabs(xCurrent[0][0] - xCurrent[1][0]);
+    double dy = dx;
+    double dz = dx;
+    double point[3];
+
+    std::vector<double> N(cell.nNodesInCell, 0e0);
+    ShapeFunction3D::C3D8_N(N, 0e0, 0e0, 0e0);
+    for(int d=0; d<dim; d++){
+        point[d] = 0e0;
+        for(int p=0; p<cell.nNodesInCell; p++){
+            point[d] += N[p] * xCurrent[p][d];
+        }
+    }
+        
+    double ss = (center[0] - point[0]);
+    double tt = (center[1] - point[1]);
+    double uu = (center[2] - point[2]);
+
+    ss = ss / (dx / 2e0);
+    tt = tt / (dy / 2e0);
+    uu = uu / (dz / 2e0);
+
+    if(ss<-1-EPS || ss>1+EPS){
+        PetscPrintf(MPI_COMM_WORLD, "\ns interpolation error found.\n");
+    }else if(tt<-1-EPS || tt>1+EPS){
+        PetscPrintf(MPI_COMM_WORLD, "\nt interpolation error found.\n");
+    }else if(uu<-1-EPS || uu>1+EPS){
+        PetscPrintf(MPI_COMM_WORLD, "\nu interpolation error found.\n");
+    }
+
+    for(int p=0; p<cell.nNodesInCell; p++){
+        N[p] = 0e0;
+    }
+    ShapeFunction3D::C3D8_N(N, ss, tt, uu);
+
+    for(int d=0; d<dim; d++){
+        for(int p=0; p<cell.nNodesInCell; p++){
+            vCFD[t][d] += N[p] * _v[cell(centerCell).node[p]][d];
+        }
+    }
+
 }
 
 void VoxelInfo::averageVelocity(Cell &cell, std::vector<std::vector<double>> &_v, 

@@ -17,7 +17,7 @@ Grid
 
 Boundary
 {
-    velocityDirichlet = "input/straightTube/data12x12x12/velocityDirichlet.dat"
+    velocityDirichlet = "input/straightTube/data12x12x12/velocityDirichletPoiseuille.dat"
     pressureDirichlet = "input/straightTube/data12x12x12/pressureDirichlet.dat"
 }
 

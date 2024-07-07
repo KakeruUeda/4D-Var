@@ -43,6 +43,7 @@ class Node
 
         // Adjoint variable
         std::vector<std::vector<double>> w;
+        std::vector<std::vector<double>> wPrev;
         std::vector<double> q;
         std::vector<std::vector<double>> l;
         std::vector<std::vector<std::vector<double>>> lt;

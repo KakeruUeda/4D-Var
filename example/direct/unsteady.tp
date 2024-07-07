@@ -8,7 +8,7 @@ Base
 Grid
 {
     type = "Structured"
-    extractFluid = "ON"
+    extractFluid = "OFF"
     nNodesInCell = 8
     node = "input/straightTube/node.dat"
     cell = "input/straightTube/cell.dat"
@@ -30,7 +30,7 @@ PysicalParameter
 TimeParameter
 {
     dt = 0.01
-    timeMax = 1000
+    timeMax = 300
     pulsatileFlow = "ON"
     pulseBeginItr = 100
     T = 1.0
@@ -44,7 +44,7 @@ DarcyParameter
 
 Postprocess
 {
-    isSnapShot = "ON"
+    isSnapShot = "OFF"
     nSnapShot = 10
     snapInterval = 5
     snapTimeBeginItr = 250

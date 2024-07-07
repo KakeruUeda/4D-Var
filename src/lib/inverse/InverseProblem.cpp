@@ -55,6 +55,7 @@ void InverseProblem::initialize(Config &conf)
     adjoint.Re = 1e0 / adjoint.nu; 
 
     VecTool::resize(adjoint.grid.node.w, adjoint.grid.node.nNodesGlobal, dim);
+    VecTool::resize(adjoint.grid.node.wPrev, adjoint.grid.node.nNodesGlobal, dim);
     VecTool::resize(adjoint.grid.node.q, adjoint.grid.node.nNodesGlobal);
     VecTool::resize(adjoint.grid.node.l, main.grid.nNodesGlobal, dim);
     VecTool::resize(adjoint.grid.node.lt, adjoint.timeMax, adjoint.grid.nNodesGlobal, dim);
@@ -81,6 +82,7 @@ void InverseProblem::initialize(Config &conf)
 void InverseProblem::runSimulation()
 {
     main.outputDomain();
+    initialGuess();
     for(int loop=0; loop<loopMax; loop++){
         PetscPrintf(MPI_COMM_WORLD, "\nOpt itr. : %d\n", loop);
         calcCostFunction();
@@ -89,8 +91,8 @@ void InverseProblem::runSimulation()
         calcFeedbackForce();
         calcTimeInterpolatedFeedbackForce();
         output(loop);
-        adjoint.solveAdjointEquation(main, outputDir, 
-                   feedbackForceT, data.nData, loop);
+        adjoint.solveAdjoint_DO(main, outputDir, 
+                feedbackForceT, data.nData, loop);
         calcOptimalCondition();
         double alpha = armijoCriteria(costFunction.total);
         PetscPrintf(MPI_COMM_WORLD, "\nalpha = %f\n", alpha);
@@ -98,7 +100,55 @@ void InverseProblem::runSimulation()
     }
 }
 
-void InverseProblem::updataControlVariables(DirectProblem &main, const int alpha)
+void InverseProblem::initialGuess()
+{
+    main.calcInitialCondition(main.grid.dirichlet.vDirichletNew, 
+                              main.grid.dirichlet.pDirichletNew);
+    main.solveUSNS(main.grid.dirichlet.vDirichletNew, 
+                   main.grid.dirichlet.pDirichletNew);
+
+    int n = adjoint.grid.dirichlet.controlBoundaryMap.size();
+    for(int t=0; t<main.timeMax; t++){
+        for(int ib=0; ib<n; ib++){
+            int key = adjoint.grid.dirichlet.controlBoundaryMap[ib];
+            auto it = main.grid.dirichlet.vDirichlet[t].find(key);
+            if(it != main.grid.dirichlet.vDirichlet[t].end()){
+                for(int d=0; d<dim; d++){
+                    X[t][ib][d] = main.grid.dirichlet.vDirichlet[t][key][d];
+                }
+            }
+        }
+    } 
+    
+    std::vector<std::vector<std::vector<double>>> XWholeNode;
+    VecTool::resize(XWholeNode, main.timeMax, main.grid.node.nNodesGlobal, main.dim);
+    for(int t=0; t<main.timeMax; t++){
+        for(int ib=0; ib<adjoint.grid.dirichlet.controlBoundaryMap.size(); ib++){
+            int in = adjoint.grid.dirichlet.controlBoundaryMap[ib];
+            for(int d=0; d<dim; d++){
+                XWholeNode[t][in][d] = X[t][ib][d];
+            }
+        }
+    }
+
+    if(mpi.myId == 0){
+        std::string vtuFile;
+        vtuFile = main.outputDir + "/velocity/velocityInitial.vtu";
+        main.grid.output.exportSolutionVTU(vtuFile, main.grid.node, main.grid.cell, DataType::VELOCITY);  
+    }
+
+    // debug
+    if(mpi.myId == 0){
+        for(int t=0; t<main.timeMax; t++){
+            std::string vtuFile;
+            vtuFile = outputDir + "/feedback/X_" + to_string(t) + ".vtu";
+            main.grid.output.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, XWholeNode[t]);
+        }
+    }
+ 
+}
+
+void InverseProblem::updataControlVariables(DirectProblem &main, const double alpha)
 {   
     int n = adjoint.grid.dirichlet.controlBoundaryMap.size();
     for(int t=0; t<main.timeMax; t++){
@@ -156,6 +206,15 @@ void InverseProblem::calcCostFunction()
                            t, main.grid.cell.nNodesInCell, main.dim);
         }
     }
+
+    /*
+    for(int t=0; t<main.snap.nSnapShot; t++){
+        for(int ic=0; ic<data.nCellsGlobal; ic++){
+            data(ic).interpolate(main.grid.node, main.grid.cell, main.snap.v[t],
+                                 t, main.dim);
+        }
+    }
+    */
     
     // term1
     for(int t=0; t<main.snap.nSnapShot; t++){
@@ -517,7 +576,6 @@ void InverseProblem::calcOptimalCondition()
     Gauss gauss(2);
 
     for(int t=0; t<main.timeMax; t++){
-        
         for(int in=0; in<adjoint.grid.node.nNodesGlobal; in++){
             for(int d=0; d<dim; d++){
                 gradWholeNode[t][in][d] = 0e0;
@@ -608,6 +666,7 @@ void InverseProblem::calcOptimalCondition()
                 }
             }
         }
+
         for(int ib=0; ib<adjoint.grid.dirichlet.controlBoundaryMap.size(); ib++){
             int in = adjoint.grid.dirichlet.controlBoundaryMap[ib];
             for(int d=0; d<dim; d++){
@@ -692,9 +751,9 @@ void InverseProblem::GaussIntegralOptimalConditionTerm3(std::vector<double> &N, 
     double detJ = dxdr[0][0] * dxdr[1][1] - dxdr[0][1] * dxdr[1][0];
 
     for(int p=0; p<nControlNodesInCell; p++){
-        int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
+        int n = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
         for(int d=0; d<3; d++){
-            lgp[d] -= N[p] * adjoint.grid.node.lt[t][in][d];
+            lgp[d] -= N[p] * adjoint.grid.node.lt[t][n][d];
         }
     }
     for(int p=0; p<nControlNodesInCell; p++){
@@ -755,9 +814,11 @@ double InverseProblem::armijoCriteria(const double fk)
 
         double tmp = 0e0;
         for(int t=0; t<adjoint.timeMax; t++){
-            for(int ib=0; ib<n; ib++){
-                for(int d=0; d<dim; d++){
-                    tmp += -(grad[t][ib][d] * grad[t][ib][d]);
+            if(t % main.snap.snapInterval == 0){
+                for(int ib=0; ib<n; ib++){
+                    for(int d=0; d<dim; d++){
+                        tmp += -(grad[t][ib][d] * grad[t][ib][d]);
+                    }
                 }
             }
         }

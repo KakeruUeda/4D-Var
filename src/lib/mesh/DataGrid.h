@@ -10,9 +10,13 @@
 #include "Gauss.h"
 #include "ShapeFunction.h"
 #include "MathFEM.h"
+#include "PetscSolver.h"
+#include "Tool.h"
 
 struct VoxelInfo
 {
+    int centerCell;
+    bool isIncluded;
     std::vector<std::vector<double>> vCFD;
     std::vector<std::vector<double>> vMRI;
     std::vector<std::vector<double>> ve;
@@ -20,8 +24,11 @@ struct VoxelInfo
     std::vector<int> cellChildren;
 
     void setNearCell(Node &node, Cell &cell, const double &range, const int &dim);
+    void setCellOnCenterPoint(Node &node, Cell &cell, const int &dim);
     void averageVelocity(Cell &cell, std::vector<std::vector<double>> &_v, 
                          const int &t, const int &nNodesInCell, const int &dim);
+    void interpolate(Node &node, Cell &cell, std::vector<std::vector<double>> &_v, 
+                     const int &t, const int &dim);
     void gaussIntegral(std::vector<double> &N, std::vector<std::vector<double>> &xCurrent, 
                        std::vector<std::vector<double>> &velCurrent, double &weightIntegral, 
                        const int &nNodesInCell, const double &detJ, const double &weight, 

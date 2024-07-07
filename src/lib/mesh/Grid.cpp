@@ -59,7 +59,6 @@ double Grid::structuredGridCoordinateSet(const double dx, const double dy, const
 
 void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int timeMax)
 {
-    std::cout << "1" << std::endl;
     for(auto &pair : dirichlet.vDirichlet[0]){
         int count = 0;
         for(auto &value : pair.second){

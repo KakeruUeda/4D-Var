@@ -4,11 +4,11 @@
 
 int main()
 {
-    int nx = 2;
-    int ny = 2;
-    int nz = 2;
+    int nx = 64;
+    int ny = 32;
+    int nz = 32;
 
-    double lx = 1e0;
+    double lx = 2e0;
     double ly = 1e0; 
     double lz = 1e0;
 

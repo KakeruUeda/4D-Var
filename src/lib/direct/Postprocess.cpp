@@ -8,18 +8,18 @@ void Postprocess::extractOutletVelocity(DirectProblem &direct)
     double xMax = 2e0;
     double eps = 1e-8;
     xMax = xMax - eps;
-
+    int index = 0;
+    
     std::ofstream outDirichletOutlet(direct.outputDir + "/dat/velocityDirichletPoiseuille.dat");
     for(int in=0; in<direct.grid.node.nNodesGlobal; in++){
         if(direct.grid.node.x[in][0] > xMax){
-            int nodeRight = nodeCount - 64;
-            outDirichletOutlet << nodeRight << " ";
+            outDirichletOutlet << index << " ";
             for(int d=0; d<direct.dim; d++){
                 outDirichletOutlet << direct.grid.node.v[in][d] << " ";
             }
             outDirichletOutlet << std::endl;
+            index = index + 33;
         }
-        nodeCount++;
     }
 }
 
