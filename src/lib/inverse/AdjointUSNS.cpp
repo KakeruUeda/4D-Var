@@ -1,8 +1,8 @@
 #include "InverseProblem.h"
 
-void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
-                                   std::vector<std::vector<std::vector<double>>> &feedbackForceT,
-                                   const int nData, const int loop)
+void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
+                           std::vector<std::vector<std::vector<double>>> &feedbackForceT,
+                           const int nData, const int loop)
 {
     PetscPrintf(MPI_COMM_WORLD, "\nADJOINT SOLVER\n");
 
@@ -21,15 +21,13 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
     setVariablesZero(main.dim);
 
     int st = 0;
-    //for(int t=timeMax-1; t>=0; t--){
     for(int t=0; t<timeMax; t++){
         petsc.setValueZero();
         grid.dirichlet.assignDirichletBCs(grid.dirichlet.vDirichletWallNew, 
                                           grid.dirichlet.pDirichletNew, 
                                           grid.node, main.dim, t);
         grid.dirichlet.applyDirichletBCsAdjoint(grid.cell, petsc);
-        //MPI_Barrier(MPI_COMM_WORLD);
-        //double timer = MPI_Wtime();
+
         for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
             if(grid.cell(ic).subId == mpi.myId){
                 int nDofsInCell = grid.cell(ic).dofsMap.size();
@@ -69,34 +67,7 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
             }
         }
 
-        /*
-        if(t % main.snap.snapInterval == 0){
-            for(int in=0; in<grid.node.nNodesGlobal; in++){
-                int n = grid.node.mapNew[in];
-                int size = grid.node.dofsMapNew[n].size();
-                VectorXd  Flocal(size);
-                Flocal.setZero();
-                if(grid.node.subId[in] == mpi.myId){
-                    Flocal(0) -= feedbackForceT[st][in][0];
-                    Flocal(1) -= feedbackForceT[st][in][1];
-                    Flocal(2) -= feedbackForceT[st][in][2];
-                    petsc.setVecValue(grid.node.dofsMapNew[n], Flocal);
-                }
-            }
-            st++;
-        }
-        */
-
-        //timer = MPI_Wtime() - timer;
-        //PetscPrintf(MPI_COMM_WORLD, "\nAdjoint Matrix assembly = %f seconds\n", timer);
-        //petsc.currentStatus = ASSEMBLY_OK;
-        //MPI_Barrier(MPI_COMM_WORLD); 
-        //timer = MPI_Wtime();
-
         petsc.solve();
-
-        //timer = MPI_Wtime() - timer;
-        //PetscPrintf(MPI_COMM_WORLD, "\nAdjoint PETSc solver = %f seconds \n", timer);
 
         VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
         VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
@@ -121,7 +92,7 @@ void Adjoint::solveAdjointEquation(DirectProblem &main, std::string outputDir,
     VecDestroy(&vecSEQ);
 }
 
-void Adjoint::solveAdjoint_DO(DirectProblem &main, std::string outputDir,
+void Adjoint::solveAdjointDO(DirectProblem &main, std::string outputDir,
                              std::vector<std::vector<std::vector<double>>> &feedbackForceT,
                              const int nData, const int loop)
 {
@@ -147,8 +118,7 @@ void Adjoint::solveAdjoint_DO(DirectProblem &main, std::string outputDir,
                                           grid.dirichlet.pDirichletNew, 
                                           grid.node, main.dim, t);
         grid.dirichlet.applyDirichletBCsAdjoint(grid.cell, petsc);
-        //MPI_Barrier(MPI_COMM_WORLD);
-        //double timer = MPI_Wtime();
+
         for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
             if(grid.cell(ic).subId == mpi.myId){
                 int nDofsInCell = grid.cell(ic).dofsMap.size();
@@ -188,16 +158,7 @@ void Adjoint::solveAdjoint_DO(DirectProblem &main, std::string outputDir,
             }
         }
 
-        //timer = MPI_Wtime() - timer;
-        //PetscPrintf(MPI_COMM_WORLD, "\nAdjoint Matrix assembly = %f seconds\n", timer);
-        //petsc.currentStatus = ASSEMBLY_OK;
-        //MPI_Barrier(MPI_COMM_WORLD); 
-        //timer = MPI_Wtime();
-
         petsc.solve();
-
-        //timer = MPI_Wtime() - timer;
-        //PetscPrintf(MPI_COMM_WORLD, "\nAdjoint PETSc solver = %f seconds \n", timer);
 
         VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
         VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
@@ -304,25 +265,17 @@ void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &
         for(int i2=0; i2<2; i2++){
             ShapeFunction2D::C2D4_N(N2D, gauss.point[i1], gauss.point[i2]);
             ShapeFunction2D::C2D4_dNdr(dNdr2D, gauss.point[i1], gauss.point[i2]);
-            MathFEM::calc_dxdr2D(dxdr, dNdr2D, xCurrent2D, nControlNodesInCell);
-            MathFEM::calc_dNdx2D(dNdx2D, dNdr2D, dxdr, nControlNodesInCell);
+            MathFEM::comp_dxdr2D(dxdr, dNdr2D, xCurrent2D, nControlNodesInCell);
+            MathFEM::comp_dNdx2D(dNdx2D, dNdr2D, dxdr, nControlNodesInCell);
+
             double detJ = dxdr[0][0] * dxdr[1][1] - dxdr[0][1] * dxdr[1][0];
             double weight = gauss.weight[i1] * gauss.weight[i2];
-            for(int d=0; d<main.dim; d++){
-                wgp[d] = 0e0;
-                lgp[d] = 0e0;
-                for(int p=0; p<nControlNodesInCell; p++){
-                    int n = grid.dirichlet.controlNodeInCell[ib][p];
-                    wgp[d] += N2D[p] * grid.node.w[n][d];
-                    lgp[d] += N2D[p] * grid.node.l[n][d];
-                }
-            }
+            double tau = MathFEM::comp_tau(wgp, he, main.Re, main.dt);
 
-            double tau = MathFEM::calc_tau(wgp, he, main.Re, main.dt);
-            for(int ii=0; ii<nControlNodesInCell; ii++){
+            for(int ii=0; ii<count; ii++){
                 IU = ss[ii];  IV = IU + 1;  IW = IU + 2;
                 ILU = IU + 4; ILV = IU + 5; ILW = IU + 6;
-                for(int jj=0; jj<nControlNodesInCell; jj++){
+                for(int jj=0; jj<count; jj++){
                     JU = ss[jj];  JV = JU + 1;  JW = JU + 2;
                     JLU = JU + 4; JLV = JU + 5; JLW = JU + 6;
                     Klocal(IU, JLU) -= N2D[ii] * N2D[jj] * detJ * weight;
@@ -332,9 +285,6 @@ void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &
                     Klocal(ILV, JV) -= N2D[ii] * N2D[jj] * detJ * weight; 
                     Klocal(ILW, JW) -= N2D[ii] * N2D[jj] * detJ * weight; 
                 }
-                //`Flocal(ILU) += 5e-1 * N2D[ii] * wgp[0] * detJ * weight;
-                //Flocal(ILV) += 5e-1 * N2D[ii] * wgp[1] * detJ * weight;
-                //Flocal(ILW) += 5e-1 * N2D[ii] * wgp[2] * detJ * weight;
             }
             
         }

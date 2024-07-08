@@ -59,7 +59,7 @@ class DirectProblem
         void solveUSNS(Application &app);
         void solveUSNS(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
                        std::vector<std::map<int, double>> &pDirichletTmp);
-        void calcInitialCondition(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
+        void compInitialCondition(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
                                   std::vector<std::map<int, double>> &pDirichletTmp);
         void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, 
                                 const int ic, const int t);

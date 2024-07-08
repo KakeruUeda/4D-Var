@@ -228,8 +228,8 @@ void VoxelInfo::averageVelocity(Cell &cell, std::vector<std::vector<double>> &_v
                     double dxdr[3][3];
                     ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
                     ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-                    MathFEM::calc_dxdr(dxdr, dNdr, xCurrent, nNodesInCell);
-                    detJ = MathCommon::calcDeterminant_3x3(dxdr);
+                    MathFEM::comp_dxdr(dxdr, dNdr, xCurrent, nNodesInCell);
+                    detJ = MathCommon::compDeterminant_3x3(dxdr);
                     weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
                     gaussIntegral(N, xCurrent, velCurrent, weightIntegral, nNodesInCell, detJ, weight, t, dim);
                 }

@@ -235,6 +235,7 @@ void Config::setFluidDomain()
     }
 
     std::vector<int> controlBoundaryMapTmp = controlBoundaryMap;
+    std::vector<int> controlBoundaryMapTmp2;
     controlBoundaryMap.clear();
 
     for(int in=0; in<sortNode.size(); in++){
@@ -242,6 +243,43 @@ void Config::setFluidDomain()
         int key = sortNode[in];
         if(std::find(controlBoundaryMapTmp.begin(), controlBoundaryMapTmp.end(), key) != controlBoundaryMapTmp.end()){
             controlBoundaryMap.push_back(convertNodeOldToNew[key]);
+            controlBoundaryMapTmp2.push_back(key);
         }
     }
+
+    /*
+    for(int ib=0; ib<controlBoundaryMapTmp.size(); ib++){
+        bool flag = true;
+        bool flag2 = false;
+        for(int ic=0; ic<nCellsGlobalTmp; ic++){
+            if(phiTmp[ic] < 1e-12){
+                for(int p=0; p<nNodesInCell; p++){
+                    if(controlBoundaryMapTmp[ib] == cellTmp[ic][p]){
+                        flag = false;
+                        flag2 = true;
+                    }
+                }
+            } 
+            if(flag2 == true) break;
+        }
+        if(flag == true){
+            int n = controlBoundaryMapTmp[ib];
+            controlBoundaryMap.push_back(convertNodeOldToNew[n]);
+        }
+    }
+    */
+    int count22 = 0;
+
+    isBoundaryEdge.resize(nNodesGlobal, false);
+    for(int ic=0; ic<cellTmp.size(); ic++){
+        if(phiTmp[ic] < 1e-12){
+            for(int p=0; p<nNodesInCell; p++){
+                int key = cellTmp[ic][p];
+                if(std::find(controlBoundaryMapTmp2.begin(), controlBoundaryMapTmp2.end(), key) != controlBoundaryMapTmp2.end()){
+                    isBoundaryEdge[convertNodeOldToNew[key]] = true;
+                }
+            }
+        }
+    }
+
 }

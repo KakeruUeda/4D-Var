@@ -1,7 +1,7 @@
 #include "InverseProblem.h"
 
 InverseProblem::InverseProblem(Config &conf):
-main(conf), adjoint(conf), data(conf), app(conf.app), 
+main(conf), adjoint(conf), data(conf), app(conf.app), vvox(conf.vvox), 
 dim(conf.dim), outputDir(conf.outputDir), nOMP(conf.nOMP),
 aCF(conf.aCF), bCF1(conf.bCF1), bCF2(conf.bCF2), gCF(conf.gCF),
 loopMax(conf.loopMax), nControlNodesInCell(conf.nControlNodesInCell),
@@ -31,6 +31,7 @@ void InverseProblem::initialize(Config &conf)
     main.nu = main.mu / main.rho;
     main.Re = 1e0 / main.nu; 
 
+    VecTool::resize(main.grid.node.v0, main.grid.node.nNodesGlobal, dim);
     VecTool::resize(main.grid.node.v, main.grid.node.nNodesGlobal, dim);
     VecTool::resize(main.grid.node.vPrev, main.grid.node.nNodesGlobal, dim);
     VecTool::resize(main.grid.node.vt, main.timeMax, main.grid.node.nNodesGlobal, dim);
@@ -82,27 +83,30 @@ void InverseProblem::initialize(Config &conf)
 void InverseProblem::runSimulation()
 {
     main.outputDomain();
-    initialGuess();
+    guessInitialCondition();
+
     for(int loop=0; loop<loopMax; loop++){
         PetscPrintf(MPI_COMM_WORLD, "\nOpt itr. : %d\n", loop);
-        calcCostFunction();
-        PetscPrintf(MPI_COMM_WORLD, "\ncostFunction = %e\n", 
-                                        costFunction.total);
-        calcFeedbackForce();
-        calcTimeInterpolatedFeedbackForce();
+
+        compCostFunction();
+        PetscPrintf(MPI_COMM_WORLD, "\ncostFunction = %e\n", costFunction.total);
+        compFeedbackForce();
+        compTimeInterpolatedFeedbackForce();
         output(loop);
-        adjoint.solveAdjoint_DO(main, outputDir, 
-                feedbackForceT, data.nData, loop);
-        calcOptimalCondition();
+
+        adjoint.solveAdjointDO(main, outputDir, feedbackForceT, data.nData, loop);
+
+        compOptimalCondition();
         double alpha = armijoCriteria(costFunction.total);
+
         PetscPrintf(MPI_COMM_WORLD, "\nalpha = %f\n", alpha);
         updataControlVariables(main, alpha);
     }
 }
 
-void InverseProblem::initialGuess()
+void InverseProblem::guessInitialCondition()
 {
-    main.calcInitialCondition(main.grid.dirichlet.vDirichletNew, 
+    main.compInitialCondition(main.grid.dirichlet.vDirichletNew, 
                               main.grid.dirichlet.pDirichletNew);
     main.solveUSNS(main.grid.dirichlet.vDirichletNew, 
                    main.grid.dirichlet.pDirichletNew);
@@ -119,33 +123,12 @@ void InverseProblem::initialGuess()
             }
         }
     } 
-    
-    std::vector<std::vector<std::vector<double>>> XWholeNode;
-    VecTool::resize(XWholeNode, main.timeMax, main.grid.node.nNodesGlobal, main.dim);
-    for(int t=0; t<main.timeMax; t++){
-        for(int ib=0; ib<adjoint.grid.dirichlet.controlBoundaryMap.size(); ib++){
-            int in = adjoint.grid.dirichlet.controlBoundaryMap[ib];
-            for(int d=0; d<dim; d++){
-                XWholeNode[t][in][d] = X[t][ib][d];
-            }
-        }
-    }
 
     if(mpi.myId == 0){
         std::string vtuFile;
         vtuFile = main.outputDir + "/velocity/velocityInitial.vtu";
         main.grid.output.exportSolutionVTU(vtuFile, main.grid.node, main.grid.cell, DataType::VELOCITY);  
     }
-
-    // debug
-    if(mpi.myId == 0){
-        for(int t=0; t<main.timeMax; t++){
-            std::string vtuFile;
-            vtuFile = outputDir + "/feedback/X_" + to_string(t) + ".vtu";
-            main.grid.output.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, XWholeNode[t]);
-        }
-    }
- 
 }
 
 void InverseProblem::updataControlVariables(DirectProblem &main, const double alpha)
@@ -166,26 +149,25 @@ void InverseProblem::output(const int loop)
 {
     if(mpi.myId > 0) return;
 
+    std::string vtiFile;
+    std::string vtuFile;
+
     for(int t=0; t<main.snap.nSnapShot; t++){
-        std::string vtuFile;
-        vtuFile = outputDir + "/feedback/feedbackForce_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-        main.grid.output.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, feedbackForce[t]);
+        vtiFile = main.outputDir + "/data/data_" + to_string(loop) + "_" + to_string(t) + ".vti";
+        main.grid.output.exportVelocityDataVTI(vtiFile, data, t, main.dim);
     }
     for(int t=0; t<main.timeMax; t++){
-        std::string vtuFile;
         vtuFile = outputDir + "/feedback/feedbackForceT_" + to_string(loop) + "_" + to_string(t) + ".vtu";
         main.grid.output.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, feedbackForceT[t]);
+        vtuFile = main.outputDir + "/solution/velocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+        main.grid.output.exportMainVariablesVTU(vtuFile, main.grid.node, main.grid.cell, t, DataType::VELOCITY);
+        vtuFile = main.outputDir + "/solution/pressure_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+        main.grid.output.exportMainVariablesVTU(vtuFile, main.grid.node, main.grid.cell, t, DataType::PRESSURE);
     }
-    for(int t=0; t<main.snap.nSnapShot; t++){
-        if(mpi.myId == 0){
-            std::string vtiFile;
-            vtiFile = outputDir + "/data/data_" + to_string(loop) + "_" + to_string(t) + ".vti";
-            main.grid.output.exportVelocityDataVTI(vtiFile, data, t, main.dim);
-        }
-    }
+
 }
 
-void InverseProblem::calcCostFunction()
+void InverseProblem::compCostFunction()
 {  
     costFunction.term1 = 0e0;
     costFunction.term2 = 0e0;
@@ -200,21 +182,29 @@ void InverseProblem::calcCostFunction()
         }
     }
 
-    for(int t=0; t<main.snap.nSnapShot; t++){
-        for(int ic=0; ic<data.nCellsGlobal; ic++){
-            data(ic).averageVelocity(main.grid.cell, main.snap.v[t],
-                           t, main.grid.cell.nNodesInCell, main.dim);
-        }
-    }
+    switch(vvox){
+        case VoxelVelocity::AVERAGE:
+            for(int t=0; t<main.snap.nSnapShot; t++){
+                for(int ic=0; ic<data.nCellsGlobal; ic++){
+                    data(ic).averageVelocity(main.grid.cell, main.snap.v[t],
+                                  t, main.grid.cell.nNodesInCell, main.dim);
+                }
+            }
+        break;
 
-    /*
-    for(int t=0; t<main.snap.nSnapShot; t++){
-        for(int ic=0; ic<data.nCellsGlobal; ic++){
-            data(ic).interpolate(main.grid.node, main.grid.cell, main.snap.v[t],
-                                 t, main.dim);
-        }
+        case VoxelVelocity::INTERPOLATION:
+            for(int t=0; t<main.snap.nSnapShot; t++){
+                for(int ic=0; ic<data.nCellsGlobal; ic++){
+                    data(ic).interpolate(main.grid.node, main.grid.cell, 
+                                         main.snap.v[t], t, main.dim);
+                }
+            }
+        break;
+    
+        default:
+            PetscPrintf(MPI_COMM_WORLD, "undefined VoxelVelocity method");
+            exit(1);
     }
-    */
     
     // term1
     for(int t=0; t<main.snap.nSnapShot; t++){
@@ -291,7 +281,7 @@ void InverseProblem::GaussIntegralRegTerm1(std::vector<double> &N, std::vector<s
                                            const double weight, const int ic, const int t)
 {
     double dxdr[2][2]; 
-    MathFEM::calc_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
+    MathFEM::comp_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
     double detJ = dxdr[0][0]*dxdr[1][1] - dxdr[0][1]*dxdr[1][0];
 
     double u[3] = {0e0, 0e0, 0e0};
@@ -315,9 +305,9 @@ void InverseProblem::GaussIntegralRegTerm2(std::vector<double> &N, std::vector<s
     std::vector<std::vector<double>> dNdx;
     dNdx.resize(nControlNodesInCell, std::vector<double>(dim-1, 0e0));
 
-    MathFEM::calc_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
+    MathFEM::comp_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
     double detJ = dxdr[0][0]*dxdr[1][1] - dxdr[0][1]*dxdr[1][0];
-    MathFEM::calc_dNdx2D(dNdx, dNdr, dxdr, nControlNodesInCell);
+    MathFEM::comp_dNdx2D(dNdx, dNdr, dxdr, nControlNodesInCell);
 
     double dudx[3][2] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
 
@@ -337,7 +327,7 @@ void InverseProblem::GaussIntegralRegTerm2(std::vector<double> &N, std::vector<s
     }
 }
 
-void InverseProblem::calcFeedbackForce()
+void InverseProblem::compFeedbackForce()
 {   
     for(int t=0; t<main.snap.nSnapShot; t++){
         int n1 = main.grid.cell.nCellsGlobal;
@@ -351,7 +341,7 @@ void InverseProblem::calcFeedbackForce()
 
         std::vector<std::vector<std::vector<std::vector<double>>>> vEX;
         VecTool::resize(vEX, data.nz+2, data.ny+2, data.nx+2, dim);
-        calcEdgeValue(vEX, t);
+        compEdgeValue(vEX, t);
 
         for(int ic=0; ic<main.grid.cell.nCellsGlobal; ic++){
             std::vector<std::vector<double>> xCurrent;
@@ -368,7 +358,7 @@ void InverseProblem::calcFeedbackForce()
             N.resize(main.grid.cell.nNodesInCell, 0e0);
             dNdr.resize(main.grid.cell.nNodesInCell, std::vector<double>(dim, 0e0));
             int nGaussPoint = 2;
-            Gauss gauss(nGaussPoint);
+            Gauss gauss(nGaussPoint); 
             
             for(int i1=0; i1<nGaussPoint; i1++){
                 for(int i2=0; i2<nGaussPoint; i2++){
@@ -376,8 +366,8 @@ void InverseProblem::calcFeedbackForce()
                         double dxdr[3][3];
                         ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
                         ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-                        MathFEM::calc_dxdr(dxdr, dNdr, xCurrent, main.grid.cell.nNodesInCell);
-                        double detJ = MathCommon::calcDeterminant_3x3(dxdr);
+                        MathFEM::comp_dxdr(dxdr, dNdr, xCurrent, main.grid.cell.nNodesInCell);
+                        double detJ = MathCommon::compDeterminant_3x3(dxdr);
                         double weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
                         double feedback[3] = {0e0, 0e0, 0e0};
                         double point[3] = {0e0, 0e0, 0e0};
@@ -385,7 +375,7 @@ void InverseProblem::calcFeedbackForce()
                             for(int p=0; p<main.grid.cell.nNodesInCell; p++) 
                                 point[d] += N[p] * xCurrent[p][d];
                         }
-                        calcInterpolatedFeeback(xCurrent, feedback, vEX, point);
+                        compInterpolatedFeeback(xCurrent, feedback, vEX, point);
                         feedbackGaussIntegral(N, feedback, detJ, weight, ic, t);
                     }
                 }
@@ -394,7 +384,7 @@ void InverseProblem::calcFeedbackForce()
     }
 }
 
-void InverseProblem::calcEdgeValue(std::vector<std::vector<std::vector<std::vector<double>>>> &vEX, const int t)
+void InverseProblem::compEdgeValue(std::vector<std::vector<std::vector<std::vector<double>>>> &vEX, const int t)
 {
     for(int k=0; k<data.nz+2; k++){
         for(int j=0; j<data.ny+2; j++){
@@ -418,7 +408,7 @@ void InverseProblem::calcEdgeValue(std::vector<std::vector<std::vector<std::vect
 
 }
 
-void InverseProblem::calcInterpolatedFeeback(std::vector<std::vector<double>> &xCurrent, double (&feedback)[3], 
+void InverseProblem::compInterpolatedFeeback(std::vector<std::vector<double>> &xCurrent, double (&feedback)[3], 
                                              std::vector<std::vector<std::vector<std::vector<double>>>> &vEX, 
                                              double (&point)[3])
 {
@@ -468,7 +458,7 @@ void InverseProblem::feedbackGaussIntegral(std::vector<double> &N, double (&feed
     }
 }
 
-void InverseProblem::calcTimeInterpolatedFeedbackForce()
+void InverseProblem::compTimeInterpolatedFeedbackForce()
 {
     for(int in=0; in<adjoint.grid.node.nNodesGlobal; in++){
         std::vector<double> x, y1, y2, y3;
@@ -505,7 +495,7 @@ void InverseProblem::calcTimeInterpolatedFeedbackForce()
 }
 
 
-void InverseProblem::calcFeedbackForce2()
+void InverseProblem::compFeedbackForce2()
 {
     for(int t=0; t<main.snap.nSnapShot; t++){
         int n1 = main.grid.cell.nCellsGlobal;
@@ -539,8 +529,8 @@ void InverseProblem::calcFeedbackForce2()
                             double dxdr[3][3];
                             ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
                             ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-                            MathFEM::calc_dxdr(dxdr, dNdr, xCurrent, main.grid.cell.nNodesInCell);
-                            detJ = MathCommon::calcDeterminant_3x3(dxdr);
+                            MathFEM::comp_dxdr(dxdr, dNdr, xCurrent, main.grid.cell.nNodesInCell);
+                            detJ = MathCommon::compDeterminant_3x3(dxdr);
                             weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
                             feedbackGaussIntegral2(N, xCurrent, velCurrent, detJ, weight, voxelId, cellId, t);
                         }
@@ -563,7 +553,7 @@ void InverseProblem::feedbackGaussIntegral2(std::vector<double> &N, std::vector<
     }
 }
 
-void InverseProblem::calcOptimalCondition()
+void InverseProblem::compOptimalCondition()
 {
     std::vector<double> N2D;
     std::vector<std::vector<double>> dNdr2D;
@@ -667,6 +657,14 @@ void InverseProblem::calcOptimalCondition()
             }
         }
 
+        for(int in=0; in<adjoint.grid.node.nNodesGlobal; in++){
+            if(adjoint.grid.dirichlet.isBoundaryEdge[in]){
+                for(int d=0; d<dim; d++){
+                    gradWholeNode[t][in][d] = 0e0;
+                }
+            }
+        }
+
         for(int ib=0; ib<adjoint.grid.dirichlet.controlBoundaryMap.size(); ib++){
             int in = adjoint.grid.dirichlet.controlBoundaryMap[ib];
             for(int d=0; d<dim; d++){
@@ -674,6 +672,16 @@ void InverseProblem::calcOptimalCondition()
             }
         }
     }
+
+
+    if(mpi.myId == 0){
+        for(int t=0; t<main.timeMax; t++){
+            std::string vtuFile;
+            vtuFile = outputDir + "/feedback/gradWholeNode_" + to_string(t) + ".vtu";
+            main.grid.output.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, gradWholeNode[t]);
+        }
+    }
+
 }
 
 void InverseProblem::GaussIntegralOptimalConditionTerm1(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
@@ -683,7 +691,7 @@ void InverseProblem::GaussIntegralOptimalConditionTerm1(std::vector<double> &N, 
 {
     double vel[3] = {0e0, 0e0, 0e0};
     double dxdr[2][2]; 
-    MathFEM::calc_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
+    MathFEM::comp_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
     double detJ = dxdr[0][0]*dxdr[1][1] - dxdr[0][1]*dxdr[1][0];
 
     for(int p=0; p<nControlNodesInCell; p++){
@@ -714,9 +722,9 @@ void InverseProblem::GaussIntegralOptimalConditionTerm2(std::vector<double> &N, 
     std::vector<std::vector<double>> dNdx;
     dNdx.resize(nControlNodesInCell, std::vector<double>(2, 0e0));
 
-    MathFEM::calc_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
+    MathFEM::comp_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
     double detJ = dxdr[0][0]*dxdr[1][1] - dxdr[0][1]*dxdr[1][0];
-    MathFEM::calc_dNdx2D(dNdx, dNdr, dxdr, nControlNodesInCell);
+    MathFEM::comp_dNdx2D(dNdx, dNdr, dxdr, nControlNodesInCell);
 
     for(int p=0; p<nControlNodesInCell; p++){
         int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
@@ -747,7 +755,7 @@ void InverseProblem::GaussIntegralOptimalConditionTerm3(std::vector<double> &N, 
 {
     double lgp[3] = {0e0, 0e0, 0e0};
     double dxdr[2][2]; 
-    MathFEM::calc_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
+    MathFEM::comp_dxdr2D(dxdr, dNdr, xCurrent, nControlNodesInCell);
     double detJ = dxdr[0][0] * dxdr[1][1] - dxdr[0][1] * dxdr[1][0];
 
     for(int p=0; p<nControlNodesInCell; p++){
@@ -776,12 +784,6 @@ double InverseProblem::armijoCriteria(const double fk)
     
     std::vector<std::map<int, double>> pDirichletNewTmp;
     pDirichletNewTmp = adjoint.grid.dirichlet.pDirichletNew;
-
-    for(int t=0; t<main.timeMax; t++){
-        std::string vtuFile;
-        vtuFile = outputDir + "/feedback/grad_" + to_string(t) + ".vtu";
-        main.grid.output.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, gradWholeNode[t]);
-    }
  
     while(10){
         for(int t=0; t<adjoint.timeMax; t++){
@@ -806,21 +808,21 @@ double InverseProblem::armijoCriteria(const double fk)
             }
         }
 
-        main.calcInitialCondition(vDirichletNewTmp, pDirichletNewTmp);
+        main.compInitialCondition(vDirichletNewTmp, pDirichletNewTmp);
         main.solveUSNS(vDirichletNewTmp, pDirichletNewTmp);
-        calcCostFunction();
+        compCostFunction();
 
         double lk = costFunction.total;
 
         double tmp = 0e0;
         for(int t=0; t<adjoint.timeMax; t++){
-            if(t % main.snap.snapInterval == 0){
+            //if(t % main.snap.snapInterval == 0){
                 for(int ib=0; ib<n; ib++){
                     for(int d=0; d<dim; d++){
                         tmp += -(grad[t][ib][d] * grad[t][ib][d]);
                     }
                 }
-            }
+            //}
         }
         double l_tmp = fk + c1 * tmp * alpha;
 

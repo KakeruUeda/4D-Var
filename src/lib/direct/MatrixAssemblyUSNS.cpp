@@ -35,19 +35,19 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal,
             for(int i3=0; i3<nGaussPoint; i3++){
                 ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
                 ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-                MathFEM::calc_dxdr(dxdr, dNdr, xCurrent, grid.cell.nNodesInCell);
-                detJ = MathCommon::calcDeterminant_3x3(dxdr);
+                MathFEM::comp_dxdr(dxdr, dNdr, xCurrent, grid.cell.nNodesInCell);
+                detJ = MathCommon::compDeterminant_3x3(dxdr);
                 weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
 
-                MathFEM::calc_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
-                MathFEM::calc_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
+                MathFEM::comp_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
+                MathFEM::comp_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
 
                 double vel[3] = {0e0, 0e0, 0e0};
                 double advel[3] {0e0, 0e0, 0e0};
                 double dvdx[3][3] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
 
                 setVelocityValue(vel, advel, dvdx, N, dNdx, ic, t);
-                double tau = MathFEM::calc_tau(advel, he, Re, dt);
+                double tau = MathFEM::comp_tau(advel, he, Re, dt);
 
                 for(int ii=0; ii<grid.cell.nNodesInCell; ii++){  
                     IU = 4 * ii;

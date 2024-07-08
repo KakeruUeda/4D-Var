@@ -45,9 +45,9 @@ void Adjoint::matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, V
             for(int i3=0; i3<nGaussPoint; i3++){
                 ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
                 ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-                MathFEM::calc_dxdr(dxdr, dNdr, xCurrent, grid.cell.nNodesInCell);
-                MathFEM::calc_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
-                detJ = MathCommon::calcDeterminant_3x3(dxdr);
+                MathFEM::comp_dxdr(dxdr, dNdr, xCurrent, grid.cell.nNodesInCell);
+                MathFEM::comp_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
+                detJ = MathCommon::compDeterminant_3x3(dxdr);
                 weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
 
                 double vel[3];
@@ -92,7 +92,7 @@ void Adjoint::matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, V
                 }
 
                 //setVelocityValue(vel, advel, dvdx, N, dNdx, ic, t);
-                double tau = MathFEM::calc_tau(wgp, he, main.Re, main.dt);
+                double tau = MathFEM::comp_tau(wgp, he, main.Re, main.dt);
 
                 for(int ii=0; ii<grid.cell.nNodesInCell; ii++){  
                     IU = s[ii];
@@ -327,9 +327,9 @@ void Adjoint::matrixAssemblyAdjoint_DO(DirectProblem &main, MatrixXd &Klocal, Ve
             for(int i3=0; i3<nGaussPoint; i3++){
                 ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
                 ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-                MathFEM::calc_dxdr(dxdr, dNdr, xCurrent, grid.cell.nNodesInCell);
-                MathFEM::calc_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
-                detJ = MathCommon::calcDeterminant_3x3(dxdr);
+                MathFEM::comp_dxdr(dxdr, dNdr, xCurrent, grid.cell.nNodesInCell);
+                MathFEM::comp_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
+                detJ = MathCommon::compDeterminant_3x3(dxdr);
                 weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
 
                 setValue(main, N, dNdx, ic, t);
@@ -341,7 +341,7 @@ void Adjoint::matrixAssemblyAdjoint_DO(DirectProblem &main, MatrixXd &Klocal, Ve
                     } 
                 }
 
-                double tau = MathFEM::calc_tau(wk1, he, main.Re, main.dt);
+                double tau = MathFEM::comp_tau(wk1, he, main.Re, main.dt);
 
                 for(int ii=0; ii<grid.cell.nNodesInCell; ii++){  
                     IU = s[ii];
@@ -449,12 +449,10 @@ void Adjoint::matrixAssemblyAdjoint_DO(DirectProblem &main, MatrixXd &Klocal, Ve
                     Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvk1dx[2][0] * wk1[2] * detJ * weight;
                     Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvkdx[2][0] * wk1[2] * detJ * weight;
 
-                    Flocal(IU) -= 0.5 * (-0.5) * N[ii] * dvk2dx[0][0] * wk2[0] * detJ * weight;
-                    Flocal(IU) -= 0.5 * (-0.5) * N[ii] * dvk1dx[0][0] * wk2[0] * detJ * weight;
-                    Flocal(IU) -= 0.5 * (-0.5) * N[ii] * dvk2dx[1][0] * wk2[1] * detJ * weight;
-                    Flocal(IU) -= 0.5 * (-0.5) * N[ii] * dvk1dx[1][0] * wk2[1] * detJ * weight;
-                    Flocal(IU) -= 0.5 * (-0.5) * N[ii] * dvk2dx[2][0] * wk2[2] * detJ * weight;
-                    Flocal(IU) -= 0.5 * (-0.5) * N[ii] * dvk1dx[2][0] * wk2[2] * detJ * weight;
+                    for(int d=0; d<main.dim; d++){
+                        Flocal(IU) -= 0.5 * (-0.5) * N[ii] * dvk2dx[d][0] * wk2[d] * detJ * weight;
+                        Flocal(IU) -= 0.5 * (-0.5) * N[ii] * dvk1dx[d][0] * wk2[d] * detJ * weight;
+                    }
 
                     // y dir
                     Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvk1dx[1][1] * wk1[1] * detJ * weight;
@@ -466,13 +464,11 @@ void Adjoint::matrixAssemblyAdjoint_DO(DirectProblem &main, MatrixXd &Klocal, Ve
                     Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvkdx[0][1] * wk1[0] * detJ * weight;
                     Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvk1dx[2][1] * wk1[2] * detJ * weight;
                     Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvkdx[2][1] * wk1[2] * detJ * weight;
-                    
-                    Flocal(IV) -= 0.5 * (-0.5) * N[ii] * dvk2dx[0][1] * wk2[0] * detJ * weight;
-                    Flocal(IV) -= 0.5 * (-0.5) * N[ii] * dvk1dx[0][1] * wk2[0] * detJ * weight;
-                    Flocal(IV) -= 0.5 * (-0.5) * N[ii] * dvk2dx[1][1] * wk2[1] * detJ * weight;
-                    Flocal(IV) -= 0.5 * (-0.5) * N[ii] * dvk1dx[1][1] * wk2[1] * detJ * weight;
-                    Flocal(IV) -= 0.5 * (-0.5) * N[ii] * dvk2dx[2][1] * wk2[2] * detJ * weight;
-                    Flocal(IV) -= 0.5 * (-0.5) * N[ii] * dvk1dx[2][1] * wk2[2] * detJ * weight;
+
+                    for(int d=0; d<main.dim; d++){
+                        Flocal(IV) -= 0.5 * (-0.5) * N[ii] * dvk2dx[d][1] * wk2[d] * detJ * weight;
+                        Flocal(IV) -= 0.5 * (-0.5) * N[ii] * dvk1dx[d][1] * wk2[d] * detJ * weight;
+                    }
 
                     // z dir
                     Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvk1dx[2][2] * wk1[2] * detJ * weight;
@@ -485,12 +481,10 @@ void Adjoint::matrixAssemblyAdjoint_DO(DirectProblem &main, MatrixXd &Klocal, Ve
                     Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvk1dx[1][2] * wk1[1] * detJ * weight;
                     Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvkdx[1][2] * wk1[1] * detJ * weight;
                     
-                    Flocal(IW) -= 0.5 * (-0.5) * N[ii] * dvk2dx[0][2] * wk2[0] * detJ * weight;
-                    Flocal(IW) -= 0.5 * (-0.5) * N[ii] * dvk1dx[0][2] * wk2[0] * detJ * weight;
-                    Flocal(IW) -= 0.5 * (-0.5) * N[ii] * dvk2dx[1][2] * wk2[1] * detJ * weight;
-                    Flocal(IW) -= 0.5 * (-0.5) * N[ii] * dvk1dx[1][2] * wk2[1] * detJ * weight;
-                    Flocal(IW) -= 0.5 * (-0.5) * N[ii] * dvk2dx[2][2] * wk2[2] * detJ * weight;
-                    Flocal(IW) -= 0.5 * (-0.5) * N[ii] * dvk1dx[2][2] * wk2[2] * detJ * weight;
+                    for(int d=0; d<main.dim; d++){
+                        Flocal(IW) -= 0.5 * (-0.5) * N[ii] * dvk2dx[d][2] * wk2[d] * detJ * weight;
+                        Flocal(IW) -= 0.5 * (-0.5) * N[ii] * dvk1dx[d][2] * wk2[d] * detJ * weight;
+                    }
 
                     // DARCY TERM
                     Flocal(IU) -= 5e-1 * f * N[ii] * wk1[0] * detJ * weight;
@@ -573,12 +567,15 @@ void Adjoint::setValue(DirectProblem &main, std::vector<double> &N,
         for(int p=0; p<grid.cell.nNodesInCell; p++){
             int n = grid.cell(ic).node[p];
             if(t == 0){
-                advk1[d] = 0e0;
-                advk2[d] += N[p] * 1.5 * main.grid.node.vt[t][n][d];
+                advk1[d] += N[p] * (1.5 * main.grid.node.v0[n][d]
+                          - 0.5 * main.grid.node.v0[n][d]);
+                advk2[d] += N[p] * (1.5 * main.grid.node.vt[t][n][d]
+                          - 0.5 * main.grid.node.v0[n][d]);
             }else if(t == 1){
-                advk1[d] += N[p] * 1.5 * main.grid.node.vt[t-1][n][d];
+                advk1[d] += N[p] * (1.5 * main.grid.node.vt[t-1][n][d]
+                          - 0.5 * main.grid.node.v0[n][d]);
                 advk2[d] += N[p] * (1.5 * main.grid.node.vt[t][n][d] 
-                                  - 0.5 * main.grid.node.vt[t-1][n][d]);
+                          - 0.5 * main.grid.node.vt[t-1][n][d]);
             }else{
                 advk1[d] += N[p] * (1.5 * main.grid.node.vt[t-1][n][d] 
                                  - 0.5 * main.grid.node.vt[t-2][n][d]);

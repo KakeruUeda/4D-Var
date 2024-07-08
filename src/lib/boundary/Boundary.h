@@ -35,6 +35,8 @@ class DirichletBoundary
         std::vector<int> controlBoundaryMap;
         std::vector<int> controlCellMap;
         std::vector<std::vector<int>> controlNodeInCell;
+
+        std::vector<bool> isBoundaryEdge;
         
         void initialize(Config &conf);
         void initializeAdjoint(Config &conf);

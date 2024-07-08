@@ -15,15 +15,11 @@ alpha(conf.alpha), resistance(conf.resistance)
     mkdir(outputDir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     outputDir = outputDir + "/main";
     mkdir(outputDir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-    dir = outputDir + "/velocity";
-    mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-    dir = outputDir + "/pressure";
+    dir = outputDir + "/solution";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     dir = outputDir + "/domain";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     dir = outputDir + "/dat";
-    mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-    dir = outputDir + "/data";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 }
 

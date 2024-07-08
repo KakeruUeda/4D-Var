@@ -4,7 +4,7 @@ Grid::Grid(Config &conf) :
 gridType(conf.gridType), cell(conf), node(conf), dirichlet(conf),
 nNodesGlobal(conf.nNodesGlobal), nCellsGlobal(conf.nCellsGlobal),
 nDofsGlobal(0), nDofsLocal(0), dim(conf.dim)
-{   
+{
 }
 
 void Grid::setStructuredGrid(const int nxCells, const int nyCells, const int nzCells, 
