@@ -372,6 +372,17 @@ void Config::readInverseParameter()
         planeDir[0] = 0, planeDir[1] = 1;
     }
 
+    label = base_label + "/VoxelVelocity";
+
+    if(!tp.getInspectedValue(label, str))
+        throw std::runtime_error(label + " is not set");
+
+    if(str == "average"){
+        vvox = VoxelVelocity::AVERAGE;
+    }else if(str == "interpolation"){
+        vvox = VoxelVelocity::INTERPOLATION;
+    }
+
     label = base_label + "/aCF";
     if(!tp.getInspectedValue(label, aCF))
         throw std::runtime_error(label + " is not set");

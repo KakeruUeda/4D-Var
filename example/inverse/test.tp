@@ -24,6 +24,7 @@ Boundary
 Inverse
 {
     controlBoundary = "left"
+    voxelVelocity = "average"
     aCF = 1e2
     bCF1 = 0e0
     bCF2 = 0e0

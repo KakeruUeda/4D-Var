@@ -46,7 +46,7 @@ void Adjoint::matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, V
                 ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
                 ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
                 MathFEM::comp_dxdr(dxdr, dNdr, xCurrent, grid.cell.nNodesInCell);
-                MathFEM::comp_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
+                comp_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
                 detJ = MathCommon::compDeterminant_3x3(dxdr);
                 weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
 
@@ -91,8 +91,7 @@ void Adjoint::matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, V
                     } 
                 }
 
-                //setVelocityValue(vel, advel, dvdx, N, dNdx, ic, t);
-                double tau = MathFEM::comp_tau(wgp, he, main.Re, main.dt);
+                double tau = comp_tau(wk1, he, main.Re, main.dt);
 
                 for(int ii=0; ii<grid.cell.nNodesInCell; ii++){  
                     IU = s[ii];
@@ -283,229 +282,204 @@ void Adjoint::matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, V
 }
 
 
-void Adjoint::matrixAssemblyAdjoint_DO(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal, 
+void Adjoint::matrixAssemblyAdjointDO(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal, 
                                        const int ic, const int t)
-{
-    int n1, n2, n3;
-    int IU, IV, IW, IP;
-    int JU, JV, JW, JP;
-    int ILU, ILV, ILW;
-    int nGaussPoint = 2;
-
-    std::vector<std::vector<double>> xCurrent;
-    std::vector<double> N;
-    std::vector<std::vector<double>> dNdr;
-    std::vector<std::vector<double>> dNdx;
-    std::vector<std::vector<double>> K;
-    
-    VecTool::resize(xCurrent, grid.cell.nNodesInCell, main.dim);
-    VecTool::resize(N, grid.cell.nNodesInCell);
-    VecTool::resize(dNdr, grid.cell.nNodesInCell, main.dim);
-    VecTool::resize(dNdx, grid.cell.nNodesInCell, main.dim);
-    VecTool::resize(K, grid.cell.nNodesInCell, grid.cell.nNodesInCell);
-    
+{   
     for(int p=0; p<grid.cell.nNodesInCell; p++){
         for(int d=0; d<main.dim; d++){
             xCurrent[p][d] = grid.node.x[grid.cell(ic).node[p]][d];
         }
     }
-    int s[grid.cell.nNodesInCell];
-    for(int p=0; p<grid.cell.nNodesInCell; p++){
-        s[p] = 0;
-    }       
-    for(int p=1; p<grid.cell.nNodesInCell; p++){
-        s[p] = s[p-1] + grid.node.nDofsOnNode[grid.cell(ic).node[p-1]]; 
-    }
 
     double he = fabs(xCurrent[1][0] - xCurrent[0][0]);
-    double f = main.resistance * main.alpha * (1e0 - grid.cell(ic).phi) / (main.alpha + grid.cell(ic).phi);
-    double detJ, weight;
-    Gauss gauss(nGaussPoint);
-    double dxdr[3][3] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
-    for(int i1=0; i1<nGaussPoint; i1++){
-        for(int i2=0; i2<nGaussPoint; i2++){
-            for(int i3=0; i3<nGaussPoint; i3++){
-                ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-                ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
+
+    double k = main.resistance * main.alpha;
+    double ftmp = (1e0 - grid.cell(ic).phi) / (main.alpha + grid.cell(ic).phi);
+    double f = k * ftmp;
+
+    Gauss g2(2);
+
+    for(int i1=0; i1<2; i1++){
+        for(int i2=0; i2<2; i2++){
+            for(int i3=0; i3<2; i3++){
+                ShapeFunction3D::C3D8_N(N, g2.point[i1], g2.point[i2], g2.point[i3]);
+                ShapeFunction3D::C3D8_dNdr(dNdr, g2.point[i1], g2.point[i2], g2.point[i3]);
+
                 MathFEM::comp_dxdr(dxdr, dNdr, xCurrent, grid.cell.nNodesInCell);
-                MathFEM::comp_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
+                comp_dNdx(dNdx, dNdr, dxdr, grid.cell.nNodesInCell);
+
                 detJ = MathCommon::compDeterminant_3x3(dxdr);
-                weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
-
+                weight = g2.weight[i1] * g2.weight[i2] * g2.weight[i3];
+                
                 setValue(main, N, dNdx, ic, t);
-
-                vector<double> tmp(grid.cell.nNodesInCell, 0e0);
-                for(int p=0; p<grid.cell.nNodesInCell; p++){
-                    for(int d=0; d<main.dim; d++){
-                        tmp[p] += dNdx[p][d] * vk[d];
-                    } 
-                }
-
-                double tau = MathFEM::comp_tau(wk1, he, main.Re, main.dt);
+                tau = comp_tau(wk1, he, main.Re, main.dt);
 
                 for(int ii=0; ii<grid.cell.nNodesInCell; ii++){  
-                    IU = s[ii];
-                    IV = IU + 1;
-                    IW = IU + 2;
-                    IP = IU + 3;
+                    updateRowIndex(ii, ic);
                     for(int jj=0; jj<grid.cell.nNodesInCell; jj++){  
-                        JU = s[jj];
-                        JV = JU + 1;
-                        JW = JU + 2;
-                        JP = JU + 3;
-
-                        K[ii][jj] = 0e0;
-                        for(int k=0;k<3;k++){
-                            K[ii][jj] += dNdx[ii][k] * dNdx[jj][k];
-                        }
-
-                        // MASS TERM
-                        Klocal(IU, JU) += N[ii] * N[jj] / main.dt * detJ * weight;
-                        Klocal(IV, JV) += N[ii] * N[jj] / main.dt * detJ * weight;
-                        Klocal(IW, JW) += N[ii] * N[jj] / main.dt * detJ * weight;
-
-                         // DIFFUSION TERM
-                        for(int mm=0; mm<3; mm++){
-                            if(mm == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
-                            if(mm == 1){n1 = 1e0; n2 = 2e0; n3 = 1e0;}
-                            if(mm == 2){n1 = 1e0; n2 = 1e0; n3 = 2e0;}
-                            Klocal(IU, JU) += 5e-1 * n1 * dNdx[ii][mm] * dNdx[jj][mm] / main.Re * detJ * weight;
-                            Klocal(IV, JV) += 5e-1 * n2 * dNdx[ii][mm] * dNdx[jj][mm] / main.Re * detJ * weight;
-                            Klocal(IW, JW) += 5e-1 * n3 * dNdx[ii][mm] * dNdx[jj][mm] / main.Re * detJ * weight;
-                        }
-                        Klocal(IU, JV) += 5e-1 * dNdx[ii][1] * dNdx[jj][0] / main.Re * detJ * weight;
-                        Klocal(IU, JW) += 5e-1 * dNdx[ii][2] * dNdx[jj][0] / main.Re * detJ * weight;
-                        Klocal(IV, JU) += 5e-1 * dNdx[ii][0] * dNdx[jj][1] / main.Re * detJ * weight;
-                        Klocal(IV, JW) += 5e-1 * dNdx[ii][2] * dNdx[jj][1] / main.Re * detJ * weight;
-                        Klocal(IW, JU) += 5e-1 * dNdx[ii][0] * dNdx[jj][2] / main.Re * detJ * weight;
-                        Klocal(IW, JV) += 5e-1 * dNdx[ii][1] * dNdx[jj][2] / main.Re * detJ * weight;
-
-                        // ADVECTION TERM
-                        for(int d=0; d<main.dim; d++){
-                            Klocal(IU, JU) += 5e-1 * dNdx[ii][d] * advk1[d] * N[jj] * detJ * weight;
-                            Klocal(IV, JV) += 5e-1 * dNdx[ii][d] * advk1[d] * N[jj] * detJ * weight;
-                            Klocal(IW, JW) += 5e-1 * dNdx[ii][d] * advk1[d] * N[jj] * detJ * weight;
-                        }
-
-                        // PRESSURE TERM
-                        Klocal(IU, JP) -= dNdx[ii][0] * N[jj] * detJ * weight;
-                        Klocal(IV, JP) -= dNdx[ii][1] * N[jj] * detJ * weight;
-                        Klocal(IW, JP) -= dNdx[ii][2] * N[jj] * detJ * weight;
-  
-                        // CONTINUITY TERM
-                        Klocal(IP, JU) += N[ii] * dNdx[jj][0] * detJ * weight;
-                        Klocal(IP, JV) += N[ii] * dNdx[jj][1] * detJ * weight;
-                        Klocal(IP, JW) += N[ii] * dNdx[jj][2] * detJ * weight;
-                        
-                        // DARCY TERM
-                        Klocal(IU, JU) += 5e-1 * f * N[ii] * N[jj] * detJ * weight;
-                        Klocal(IV, JV) += 5e-1 * f * N[ii] * N[jj] * detJ * weight;
-                        Klocal(IW, JW) += 5e-1 * f * N[ii] * N[jj] * detJ * weight;   
-
-                        // PSPG TERM
-                        /*
-                        // ADVECTION TERM
-                        for(int d=0; d<3; d++){
-                            Klocal(IP, JU) += 5e-1 * tau * dNdx[ii][0] * vel[d] * dNdx[jj][d] * detJ * weight;
-                            Klocal(IP, JV) += 5e-1 * tau * dNdx[ii][1] * vel[d] * dNdx[jj][d] * detJ * weight;
-                            Klocal(IP, JW) += 5e-1 * tau * dNdx[ii][2] * vel[d] * dNdx[jj][d] * detJ * weight;
-                        }
-                        */
-
-                        // PRESSURE TERM
-                        Klocal(IP, JP) += tau * K[ii][jj] * detJ * weight;
+                        updateRowIndex(jj, ic);
+                        adjointGaussIntegralLHS(main, Klocal, f, ii, jj);
                     }
-
-                    // MASS TERM
-                    Flocal(IU) += N[ii] * wk1[0] / main.dt * detJ * weight;
-                    Flocal(IV) += N[ii] * wk1[1] / main.dt * detJ * weight;
-                    Flocal(IW) += N[ii] * wk1[2] / main.dt * detJ * weight;
-
-                    // DIFFUSION TERM
-                    for(int d=0; d<3; d++){
-                        if(d == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
-                        if(d == 1){n1 = 1e0; n2 = 2e0; n3 = 1e0;}
-                        if(d == 2){n1 = 1e0; n2 = 1e0; n3 = 2e0;}
-                        Flocal(IU) -= 5e-1 * n1 * dNdx[ii][d] * dwk1dx[0][d] / main.Re * detJ * weight;
-                        Flocal(IV) -= 5e-1 * n2 * dNdx[ii][d] * dwk1dx[1][d] / main.Re * detJ * weight;
-                        Flocal(IW) -= 5e-1 * n3 * dNdx[ii][d] * dwk1dx[2][d] / main.Re * detJ * weight;
-                    }
-                    Flocal(IU) -= 5e-1 * dNdx[ii][1] * dwk1dx[1][0] / main.Re * detJ * weight;
-                    Flocal(IU) -= 5e-1 * dNdx[ii][2] * dwk1dx[2][0] / main.Re * detJ * weight;
-                    Flocal(IV) -= 5e-1 * dNdx[ii][0] * dwk1dx[0][1] / main.Re * detJ * weight;
-                    Flocal(IV) -= 5e-1 * dNdx[ii][2] * dwk1dx[2][1] / main.Re * detJ * weight;
-                    Flocal(IW) -= 5e-1 * dNdx[ii][0] * dwk1dx[0][2] / main.Re * detJ * weight;
-                    Flocal(IW) -= 5e-1 * dNdx[ii][1] * dwk1dx[1][2] / main.Re * detJ * weight;
-                    
-                    // ADVECTION TERM
-                    // x dir
-                    Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvk1dx[0][0] * wk1[0] * detJ * weight;
-                    Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvkdx[0][0] * wk1[0] * detJ * weight;
-                    for(int d=0; d<main.dim; d++){
-                        Flocal(IU) -= 0.5 * dNdx[ii][d] * advk2[d] * wk1[0] * detJ * weight;
-                    }
-                    Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvk1dx[1][0] * wk1[1] * detJ * weight;
-                    Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvkdx[1][0] * wk1[1] * detJ * weight;
-                    Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvk1dx[2][0] * wk1[2] * detJ * weight;
-                    Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvkdx[2][0] * wk1[2] * detJ * weight;
-
-                    for(int d=0; d<main.dim; d++){
-                        Flocal(IU) -= 0.5 * (-0.5) * N[ii] * dvk2dx[d][0] * wk2[d] * detJ * weight;
-                        Flocal(IU) -= 0.5 * (-0.5) * N[ii] * dvk1dx[d][0] * wk2[d] * detJ * weight;
-                    }
-
-                    // y dir
-                    Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvk1dx[1][1] * wk1[1] * detJ * weight;
-                    Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvkdx[1][1] * wk1[1] * detJ * weight;
-                    for(int d=0; d<main.dim; d++){
-                        Flocal(IV) -= 0.5 * dNdx[ii][d] * advk2[d] * wk1[1] * detJ * weight;
-                    }
-                    Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvk1dx[0][1] * wk1[0] * detJ * weight;
-                    Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvkdx[0][1] * wk1[0] * detJ * weight;
-                    Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvk1dx[2][1] * wk1[2] * detJ * weight;
-                    Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvkdx[2][1] * wk1[2] * detJ * weight;
-
-                    for(int d=0; d<main.dim; d++){
-                        Flocal(IV) -= 0.5 * (-0.5) * N[ii] * dvk2dx[d][1] * wk2[d] * detJ * weight;
-                        Flocal(IV) -= 0.5 * (-0.5) * N[ii] * dvk1dx[d][1] * wk2[d] * detJ * weight;
-                    }
-
-                    // z dir
-                    Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvk1dx[2][2] * wk1[2] * detJ * weight;
-                    Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvkdx[2][2] * wk1[2] * detJ * weight;
-                    for(int d=0; d<main.dim; d++){
-                        Flocal(IW) -= 0.5 * dNdx[ii][d] * advk2[d] * wk1[2] * detJ * weight;
-                    }
-                    Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvk1dx[0][2] * wk1[0] * detJ * weight;
-                    Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvkdx[0][2] * wk1[0] * detJ * weight;
-                    Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvk1dx[1][2] * wk1[1] * detJ * weight;
-                    Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvkdx[1][2] * wk1[1] * detJ * weight;
-                    
-                    for(int d=0; d<main.dim; d++){
-                        Flocal(IW) -= 0.5 * (-0.5) * N[ii] * dvk2dx[d][2] * wk2[d] * detJ * weight;
-                        Flocal(IW) -= 0.5 * (-0.5) * N[ii] * dvk1dx[d][2] * wk2[d] * detJ * weight;
-                    }
-
-                    // DARCY TERM
-                    Flocal(IU) -= 5e-1 * f * N[ii] * wk1[0] * detJ * weight;
-                    Flocal(IV) -= 5e-1 * f * N[ii] * wk1[1] * detJ * weight;
-                    Flocal(IW) -= 5e-1 * f * N[ii] * wk1[2] * detJ * weight;
-
-                    // PSPG TERM
-                    /*
-                    // ADVECTION TERM
-                    for(int mm=0; mm<3; mm++){
-                        Flocal(IP) -= 5e-1 * tau * dNdx[ii][0] * vel[mm] * dwgpdx[0][mm] * detJ * weight;
-                        Flocal(IP) -= 5e-1 * tau * dNdx[ii][1] * vel[mm] * dwgpdx[1][mm] * detJ * weight;
-                        Flocal(IP) -= 5e-1 * tau * dNdx[ii][2] * vel[mm] * dwgpdx[2][mm] * detJ * weight;
-                    }
-                    */
-                    
+                    adjointGaussIntegralRHS(main, Flocal, f, ii);                    
                 }
             }
         }
     }
 
+}
+
+void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, const double &f, const int &ii, const int &jj)
+{
+    int n1, n2, n3;
+
+    K[ii][jj] = 0e0;
+    for(int k=0;k<3;k++){
+        K[ii][jj] += dNdx[ii][k] * dNdx[jj][k];
+    }
+
+    // MASS TERM
+    Klocal(IU, JU) += N[ii] * N[jj] / main.dt * detJ * weight;
+    Klocal(IV, JV) += N[ii] * N[jj] / main.dt * detJ * weight;
+    Klocal(IW, JW) += N[ii] * N[jj] / main.dt * detJ * weight;
+
+     // DIFFUSION TERM
+    for(int mm=0; mm<3; mm++){
+        if(mm == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
+        if(mm == 1){n1 = 1e0; n2 = 2e0; n3 = 1e0;}
+        if(mm == 2){n1 = 1e0; n2 = 1e0; n3 = 2e0;}
+        Klocal(IU, JU) += 5e-1 * n1 * dNdx[ii][mm] * dNdx[jj][mm] / main.Re * detJ * weight;
+        Klocal(IV, JV) += 5e-1 * n2 * dNdx[ii][mm] * dNdx[jj][mm] / main.Re * detJ * weight;
+        Klocal(IW, JW) += 5e-1 * n3 * dNdx[ii][mm] * dNdx[jj][mm] / main.Re * detJ * weight;
+    }
+    Klocal(IU, JV) += 5e-1 * dNdx[ii][1] * dNdx[jj][0] / main.Re * detJ * weight;
+    Klocal(IU, JW) += 5e-1 * dNdx[ii][2] * dNdx[jj][0] / main.Re * detJ * weight;
+    Klocal(IV, JU) += 5e-1 * dNdx[ii][0] * dNdx[jj][1] / main.Re * detJ * weight;
+    Klocal(IV, JW) += 5e-1 * dNdx[ii][2] * dNdx[jj][1] / main.Re * detJ * weight;
+    Klocal(IW, JU) += 5e-1 * dNdx[ii][0] * dNdx[jj][2] / main.Re * detJ * weight;
+    Klocal(IW, JV) += 5e-1 * dNdx[ii][1] * dNdx[jj][2] / main.Re * detJ * weight;
+
+    // ADVECTION TERM
+    for(int d=0; d<main.dim; d++){
+        Klocal(IU, JU) += 5e-1 * dNdx[ii][d] * advk1[d] * N[jj] * detJ * weight;
+        Klocal(IV, JV) += 5e-1 * dNdx[ii][d] * advk1[d] * N[jj] * detJ * weight;
+        Klocal(IW, JW) += 5e-1 * dNdx[ii][d] * advk1[d] * N[jj] * detJ * weight;
+    }
+
+    // PRESSURE TERM
+    Klocal(IU, JP) -= dNdx[ii][0] * N[jj] * detJ * weight;
+    Klocal(IV, JP) -= dNdx[ii][1] * N[jj] * detJ * weight;
+    Klocal(IW, JP) -= dNdx[ii][2] * N[jj] * detJ * weight;  
+    
+    // CONTINUITY TERM
+    Klocal(IP, JU) += N[ii] * dNdx[jj][0] * detJ * weight;
+    Klocal(IP, JV) += N[ii] * dNdx[jj][1] * detJ * weight;
+    Klocal(IP, JW) += N[ii] * dNdx[jj][2] * detJ * weight;
+    
+    // DARCY TERM
+    Klocal(IU, JU) += 5e-1 * f * N[ii] * N[jj] * detJ * weight;
+    Klocal(IV, JV) += 5e-1 * f * N[ii] * N[jj] * detJ * weight;
+    Klocal(IW, JW) += 5e-1 * f * N[ii] * N[jj] * detJ * weight;   
+
+    // PSPG TERM
+    /*
+    // ADVECTION TERM
+    for(int d=0; d<3; d++){
+        Klocal(IP, JU) += 5e-1 * tau * dNdx[ii][0] * vel[d] * dNdx[jj][d] * detJ * weight;
+        Klocal(IP, JV) += 5e-1 * tau * dNdx[ii][1] * vel[d] * dNdx[jj][d] * detJ * weight;
+        Klocal(IP, JW) += 5e-1 * tau * dNdx[ii][2] * vel[d] * dNdx[jj][d] * detJ * weight;
+    }
+    */
+
+    // PRESSURE TERM
+    Klocal(IP, JP) += tau * K[ii][jj] * detJ * weight;
+}
+
+
+void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, const double &f, const int &ii)
+{
+    int n1, n2, n3;
+
+    // MASS TERM
+    Flocal(IU) += N[ii] * wk1[0] / main.dt * detJ * weight;
+    Flocal(IV) += N[ii] * wk1[1] / main.dt * detJ * weight;
+    Flocal(IW) += N[ii] * wk1[2] / main.dt * detJ * weight;
+                
+    // DIFFUSION TERM
+    for(int d=0; d<3; d++){
+        if(d == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
+        if(d == 1){n1 = 1e0; n2 = 2e0; n3 = 1e0;}
+        if(d == 2){n1 = 1e0; n2 = 1e0; n3 = 2e0;}
+        Flocal(IU) -= 5e-1 * n1 * dNdx[ii][d] * dwk1dx[0][d] / main.Re * detJ * weight;
+        Flocal(IV) -= 5e-1 * n2 * dNdx[ii][d] * dwk1dx[1][d] / main.Re * detJ * weight;
+        Flocal(IW) -= 5e-1 * n3 * dNdx[ii][d] * dwk1dx[2][d] / main.Re * detJ * weight;
+    }
+    Flocal(IU) -= 5e-1 * dNdx[ii][1] * dwk1dx[1][0] / main.Re * detJ * weight;
+    Flocal(IU) -= 5e-1 * dNdx[ii][2] * dwk1dx[2][0] / main.Re * detJ * weight;
+    Flocal(IV) -= 5e-1 * dNdx[ii][0] * dwk1dx[0][1] / main.Re * detJ * weight;
+    Flocal(IV) -= 5e-1 * dNdx[ii][2] * dwk1dx[2][1] / main.Re * detJ * weight;
+    Flocal(IW) -= 5e-1 * dNdx[ii][0] * dwk1dx[0][2] / main.Re * detJ * weight;
+    Flocal(IW) -= 5e-1 * dNdx[ii][1] * dwk1dx[1][2] / main.Re * detJ * weight;
+                
+    // ADVECTION TERM
+    // x dir
+    Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvk1dx[0][0] * wk1[0] * detJ * weight;
+    Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvkdx[0][0] * wk1[0] * detJ * weight;
+    for(int d=0; d<main.dim; d++){
+        Flocal(IU) -= 0.5 * dNdx[ii][d] * advk2[d] * wk1[0] * detJ * weight;
+    }
+    Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvk1dx[1][0] * wk1[1] * detJ * weight;
+    Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvkdx[1][0] * wk1[1] * detJ * weight;
+    Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvk1dx[2][0] * wk1[2] * detJ * weight;
+    Flocal(IU) -= 0.5 * 1.5 * N[ii] * dvkdx[2][0] * wk1[2] * detJ * weight;
+    for(int d=0; d<main.dim; d++){
+        Flocal(IU) -= 0.5 * (-0.5) * N[ii] * dvk2dx[d][0] * wk2[d] * detJ * weight;
+        Flocal(IU) -= 0.5 * (-0.5) * N[ii] * dvk1dx[d][0] * wk2[d] * detJ * weight;
+    }
+                
+    // y dir
+    Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvk1dx[1][1] * wk1[1] * detJ * weight;
+    Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvkdx[1][1] * wk1[1] * detJ * weight;
+    for(int d=0; d<main.dim; d++){
+        Flocal(IV) -= 0.5 * dNdx[ii][d] * advk2[d] * wk1[1] * detJ * weight;
+    }
+    Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvk1dx[0][1] * wk1[0] * detJ * weight;
+    Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvkdx[0][1] * wk1[0] * detJ * weight;
+    Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvk1dx[2][1] * wk1[2] * detJ * weight;
+    Flocal(IV) -= 0.5 * 1.5 * N[ii] * dvkdx[2][1] * wk1[2] * detJ * weight;
+    for(int d=0; d<main.dim; d++){
+        Flocal(IV) -= 0.5 * (-0.5) * N[ii] * dvk2dx[d][1] * wk2[d] * detJ * weight;
+        Flocal(IV) -= 0.5 * (-0.5) * N[ii] * dvk1dx[d][1] * wk2[d] * detJ * weight;
+    }
+                
+    // z dir
+    Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvk1dx[2][2] * wk1[2] * detJ * weight;
+    Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvkdx[2][2] * wk1[2] * detJ * weight;
+    for(int d=0; d<main.dim; d++){
+        Flocal(IW) -= 0.5 * dNdx[ii][d] * advk2[d] * wk1[2] * detJ * weight;
+    }
+    Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvk1dx[0][2] * wk1[0] * detJ * weight;
+    Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvkdx[0][2] * wk1[0] * detJ * weight;
+    Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvk1dx[1][2] * wk1[1] * detJ * weight;
+    Flocal(IW) -= 0.5 * 1.5 * N[ii] * dvkdx[1][2] * wk1[1] * detJ * weight;   
+    for(int d=0; d<main.dim; d++){
+        Flocal(IW) -= 0.5 * (-0.5) * N[ii] * dvk2dx[d][2] * wk2[d] * detJ * weight;
+        Flocal(IW) -= 0.5 * (-0.5) * N[ii] * dvk1dx[d][2] * wk2[d] * detJ * weight;
+    }
+    
+    // DARCY TERM
+    Flocal(IU) -= 5e-1 * f * N[ii] * wk1[0] * detJ * weight;
+    Flocal(IV) -= 5e-1 * f * N[ii] * wk1[1] * detJ * weight;
+    Flocal(IW) -= 5e-1 * f * N[ii] * wk1[2] * detJ * weight;
+                
+    // PSPG TERM
+    /*
+    // ADVECTION TERM
+    for(int mm=0; mm<3; mm++){
+        Flocal(IP) -= 5e-1 * tau * dNdx[ii][0] * vel[mm] * dwgpdx[0][mm] * detJ * weight;
+        Flocal(IP) -= 5e-1 * tau * dNdx[ii][1] * vel[mm] * dwgpdx[1][mm] * detJ * weight;
+        Flocal(IP) -= 5e-1 * tau * dNdx[ii][2] * vel[mm] * dwgpdx[2][mm] * detJ * weight;
+    }
+    */
 }
 
 

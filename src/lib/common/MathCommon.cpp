@@ -31,6 +31,11 @@ void MathCommon::compInverseMatrix_3x3(double (&inv_a)[3][3], const double (&a)[
     }
 }
 
+double MathCommon::compDeterminant_2x2(const double (&a)[2][2])
+{
+    double det = a[0][0] * a[1][1] - a[0][1] * a[1][0];
+    return det;
+}
 double MathCommon::compDeterminant_3x3(const double (&a)[3][3])
 {
     double det  = a[0][0] * a[1][1] * a[2][2] + a[1][0] * a[2][1] * a[0][2] + a[2][0] * a[0][1] * a[1][2]

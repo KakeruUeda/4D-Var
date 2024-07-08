@@ -8,10 +8,15 @@ Base
 Grid
 {
     type = "Structured"
+    extractFluid = "OFF"
     nNodesInCell = 8
     node = "input/square/64x64x64/node.dat"
     cell = "input/square/64x64x64/cell.dat"
     image = "input/square/64x64x64/image.dat"
+}
+
+Boundary
+{
     velocityDirichlet = "input/square/64x64x64/velocityDirichlet.dat"
     pressureDirichlet = "input/square/64x64x64/pressureDirichlet.dat"
 }
@@ -26,8 +31,8 @@ TimeParameter
 {
     dt = 0.1
     timeMax = 200
-    pulsatile_flow = "ON"
-    pulse_begin_itr = -1
+    pulsatileFlow = "OFF"
+    pulseBeginItr = -1
     T = 1.0
 }
 
@@ -35,5 +40,17 @@ DarcyParameter
 {
     alpha = 1e-1
     resistance = 1e2
+}
+
+Postprocess
+{
+    isSnapShot = "OFF"
+    nSnapShot = 10
+    snapInterval = 5
+    snapTimeBeginItr = 250
+    nNodesInDataCell = 8
+    origin = (1.0, 0.0, 0.0)
+    nxData = (12, 12, 12)
+    lxData = (1.0, 1.0, 1.0)
 }
 

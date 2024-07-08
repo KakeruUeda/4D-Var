@@ -11,14 +11,6 @@ void DirectProblem::solveUSNS(Application &app)
 
     petsc.setMatAndVecZero(grid.cell);
     petsc.initialAssembly();
-    
-    for(int in=0; in<grid.node.nNodesGlobal; in++){
-        for(int d=0; d<dim; d++){
-            grid.node.v[in][d] = 0e0;
-            grid.node.vPrev[in][d] = 0e0;
-        }
-        grid.node.p[in] = 0e0;
-    }
 
     for(int id=0; id<grid.nDofsGlobal; id++){
         grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
@@ -32,6 +24,7 @@ void DirectProblem::solveUSNS(Application &app)
 
     int snapCount = 0;
     for(int t=0; t<timeMax; t++){
+
         petsc.setValueZero();
         grid.dirichlet.assignDirichletBCs(grid.dirichlet.vDirichletNew, 
                                           grid.dirichlet.pDirichletNew, 
@@ -57,9 +50,14 @@ void DirectProblem::solveUSNS(Application &app)
                                grid.cell(ic).dofsBCsMap, Klocal, Flocal);
             }
         }
-        
+        petsc.currentStatus = ASSEMBLY_OK;
+        timer = MPI_Wtime() - timer;
+        PetscPrintf(MPI_COMM_WORLD, "\nMatrix assembly = %f seconds\n", timer);
+        MPI_Barrier(MPI_COMM_WORLD); 
+        timer = MPI_Wtime();
         petsc.solve();
-
+        timer = MPI_Wtime() - timer;
+        PetscPrintf(MPI_COMM_WORLD, "PETSc solver = %f seconds \n", timer);
         VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
         VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
         VecGetArray(vecSEQ, &arraySolnTmp);

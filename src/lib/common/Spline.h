@@ -1,7 +1,8 @@
 #ifndef SPLINE_H
 #define SPLINE_H
 
-class Spline {
+class Spline
+{
     public:
         void setPoints(const std::vector<double>& x, const std::vector<double>& y)
         {
@@ -10,7 +11,7 @@ class Spline {
             n = x.size();
 
             std::vector<double> h(n - 1), alpha(n - 1);
-            for (size_t i = 0; i < n - 1; ++i) {
+            for (int i = 0; i < n - 1; ++i) {
                 h[i] = x[i + 1] - x[i];
                 alpha[i] = (i == 0) ? 0 : (3 / h[i]) * (y[i + 1] - y[i]) - (3 / h[i - 1]) * (y[i] - y[i - 1]);
             }
@@ -20,7 +21,7 @@ class Spline {
             mu[0] = 0.0;
             z[0] = 0.0;
 
-            for(size_t i = 1; i < n - 1; ++i) {
+            for(int i = 1; i < n - 1; ++i) {
                 l[i] = 2 * (x[i + 1] - x[i - 1]) - h[i - 1] * mu[i - 1];
                 mu[i] = h[i] / l[i];
                 z[i] = (alpha[i] - h[i - 1] * z[i - 1]) / l[i];
@@ -46,10 +47,10 @@ class Spline {
                 throw std::out_of_range("x_val is out of range");
             }
 
-            size_t i = 0;
-            size_t j = n - 1;
+            int i = 0;
+            int j = n - 1;
             while(i < j){
-                size_t k = (i + j) / 2;
+                int k = (i + j) / 2;
                 if(x_val <= x[k]){
                     j = k;
                 }else{
@@ -63,7 +64,7 @@ class Spline {
     }
 
     private:
-        size_t n;
+        int n;
         std::vector<double> x, y, b, c, d;
 };
 

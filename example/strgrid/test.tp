@@ -7,7 +7,7 @@ Base
 
 StructuredGrid
 {
-    nx = (32, 32, 32) 
+    nx = (64, 64, 64) 
     lx = (1.0, 1.0, 1.0)
     nNodesInCell = 8
 }
@@ -16,7 +16,7 @@ Boundary
 {
     top{
         type = "v"
-        value = (0,0,0)
+        value = (1,0,0)
     }
     bottom{
         type = "v"
@@ -24,10 +24,10 @@ Boundary
     }
     left{
         type = "v"
-        value = (2.5,0,0)
+        value = (0,0,0)
     }
     right{
-        type = "free"
+        type = "v"
         value = (0,0,0)
     }
     front{

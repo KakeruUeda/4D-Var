@@ -24,7 +24,7 @@
 
 extern MyMPI mpi;
 
-class DirectProblem
+class DirectProblem :public MathFEM
 {
     public:
         DirectProblem(Config &conf);
@@ -54,6 +54,7 @@ class DirectProblem
         double alpha, resistance;
 
         void initialize(Config &conf);
+        void initializeFEM();
         void runSimulation();
         void outputDomain();
         void solveUSNS(Application &app);
@@ -65,9 +66,9 @@ class DirectProblem
                                 const int ic, const int t);
 
     private:
-        void setVelocityValue(double (&vel)[3], double (&advel)[3], double (&dvdx)[3][3],
-                              std::vector<double> &N, std::vector<std::vector<double>> &dNdx, 
-                              const int ic, const int t);
+        void mainGaussIntegralLHS(MatrixXd &Klocal, const double f, const int ii, const int jj);
+        void mainGaussIntegralRHS(VectorXd &Flocal, const double f, const int ii);
+        void setVelocityValue(const int ic, const int t);
         void updateVariables(const int t);
         void assignTimeVariables(const int t);
         void outputSolution(const int t);

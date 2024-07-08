@@ -42,31 +42,33 @@ struct CostFunction
 };
 
 
-class Adjoint
+class Adjoint : public MathFEM
 {
     public:
         Adjoint(Config &conf):
-        grid(conf), planeDir(conf.planeDir), timeMax(conf.timeMax), 
-        rho(conf.rho), mu(conf.mu), dt(conf.dt),
+        grid(conf), dim(conf.dim), planeDir(conf.planeDir), 
+        timeMax(conf.timeMax), rho(conf.rho), mu(conf.mu), dt(conf.dt),
         alpha(conf.alpha), resistance(conf.resistance)
         {}
         
         Grid grid;
         PetscSolver petsc;
         
+        int dim;
         int timeMax;
         double dt;
         double rho, mu, nu, Re;
         double alpha, resistance;
 
-        double vk[3], vk1[3], vk2[3];
-        double advk1[3], advk2[3];
-        double dvkdx[3][3], dvk1dx[3][3], dvk2dx[3][3];
-        double wk1[3], wk2[3];
-        double dwk1dx[3][3], dwk2dx[3][3];
+        std::vector<double> vk, vk1, vk2;
+        std::vector<double> advk1, advk2;
+        std::vector<double> wk1, wk2;
+        std::vector<std::vector<double>> dvkdx, dvk1dx, dvk2dx;
+        std::vector<std::vector<double>> dwk1dx, dwk2dx;
         
         std::vector<int> planeDir;
 
+        void initializeFEM();
         void solveAdjoint(DirectProblem &main, std::string outputDir, 
                           std::vector<std::vector<std::vector<double>>> &feedbackForceT,  
                           const int nData, const int loop);
@@ -77,11 +79,15 @@ class Adjoint
                       std::vector<std::vector<double>> &dNdx, const int ic, const int t);
         void matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
                                        const int ic, const int t);
-        void matrixAssemblyAdjoint_DO(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
-                                      const int ic, const int t);
+        void matrixAssemblyAdjointDO(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
+                                     const int ic, const int t);
         void boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
                               const int ic, const int ib);
+        void boundaryInGaussIntegral(MatrixXd &Klocal, double (&dxdr2D)[2][2], const double weight,
+                                     const int ii, const int jj);
         void updateVariables(std::string output, const int dim, const int t, const int loop);
+        void adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, const double &f, const int &ii, const int &jj);
+        void adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, const double &f, const int &ii);
 
     private:
         void setVariablesZero(const int dim);

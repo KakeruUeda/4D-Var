@@ -8,7 +8,7 @@ Base
 Grid
 {
     type = "Structured"
-    extractFluid = "OFF"
+    extractFluid = "ON"
     nNodesInCell = 8
     node = "input/straightTube/node.dat"
     cell = "input/straightTube/cell.dat"

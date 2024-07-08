@@ -5,10 +5,10 @@
 int main()
 {
     int nx = 64;
-    int ny = 32;
-    int nz = 32;
+    int ny = 64;
+    int nz = 64;
 
-    double lx = 2e0;
+    double lx = 1e0;
     double ly = 1e0; 
     double lz = 1e0;
 

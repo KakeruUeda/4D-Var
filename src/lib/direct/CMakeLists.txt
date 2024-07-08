@@ -5,6 +5,7 @@ add_library(direct STATIC)
 target_sources(direct
     PRIVATE
         DirectProblem.cpp
+        initialize.cpp
         MatrixAssemblySNS.cpp
         MatrixAssemblyUSNS.cpp
         Postprocess.cpp

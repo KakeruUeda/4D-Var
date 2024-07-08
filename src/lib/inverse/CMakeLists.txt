@@ -5,6 +5,7 @@ add_library(inverse STATIC)
 target_sources(inverse
     PRIVATE
         InverseProblem.cpp
+        initialize.cpp
         AdjointUSNS.cpp
         MatrixAssemblyAdjointUSNS.cpp
 )

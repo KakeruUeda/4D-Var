@@ -126,7 +126,7 @@ void Adjoint::solveAdjointDO(DirectProblem &main, std::string outputDir,
                 VectorXd  Flocal(nDofsInCell);
                 Klocal.setZero();
                 Flocal.setZero();
-                matrixAssemblyAdjoint_DO(main, Klocal, Flocal, ic, t);
+                matrixAssemblyAdjointDO(main, Klocal, Flocal, ic, t);
                 petsc.setValue(grid.cell(ic).dofsBCsMapWall, grid.cell(ic).dofsMap,
                                grid.cell(ic).dofsBCsMapWall, Klocal, Flocal);
             }
@@ -206,89 +206,50 @@ void Adjoint::setVariablesZero(const int dim)
 
 void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
                                const int ic, const int ib)
-{
-    int IU, ILU, ILV, ILW;
-    int JU, JLU, JLV, JLW;
-    int IV, IW, IP;
-    int JV, JW, JP;
-    
-    int nControlNodesInCell = 4;
-    double dxdr[2][2]; 
-    std::vector<double> N2D;
-    std::vector<std::vector<double>> dNdr2D;
-    std::vector<std::vector<double>> dNdx2D;
-    std::vector<std::vector<double>> xCurrent2D;
-    std::vector<std::vector<double>> K;
-    
-    VecTool::resize(N2D, nControlNodesInCell);
-    VecTool::resize(dNdr2D, nControlNodesInCell, main.dim-1);
-    VecTool::resize(dNdx2D,  nControlNodesInCell, main.dim-1);
-    VecTool::resize(xCurrent2D, nControlNodesInCell, main.dim-1);
-    VecTool::resize(K, nControlNodesInCell, nControlNodesInCell);
+{   
+    int nc = grid.dirichlet.nControlNodesGlobal;
 
-    Gauss gauss(2);
-    double value;
-
-    for(int p=0; p<nControlNodesInCell; p++){
+    for(int p=0; p<nc; p++){
         int n = grid.dirichlet.controlNodeInCell[ib][p];
         for(int d=0; d<main.dim-1; d++){
+            xCurrent2D[p][d] = 0e0;
             xCurrent2D[p][d] = main.grid.node.x[n][planeDir[d]];
         }
     }
-    double he = fabs(xCurrent2D[1][0] - xCurrent2D[0][0]);
     
-    int s[grid.cell.nNodesInCell];
-    for(int p=0; p<grid.cell.nNodesInCell; p++){
-        s[p] = 0;
-    }       
-    for(int p=1; p<grid.cell.nNodesInCell; p++){
-        s[p] = s[p-1] + grid.node.nDofsOnNode[grid.cell(ic).node[p-1]]; 
-    }
-
-    int ss[nControlNodesInCell];
-    int count = 0;
-    for(int p=0; p<grid.cell.nNodesInCell; p++){
-        if(grid.node.nDofsOnNode[grid.cell(ic).node[p]] > main.dim+1){
-            ss[count] = s[p];
-            count++;
-        }
-    }
-
-    double wgp[3];
-    double lgp[3];
-
-    int tmp = ss[2];
-    ss[2] = ss[3];
-    ss[3] = tmp;
-
+    Gauss g2(2);
+    
     for(int i1=0; i1<2; i1++){
         for(int i2=0; i2<2; i2++){
-            ShapeFunction2D::C2D4_N(N2D, gauss.point[i1], gauss.point[i2]);
-            ShapeFunction2D::C2D4_dNdr(dNdr2D, gauss.point[i1], gauss.point[i2]);
-            MathFEM::comp_dxdr2D(dxdr, dNdr2D, xCurrent2D, nControlNodesInCell);
-            MathFEM::comp_dNdx2D(dNdx2D, dNdr2D, dxdr, nControlNodesInCell);
+            ShapeFunction2D::C2D4_N(N2D, g2.point[i1], g2.point[i2]);
+            ShapeFunction2D::C2D4_dNdr(dNdr2D, g2.point[i1], g2.point[i2]);
 
-            double detJ = dxdr[0][0] * dxdr[1][1] - dxdr[0][1] * dxdr[1][0];
-            double weight = gauss.weight[i1] * gauss.weight[i2];
-            double tau = MathFEM::comp_tau(wgp, he, main.Re, main.dt);
+            MathFEM::comp_dxdr2D(dxdr2D, dNdr2D, xCurrent2D, nc);
+            double weight = g2.weight[i1] * g2.weight[i2];
 
-            for(int ii=0; ii<count; ii++){
-                IU = ss[ii];  IV = IU + 1;  IW = IU + 2;
-                ILU = IU + 4; ILV = IU + 5; ILW = IU + 6;
-                for(int jj=0; jj<count; jj++){
-                    JU = ss[jj];  JV = JU + 1;  JW = JU + 2;
-                    JLU = JU + 4; JLV = JU + 5; JLW = JU + 6;
-                    Klocal(IU, JLU) -= N2D[ii] * N2D[jj] * detJ * weight;
-                    Klocal(IV, JLV) -= N2D[ii] * N2D[jj] * detJ * weight;
-                    Klocal(IW, JLW) -= N2D[ii] * N2D[jj] * detJ * weight;
-                    Klocal(ILU, JU) -= N2D[ii] * N2D[jj] * detJ * weight; 
-                    Klocal(ILV, JV) -= N2D[ii] * N2D[jj] * detJ * weight; 
-                    Klocal(ILW, JW) -= N2D[ii] * N2D[jj] * detJ * weight; 
+            for(int ii=0; ii<nc; ii++){
+                updateRowIndexPlane(ii, ic);
+                for(int jj=0; jj<nc; jj++){
+                    updateColumnIndexPlane(jj, ic);
+                    boundaryInGaussIntegral(Klocal, dxdr2D, weight, ii, jj);
                 }
             }
             
         }
     }
+}
+
+void Adjoint::boundaryInGaussIntegral(MatrixXd &Klocal, double (&dxdr2D)[2][2], const double weight,
+                                      const int ii, const int jj)
+{
+    double detJ = MathCommon::compDeterminant_2x2(dxdr2D);
+
+    Klocal(IU, JLU) -= N2D[ii] * N2D[jj] * detJ * weight;
+    Klocal(IV, JLV) -= N2D[ii] * N2D[jj] * detJ * weight;
+    Klocal(IW, JLW) -= N2D[ii] * N2D[jj] * detJ * weight;
+    Klocal(ILU, JU) -= N2D[ii] * N2D[jj] * detJ * weight; 
+    Klocal(ILV, JV) -= N2D[ii] * N2D[jj] * detJ * weight; 
+    Klocal(ILW, JW) -= N2D[ii] * N2D[jj] * detJ * weight; 
 }
 
 void Adjoint::updateVariables(std::string outputDir, const int dim, const int t, const int loop)
