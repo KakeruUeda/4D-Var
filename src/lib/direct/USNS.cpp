@@ -1,3 +1,9 @@
+/**
+ * @file Postprocess.cpp
+ * @author K.U.
+ * @date July, 2024
+ */
+
 #include "DirectProblem.h"
 
 void DirectProblem::solveUSNS(Application &app)
@@ -16,7 +22,6 @@ void DirectProblem::solveUSNS(Application &app)
         grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
         grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
     }
-
     if(app == Application::FDVAR){
         pulsatileFlow = OFF;
         snap.isSnapShot = ON;
@@ -24,7 +29,6 @@ void DirectProblem::solveUSNS(Application &app)
 
     int snapCount = 0;
     for(int t=0; t<timeMax; t++){
-
         petsc.setValueZero();
         grid.dirichlet.assignDirichletBCs(grid.dirichlet.vDirichletNew, 
                                           grid.dirichlet.pDirichletNew, 
@@ -41,11 +45,12 @@ void DirectProblem::solveUSNS(Application &app)
         for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
             if(grid.cell(ic).subId == mpi.myId){
                 int nDofsInCell = grid.cell(ic).dofsMap.size();
-                MatrixXd  Klocal(nDofsInCell, nDofsInCell);
-                VectorXd  Flocal(nDofsInCell);
-                Klocal.setZero();
+                Function f3(grid.cell.nNodesInCell, dim);
+                MatrixXd Klocal(nDofsInCell, nDofsInCell);
+                VectorXd Flocal(nDofsInCell);
+                Klocal.setZero(); 
                 Flocal.setZero();
-                matrixAssemblyUSNS(Klocal, Flocal, ic, t);
+                matrixAssemblyUSNS(Klocal, Flocal, f3, ic, t);
                 petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
                                grid.cell(ic).dofsBCsMap, Klocal, Flocal);
             }
@@ -54,9 +59,11 @@ void DirectProblem::solveUSNS(Application &app)
         timer = MPI_Wtime() - timer;
         PetscPrintf(MPI_COMM_WORLD, "\nMatrix assembly = %f seconds\n", timer);
         MPI_Barrier(MPI_COMM_WORLD); 
+
         timer = MPI_Wtime();
         petsc.solve();
         timer = MPI_Wtime() - timer;
+
         PetscPrintf(MPI_COMM_WORLD, "PETSc solver = %f seconds \n", timer);
         VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
         VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
@@ -126,11 +133,12 @@ void DirectProblem::compInitialCondition(std::vector<std::map<int, std::vector<d
         for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
             if(grid.cell(ic).subId == mpi.myId){
                 int nDofsInCell = grid.cell(ic).dofsMap.size();
-                MatrixXd  Klocal(nDofsInCell, nDofsInCell);
-                VectorXd  Flocal(nDofsInCell);
+                Function f3(grid.cell.nNodesInCell, dim);
+                MatrixXd Klocal(nDofsInCell, nDofsInCell);
+                VectorXd Flocal(nDofsInCell);
                 Klocal.setZero();
                 Flocal.setZero();
-                matrixAssemblyUSNS(Klocal, Flocal, ic, t);
+                matrixAssemblyUSNS(Klocal, Flocal, f3, ic, t);
                 petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
                                grid.cell(ic).dofsBCsMap, Klocal, Flocal);
             }
@@ -230,11 +238,12 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
         for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
             if(grid.cell(ic).subId == mpi.myId){
                 int nDofsInCell = grid.cell(ic).dofsMap.size();
-                MatrixXd  Klocal(nDofsInCell, nDofsInCell);
-                VectorXd  Flocal(nDofsInCell);
+                Function f3(grid.cell.nNodesInCell, dim);
+                MatrixXd Klocal(nDofsInCell, nDofsInCell);
+                VectorXd Flocal(nDofsInCell);
                 Klocal.setZero();
                 Flocal.setZero();
-                matrixAssemblyUSNS(Klocal, Flocal, ic, t);
+                matrixAssemblyUSNS(Klocal, Flocal, f3, ic, t);
                 petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
                                grid.cell(ic).dofsBCsMap, Klocal, Flocal);
             }

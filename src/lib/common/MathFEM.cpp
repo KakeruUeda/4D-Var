@@ -1,29 +1,5 @@
 #include "MathFEM.h"
 
-void MathFEM::updateRowIndex(const int &ii, const int &ic)
-{
-    IU = dofStart[ic][ii]; IV = IU + 1;  IW = IU + 2;
-    IP = IU + 3; ILU = IU + 4; ILV = IU + 5; ILW = IU + 6;
-}
-
-void MathFEM::updateColumnIndex(const int &jj, const int &ic)
-{
-    JU = dofStart[ic][jj]; JV = JU + 1;  JW = JU + 2;
-    JP = JU + 3; JLU = JU + 4; JLV = JU + 5; JLW = JU + 6;
-}
-
-void MathFEM::updateRowIndexPlane(const int &ii, const int &ic)
-{
-    IU = dofStartPlane[ic][ii]; IV = IU + 1; IW = IU + 2;
-    IP = IU + 3; ILU = IU + 4; ILV = IU + 5; ILW = IU + 6;
-}
-
-void MathFEM::updateColumnIndexPlane(const int &jj, const int &ic)
-{
-    JU = dofStartPlane[ic][jj];  JV = JU + 1;  JW = JU + 2;
-    JP = JU + 3; JLU = JU + 4; JLV = JU + 5; JLW = JU + 6;
-}
-
 void MathFEM::MathFEM::comp_dxdr2D(double (&dxdr)[2][2], std::vector<std::vector<double>> &dNdr, std::vector<std::vector<double>> &x1, const int &numOfNodeInElm)
 {
     for(int i=0; i<2; i++){
@@ -36,7 +12,7 @@ void MathFEM::MathFEM::comp_dxdr2D(double (&dxdr)[2][2], std::vector<std::vector
     }
 }
 
-void MathFEM::MathFEM::comp_dNdx2D(std::vector<std::vector<double>> &dNdx, std::vector<std::vector<double>> &dNdr, const double (&dxdr)[2][2], const int &numOfNodeInElm)
+void MathFEM::comp_dNdx2D(std::vector<std::vector<double>> &dNdx, std::vector<std::vector<double>> &dNdr, const double (&dxdr)[2][2], const int &numOfNodeInElm)
 {
     double drdx[2][2];
     MathCommon::compInverseMatrix_2x2(drdx, dxdr);

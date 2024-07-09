@@ -1,3 +1,9 @@
+/**
+ * @file Node.cpp
+ * @author K.U.
+ * @date Jun, 2024
+ */
+
 #include "Node.h"
 
 void Node::initialize(Config &conf)

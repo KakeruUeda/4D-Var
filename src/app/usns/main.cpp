@@ -35,8 +35,8 @@ int main(int argc, char *argv[])
     // Solve Unstready Navier Stokes
     direct.runSimulation();
 
-    post.extractOutletVelocity(direct);
-    //post.createData(direct);
+    //post.extractOutletVelocity(direct);
+    post.createData(direct);
 
     PetscFinalize(); 
 

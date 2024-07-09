@@ -1,3 +1,9 @@
+/**
+ * @file InverseProblem.h
+ * @author K.U.
+ * @date July, 2024
+ */
+
 #ifndef INVERSEPROBLEM_H
 #define INVERSEPROBLEM_H
 
@@ -23,6 +29,7 @@
 #include "ShapeFunction.h"
 #include "MathFEM.h"
 #include "DirectProblem.h"
+#include "Function.h"
 
 extern MyMPI mpi;
 
@@ -60,6 +67,16 @@ class Adjoint : public MathFEM
         double rho, mu, nu, Re;
         double alpha, resistance;
 
+        int IU, IV, IW, IP;
+        int ILU, ILV, ILW;
+        int JU, JV, JW, JP;
+        int JLU, JLV, JLW;
+
+        double tau;
+        std::vector<double> vgp;
+        std::vector<double> advgp;
+        std::vector<std::vector<double>> dvgpdx;
+
         std::vector<double> vk, vk1, vk2;
         std::vector<double> advk1, advk2;
         std::vector<double> wk1, wk2;
@@ -68,29 +85,27 @@ class Adjoint : public MathFEM
         
         std::vector<int> planeDir;
 
-        void initializeFEM();
-        void solveAdjoint(DirectProblem &main, std::string outputDir, 
-                          std::vector<std::vector<std::vector<double>>> &feedbackForceT,  
-                          const int nData, const int loop);
-        void solveAdjointDO(DirectProblem &main, std::string outputDir,
+        void solveAdjoint(DirectProblem &main, std::string outputDir,
                              std::vector<std::vector<std::vector<double>>> &feedbackForceT,
                              const int nData, const int loop);
-        void setValue(DirectProblem &main, std::vector<double> &N, 
-                      std::vector<std::vector<double>> &dNdx, const int ic, const int t);
-        void matrixAssemblyAdjointUSNS(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
-                                       const int ic, const int t);
-        void matrixAssemblyAdjointDO(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
-                                     const int ic, const int t);
+        void setValue(DirectProblem &main, Function &func, const int ic, const int t);
+        void matrixAssemblyAdjoint(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
+                                   Function &func, const int ic, const int t);
         void boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
-                              const int ic, const int ib);
-        void boundaryInGaussIntegral(MatrixXd &Klocal, double (&dxdr2D)[2][2], const double weight,
-                                     const int ii, const int jj);
+                              Function &func, const int ic, const int ib);
+        void boundaryInGaussIntegral(MatrixXd &Klocal, Function &func, const int ii, const int jj);
         void updateVariables(std::string output, const int dim, const int t, const int loop);
-        void adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, const double &f, const int &ii, const int &jj);
-        void adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, const double &f, const int &ii);
+        void adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, Function &func, 
+                                     const double f, const int ii, const int jj);
+        void adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, Function &func, 
+                                     const double f, const int ii);
 
     private:
         void setVariablesZero(const int dim);
+        void updateRowIndex(const int ii, const int ic);
+        void updateColumnIndex(const int ii, const int ic);
+        void updateRowIndexPlane(const int jj, const int ic);
+        void updateColumnIndexPlane(const int jj, const int ic);
 };
 
 class InverseProblem
@@ -128,42 +143,21 @@ class InverseProblem
         void output(const int loop);
         void guessInitialCondition();
         void compCostFunction();
-        void GaussIntegralRegTerm1(std::vector<double> &N, std::vector<std::vector<double>> &dNdr,
-                                   std::vector<std::vector<double>> &xCurrent, double &value, 
-                                   const double weight, const int ic, const int t);
-        void GaussIntegralRegTerm2(std::vector<double> &N, std::vector<std::vector<double>> &dNdr,
-                                   std::vector<std::vector<double>> &xCurrent, double &value, 
-                                   const double weight, const int ic, const int t);
+        void GaussIntegralRegTerm2(Function &func, double &value, const int ic, const int t);
+        void GaussIntegralRegTerm3(Function &func, double &value, const int ic, const int t);
         void compFeedbackForce();
-        void compEdgeValue(std::vector<std::vector<std::vector<std::vector<double>>>> &vEX, const int t);
-        void compInterpolatedFeeback(std::vector<std::vector<double>> &xCurrent, double (&feedback)[3], 
-                                     std::vector<std::vector<std::vector<std::vector<double>>>> &vEX, 
-                                     double (&point)[3]);
+        void compInterpolatedFeeback(double (&feedback)[3], double (&point)[3]);
         void compTimeInterpolatedFeedbackForce();
-        void feedbackGaussIntegral(std::vector<double> &N, double (&feedback)[3], 
-                                   const double detJ, const double weight, const int ic, const int t);
-        void compFeedbackForce2();
-        void feedbackGaussIntegral2(std::vector<double> &N, std::vector<std::vector<double>> &xCurrent,
-                                    std::vector<std::vector<double>> &velCurrent, const double detJ,
-                                    const double weight, const int voxelId, const int cellId, const int t);
-
+        void feedbackGaussIntegral(Function &func, double (&feedback)[3], const int ic, const int t);
         void compOptimalCondition();
-        void GaussIntegralOptimalConditionTerm1(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
-                                                std::vector<std::vector<double>> &xCurrent, 
-                                                double (&value)[4][3], const double weight, 
-                                                const int ic, const int t);
-        void GaussIntegralOptimalConditionTerm2(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
-                                                std::vector<std::vector<double>> &xCurrent, 
-                                                double (&value)[4][3], const double weight, 
-                                                const int ic, const int t);
-        void GaussIntegralOptimalConditionTerm3(std::vector<double> &N, std::vector<std::vector<double>> &dNdr, 
-                                                std::vector<std::vector<double>> &xCurrent, 
-                                                double (&value)[4][3], const double weight, 
-                                                const int ic, const int t);
+        void GaussIntegralOptimalConditionTerm1(Function &func, double (&value)[4][3], const int ic, const int t);
+        void GaussIntegralOptimalConditionTerm2(Function &func, double (&value)[4][3], const int ic, const int t);
+        void GaussIntegralOptimalConditionTerm3(Function &func, double (&value)[4][3], const int ic, const int t);
         double armijoCriteria(const double fk);
         void updataControlVariables(DirectProblem &main, const double alpha);
     
     private:
+        void assembleFeedbackForce(Function &func, const int ic, const int t);
 
 };
 

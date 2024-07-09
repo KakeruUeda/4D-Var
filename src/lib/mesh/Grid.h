@@ -1,3 +1,9 @@
+/**
+ * @file Grid.h
+ * @author K.U.
+ * @date Jun, 2024
+ */
+
 #ifndef GRID_H
 #define GRID_H
 

@@ -26,6 +26,7 @@ void DirichletBoundary::initializeAdjoint(Config &conf)
     controlBoundaryMap = conf.controlBoundaryMap;
     controlCellMap = conf.controlCellMap;
     controlNodeInCell = conf.controlNodeInCell;
+    nControlNodesInCell = conf.controlNodeInCell[0].size();
     nControlCellsGlobal = controlCellMap.size();
     nControlNodesGlobal = controlBoundaryMap.size();
     isBoundaryEdge = conf.isBoundaryEdge;

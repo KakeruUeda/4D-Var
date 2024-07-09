@@ -1,3 +1,9 @@
+/**
+ * @file Node.h
+ * @author K.U.
+ * @date Jun, 2024
+ */
+
 #ifndef NODE_H
 #define NODE_H
 

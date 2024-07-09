@@ -4,9 +4,9 @@
 
 int main()
 {
-    int nx = 64;
-    int ny = 64;
-    int nz = 64;
+    int nx = 32;
+    int ny = 32;
+    int nz = 32;
 
     double lx = 1e0;
     double ly = 1e0; 

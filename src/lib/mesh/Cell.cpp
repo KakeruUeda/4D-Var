@@ -1,3 +1,9 @@
+/**
+ * @file Cell.cpp
+ * @author K.U.
+ * @date Jun, 2024
+ */
+
 #include "Cell.h"
 
 inline void CellInfo::setArrayZero(int n)
@@ -35,7 +41,6 @@ void Cell::initialize(Config &conf)
     if(conf.nNodesInCell == 8)
         for(int ic=0; ic<nCellsGlobal; ic++)
             data[ic].cellType = VTK_HEXAHEDRON;
-
 }
 
 

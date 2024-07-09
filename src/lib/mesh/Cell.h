@@ -1,3 +1,9 @@
+/**
+ * @file Cell.h
+ * @author K.U.
+ * @date Jun, 2024
+ */
+
 #ifndef CELL_H
 #define CELL_H
 
@@ -16,6 +22,8 @@ struct CellInfo
 
         std::vector<int> node, nodeNew;
         std::vector<int> dofsMap, dofsBCsMap;
+        std::vector<int> dofStart;
+        std::vector<int> dofStartPlane;
         std::vector<std::vector<double>> x;
 
         /// add ///

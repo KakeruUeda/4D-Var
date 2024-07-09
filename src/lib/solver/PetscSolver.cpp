@@ -44,23 +44,19 @@ int PetscSolver::initialize(int sizeLocal, int sizeGlobal)
     errpetsc = MatSetOption(mtx, MAT_KEEP_NONZERO_PATTERN, PETSC_TRUE);
     CHKERRQ(errpetsc);
 
-
     // Create the KSP context
     errpetsc = KSPCreate(PETSC_COMM_WORLD, &ksp);
     CHKERRQ(errpetsc);
 
-    
     // Set the operators for the KSP context
     errpetsc = KSPSetOperators(ksp, mtx, mtx);
     CHKERRQ(errpetsc);
 
-    //  Set whether to use non-zero initial guess or not
+    // Set whether to use non-zero initial guess or not
     //KSPSetInitialGuessNonzero(ksp, PETSC_TRUE);
     //KSPSetInitialGuessNonzero(ksp, PETSC_FALSE);
 
     // Set KSP options from the input file
-    // This is convenient as it allows to choose different options
-    // from the input files instead of recompiling the code
     errpetsc = KSPSetFromOptions(ksp); 
     CHKERRQ(errpetsc);
     errpetsc = KSPGetPC(ksp, &pc);
@@ -68,7 +64,6 @@ int PetscSolver::initialize(int sizeLocal, int sizeGlobal)
     errpetsc = PCSetFromOptions(pc);
     CHKERRQ(errpetsc);
     
-
     currentStatus = SOLVER_EMPTY;
 
     return 0;
