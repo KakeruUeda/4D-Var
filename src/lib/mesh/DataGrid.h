@@ -1,3 +1,9 @@
+/**
+ * @file DataGrid.h
+ * @author K.U.
+ * @date July, 2024
+ */
+
 #ifndef DATAGRID_H
 #define DATAGRID_H
 
@@ -12,6 +18,7 @@
 #include "MathFEM.h"
 #include "PetscSolver.h"
 #include "Tool.h"
+#include "Function.h"
 
 struct VoxelInfo
 {
@@ -22,17 +29,16 @@ struct VoxelInfo
     std::vector<std::vector<double>> ve;
     std::vector<double> center;
     std::vector<int> cellChildren;
+    std::vector<double> vEX;
 
     void setNearCell(Node &node, Cell &cell, const double &range, const int &dim);
     void setCellOnCenterPoint(Node &node, Cell &cell, const int &dim);
-    void averageVelocity(Cell &cell, std::vector<std::vector<double>> &_v, 
-                         const int &t, const int &nNodesInCell, const int &dim);
+    void average(Cell &cell, std::vector<std::vector<double>> &_v, 
+                 const int t, const int nNodesInCell, const int dim);
     void interpolate(Node &node, Cell &cell, std::vector<std::vector<double>> &_v, 
                      const int &t, const int &dim);
-    void gaussIntegral(std::vector<double> &N, std::vector<std::vector<double>> &xCurrent, 
-                       std::vector<std::vector<double>> &velCurrent, double &weightIntegral, 
-                       const int &nNodesInCell, const double &detJ, const double &weight, 
-                       const int &t, const int &dim);
+    void gaussIntegral(Function &func, std::vector<std::vector<double>> &velCurrent, double &weightIntegral, 
+                      const int nNodesInCell, const int t, const int dim);
 };
 
 class DataGrid
@@ -40,7 +46,8 @@ class DataGrid
     public:
         DataGrid(){}  
         DataGrid(Config &conf);
-
+        
+        int dim;
         int nx, ny, nz;
         double dx, dy, dz; 
         double lx, ly, lz;
@@ -55,6 +62,8 @@ class DataGrid
 
         int nSnapShot;
         int snapInterval;
+
+        std::vector<std::vector<std::vector<std::vector<double>>>> vEX;
         
         inline VoxelInfo& operator()(int x)
         { return data[x]; }
@@ -69,7 +78,7 @@ class DataGrid
         { data.resize(n); }
         
         void initialize(Config &conf, Node &node, Cell &cell, const int &dim);
-
+        void compEdgeValue(const int t);
         std::vector<VoxelInfo> data;
 };
 

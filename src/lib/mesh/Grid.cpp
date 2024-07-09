@@ -1,10 +1,16 @@
+/**
+ * @file Grid.cpp
+ * @author K.U.
+ * @date Jun, 2024
+ */
+
 #include "Grid.h"
 
 Grid::Grid(Config &conf) : 
 gridType(conf.gridType), cell(conf), node(conf), dirichlet(conf),
 nNodesGlobal(conf.nNodesGlobal), nCellsGlobal(conf.nCellsGlobal),
 nDofsGlobal(0), nDofsLocal(0), dim(conf.dim)
-{   
+{
 }
 
 void Grid::setStructuredGrid(const int nxCells, const int nyCells, const int nzCells, 
@@ -74,6 +80,13 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
         for(int id=0; id<node.nDofsOnNode[in]; id++)
             if(node.isDirichlet[in][id])
                 node.dofsBCsMap[in][id] = -1;
+    
+    for(int ic=0; ic<cell.nCellsGlobal; ic++){
+        VecTool::resize(cell(ic).dofStart, cell.nNodesInCell);
+        for(int p=1; p<cell.nNodesInCell; p++){
+            cell(ic).dofStart[p] = cell(ic).dofStart[p-1] + node.nDofsOnNode[cell(ic).node[p-1]]; 
+        }
+    }
 
     //// add //////////////////////////////////////
     for(auto &pair : dirichlet.vDirichletWall[0]){

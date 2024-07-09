@@ -11,6 +11,7 @@
 #include "Array.h"
 #include "MyMPI.h"
 #include "define.h"
+#include "Tool.h"
 
 extern MyMPI mpi;
 
@@ -32,6 +33,13 @@ enum class ControlBoundary
     front = 4, back = 5
 };
 
+enum class VoxelVelocity
+{
+    POINTSPREAD = 0,
+    AVERAGE = 1,
+    INTERPOLATION = 2
+};
+
 class Config
 {
     public:
@@ -42,6 +50,7 @@ class Config
         Application app;
         GridType gridType;
         ControlBoundary controlBoundary;
+        VoxelVelocity vvox;
 
         // Basic parameter
         int dim, nOMP;
@@ -109,6 +118,8 @@ class Config
 
         std::vector<int> controlBoundaryMap;
         std::vector<int> planeDir;
+
+        std::vector<bool> isBoundaryEdge;
 
         // For cell and node data
         std::vector<std::vector<double>> node;

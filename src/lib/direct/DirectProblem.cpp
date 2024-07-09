@@ -1,3 +1,9 @@
+/**
+ * @file DirectProblem.cpp
+ * @author K.U.
+ * @date July, 2024
+ */
+
 #include "DirectProblem.h"
 
 DirectProblem::DirectProblem(Config &conf) : 
@@ -15,42 +21,16 @@ alpha(conf.alpha), resistance(conf.resistance)
     mkdir(outputDir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     outputDir = outputDir + "/main";
     mkdir(outputDir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-    dir = outputDir + "/velocity";
-    mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-    dir = outputDir + "/pressure";
+    dir = outputDir + "/solution";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     dir = outputDir + "/domain";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-    dir = outputDir + "/dat";
-    mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     dir = outputDir + "/data";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+    dir = outputDir + "/dat";
+    mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 }
 
-void DirectProblem::initialize(Config &conf)
-{
-    nu = mu / rho;
-    Re = 1e0 / nu; 
-
-    VecTool::resize(grid.node.v, grid.node.nNodesGlobal, dim);
-    VecTool::resize(grid.node.vPrev, grid.node.nNodesGlobal, dim);
-    //VecTool::resize(grid.node.vt, timeMax, grid.node.nNodesGlobal, dim);
-    VecTool::resize(grid.node.p, grid.node.nNodesGlobal);
-    //VecTool::resize(grid.node.pt, timeMax, grid.node.nNodesGlobal);
-    VecTool::resize(snap.v, snap.nSnapShot, grid.nNodesGlobal, dim);
-
-    grid.dirichlet.initialize(conf);
-    grid.cell.initialize(conf);
-    grid.node.initialize(conf);
-   
-    grid.prepareMatrix(petsc, outputDir, timeMax);
-
-    VecTool::resize(petsc.solution, grid.nDofsGlobal);
-    VecTool::resize(grid.dirichlet.dirichletBCsValue, grid.nDofsGlobal);
-    VecTool::resize(grid.dirichlet.dirichletBCsValueNew, grid.nDofsGlobal);
-    VecTool::resize(grid.dirichlet.dirichletBCsValueInit, grid.nDofsGlobal);
-    VecTool::resize(grid.dirichlet.dirichletBCsValueNewInit, grid.nDofsGlobal);
-}
 
 void DirectProblem::outputDomain()
 {
@@ -68,4 +48,16 @@ void DirectProblem::runSimulation()
 {
     outputDomain();
     solveUSNS(app);
+}
+
+void DirectProblem::updateRowIndex(const int ii, const int ic)
+{
+    IU = grid.cell(ic).dofStart[ii]; IV = IU + 1;  IW = IU + 2;
+    IP = IU + 3; ILU = IU + 4; ILV = IU + 5; ILW = IU + 6;
+}
+
+void DirectProblem::updateColumnIndex(const int jj, const int ic)
+{
+    JU = grid.cell(ic).dofStart[jj]; JV = JU + 1;  JW = JU + 2;
+    JP = JU + 3; JLU = JU + 4; JLV = JU + 5; JLW = JU + 6;
 }

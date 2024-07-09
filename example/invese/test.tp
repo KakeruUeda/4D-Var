@@ -1,34 +1,35 @@
 Base
 {
     dim = 3
-    outputDir = "square"
+    outputDir = "test"
     numOfOMP = 1
 }
 
 Grid
 {
     type = "Structured"
-    extractFluid = "OFF"
+    extractFluid = "ON"
     nNodesInCell = 8
-    node = "input/square/node.dat"
-    cell = "input/square/cell.dat"
-    image = "input/square/image.dat"
+    node = "input/straightTube/data12x12x12/node.dat"
+    cell = "input/straightTube/data12x12x12/cell.dat"
+    image = "input/straightTube/data12x12x12/image.dat"
 }
 
 Boundary
 {
-    velocityDirichlet = "input/square/velocityDirichlet.dat"
-    pressureDirichlet = "input/square/pressureDirichlet.dat"
+    velocityDirichlet = "input/straightTube/data12x12x12/velocityDirichletPoiseuille.dat"
+    pressureDirichlet = "input/straightTube/data12x12x12/pressureDirichlet.dat"
 }
 
 Inverse
 {
     controlBoundary = "left"
-    aCF = 1e3
-    bCF1 = 1e-8
-    bCF2 = 1e-4
+    voxelVelocity = "average"
+    aCF = 1e2
+    bCF1 = 0e0
+    bCF2 = 0e0
     gCF = 1e-4
-    loopMAX = 1
+    loopMAX = 100
 }
 
 Data
@@ -39,12 +40,10 @@ Data
     nNodesInDataCell = 8
     nxData = (12, 12, 12)
     lxData = (1.0, 1.0, 1.0)
-
     nControlNodesInCell = 4
-    controlBoundary = "input/square/controlBoundary.dat"
-    controlCellMap = "input/square/controlCellMap.dat"
-    controlNodeInCell = "input/square/controlNodeInCell.dat"
-
+    controlBoundary = "input/straightTube/data12x12x12/controlBoundary.dat"
+    controlCellMap = "input/straightTube/data12x12x12/controlCellMap.dat"
+    controlNodeInCell = "input/straightTube/data12x12x12/controlNodeInCell.dat"
     data0 = "input/straightTube/data12x12x12/data0.dat"
     data1 = "input/straightTube/data12x12x12/data1.dat"
     data2 = "input/straightTube/data12x12x12/data2.dat"
@@ -63,15 +62,19 @@ PysicalParameter
     mu = 1   
 }
 
+NRParameter
+{
+    NRtolerance = 1e-5
+}
+
 TimeParameter
 {
     dt = 0.01
-    timeMax = 1
-    pulsatileFlow = "ON"
+    timeMax = 46
+    pulsatileFlow = "OFF"
     pulseBeginItr = 100
     T = 1.0
 }
-
 
 DarcyParameter
 {

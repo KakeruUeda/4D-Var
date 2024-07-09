@@ -1,3 +1,9 @@
+/**
+ * @file Node.h
+ * @author K.U.
+ * @date Jun, 2024
+ */
+
 #ifndef NODE_H
 #define NODE_H
 
@@ -36,7 +42,7 @@ class Node
         ///////////
 
         // Main variable
-        std::vector<std::vector<double>> v, vPrev;
+        std::vector<std::vector<double>> v0, v, vPrev;
         std::vector<double> p;
         std::vector<std::vector<std::vector<double>>> vt;
         std::vector<std::vector<double>> pt;

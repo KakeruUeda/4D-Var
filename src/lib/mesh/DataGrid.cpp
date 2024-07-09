@@ -1,10 +1,16 @@
+/**
+ * @file DataGrid.cpp
+ * @author K.U.
+ * @date July, 2024
+ */
+
 #include "DataGrid.h"
 
 DataGrid::DataGrid(Config &conf) :
 nx(conf.nxData), ny(conf.nyData), nz(conf.nzData),
 lx(conf.lxData), ly(conf.lyData), lz(conf.lzData),
 dx(conf.dxData), dy(conf.dyData), dz(conf.dzData),
-nData(conf.nData), nSnapShot(conf.nSnapShot), 
+nData(conf.nData), nSnapShot(conf.nSnapShot), dim(conf.dim),
 snapInterval(conf.snapInterval),
 nCellsGlobal(conf.nCellsDataGlobal), 
 nNodesInCell(conf.nNodesInCellData), 
@@ -15,21 +21,25 @@ data(conf.nCellsDataGlobal)
         yOrigin = conf.yOrigin; 
         zOrigin = conf.zOrigin;
         for(int ic=0; ic<conf.nCellsDataGlobal; ic++){
-            data[ic].vCFD.resize(conf.nSnapShot, std::vector<double>(conf.dim, 0e0));
-            data[ic].center.resize(conf.dim, 0e0);
+            VecTool::resize(data[ic].vCFD, conf.nSnapShot, conf.dim);
+            VecTool::resize(data[ic].center, conf.dim);
         }
     }else if(conf.app == Application::FDVAR){
         for(int ic=0; ic<conf.nCellsDataGlobal; ic++){
-            data[ic].vCFD.resize(conf.nSnapShot, std::vector<double>(conf.dim, 0e0));
-            data[ic].vMRI.resize(conf.nSnapShot, std::vector<double>(conf.dim, 0e0));
-            data[ic].ve.resize(conf.nSnapShot, std::vector<double>(conf.dim, 0e0));
-            data[ic].center.resize(conf.dim, 0e0);
+            VecTool::resize(data[ic].vCFD, conf.nSnapShot, conf.dim);
+            VecTool::resize(data[ic].vMRI, conf.nSnapShot, conf.dim);
+            VecTool::resize(data[ic].ve, conf.nSnapShot, conf.dim);
+            VecTool::resize(data[ic].center, conf.dim);
         }
+        VecTool::resize(vEX, nz+2, ny+2, nx+2, conf.dim);
     }
+
 }
 
 void DataGrid::initialize(Config &conf, Node &node, Cell &cell, const int &dim)
 {   
+    range = 5e-1 * sqrt(dx*dx + dy*dy + dz*dz);
+
     for(int t=0; t<conf.nSnapShot; t++){
         for(int k=0; k<nz; k++){
             for(int j=0; j<ny; j++){
@@ -43,7 +53,6 @@ void DataGrid::initialize(Config &conf, Node &node, Cell &cell, const int &dim)
         }
     }
 
-    range = 5e-1 * sqrt(dx*dx + dy*dy + dz*dz);
     for(int k=0; k<nz; k++){
         for(int j=0; j<ny; j++){
             for(int i=0; i<nx; i++){
@@ -59,6 +68,30 @@ void DataGrid::initialize(Config &conf, Node &node, Cell &cell, const int &dim)
         for(int j=0; j<ny; j++){
             for(int i=0; i<nx; i++){
                 data[k * nx * ny + j * nx + i].setCellOnCenterPoint(node, cell, dim);
+            }
+        }
+    }
+
+}
+
+void DataGrid::compEdgeValue(const int t)
+{
+    for(int k=0; k<nz+2; k++){
+        for(int j=0; j<ny+2; j++){
+            for(int i=0; i<nx+2; i++){
+                for(int d=0; d<dim; d++){
+                    vEX[k][j][i][d] = 0e0;
+                }
+            }
+        }
+    }
+    for(int k=0; k<nz; k++){
+        for(int j=0; j<ny; j++){
+            for(int i=0; i<nx; i++){
+                for(int d=0; d<dim; d++){
+                    vEX[k+1][j+1][i+1][d] 
+                    = data[k * nx * ny + j * nx + i].ve[t][d];
+                }
             }
         }
     }
@@ -195,43 +228,37 @@ void VoxelInfo::interpolate(Node &node, Cell &cell, std::vector<std::vector<doub
 
 }
 
-void VoxelInfo::averageVelocity(Cell &cell, std::vector<std::vector<double>> &_v, 
-                                const int &t, const int &nNodesInCell, const int &dim)
+void VoxelInfo::average(Cell &cell, std::vector<std::vector<double>> &_v, 
+                        const int t, const int nNodesInCell, const int dim)
 {
     if(cellChildren.size() == 0) return;
     
     double weightIntegral = 0e0;
+    Function func3d(nNodesInCell, dim);
+
     for(int ic=0; ic<cellChildren.size(); ic++){
         std::vector<std::vector<double>> velCurrent;
-        std::vector<std::vector<double>> xCurrent;
-
         velCurrent.resize(nNodesInCell, std::vector<double>(dim, 0e0));
-        xCurrent.resize(nNodesInCell, std::vector<double>(dim, 0e0));
 
         for(int p=0; p<nNodesInCell; p++){
             for(int d=0; d<dim; d++){
                 velCurrent[p][d] = _v[cell(cellChildren[ic]).node[p]][d];
-                xCurrent[p][d] = cell(cellChildren[ic]).x[p][d];
+                func3d.xCurrent[p][d] = cell(cellChildren[ic]).x[p][d];
             }
         }
-        std::vector<double> N;
-        std::vector<std::vector<double>> dNdr;
-        N.resize(nNodesInCell, 0e0);
-        dNdr.resize(nNodesInCell, std::vector<double>(dim, 0e0));
-        int nGaussPoint = 2;
-        Gauss gauss(nGaussPoint);
-        double detJ, weight;
         
-        for(int i1=0; i1<nGaussPoint; i1++){
-            for(int i2=0; i2<nGaussPoint; i2++){
-                for(int i3=0; i3<nGaussPoint; i3++){
-                    double dxdr[3][3];
-                    ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-                    ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-                    MathFEM::calc_dxdr(dxdr, dNdr, xCurrent, nNodesInCell);
-                    detJ = MathCommon::calcDeterminant_3x3(dxdr);
-                    weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
-                    gaussIntegral(N, xCurrent, velCurrent, weightIntegral, nNodesInCell, detJ, weight, t, dim);
+        double dxdr[3][3];
+        Gauss gauss(2);
+        
+        for(int i1=0; i1<2; i1++){
+            for(int i2=0; i2<2; i2++){
+                for(int i3=0; i3<2; i3++){
+                    ShapeFunction3D::C3D8_N(func3d.N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
+                    ShapeFunction3D::C3D8_dNdr(func3d.dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
+                    MathFEM::MathFEM::comp_dxdr(dxdr, func3d.dNdr, func3d.xCurrent, nNodesInCell);
+                    func3d.detJ = MathCommon::compDeterminant_3x3(dxdr);
+                    func3d.weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
+                    gaussIntegral(func3d, velCurrent, weightIntegral, nNodesInCell, t, dim);
                 }
             }
         }
@@ -240,16 +267,15 @@ void VoxelInfo::averageVelocity(Cell &cell, std::vector<std::vector<double>> &_v
         vCFD[t][d] /= weightIntegral;
 }
 
-void VoxelInfo::gaussIntegral(std::vector<double> &N, std::vector<std::vector<double>> &xCurrent, 
-                              std::vector<std::vector<double>> &velCurrent, double &weightIntegral, 
-                              const int &nNodesInCell, const double &detJ, const double &weight, 
-                              const int &t, const int &dim)
+void VoxelInfo::gaussIntegral(Function &func, std::vector<std::vector<double>> &velCurrent, double &weightIntegral, 
+                              const int nNodesInCell, const int t, const int dim)
 {
+    func.vol = func.detJ * func.weight;
     for(int d=0; d<dim; d++){
         for(int p=0; p<nNodesInCell; p++){
-            vCFD[t][d] += N[p] * velCurrent[p][d] * detJ * weight;
+            vCFD[t][d] += func.N[p] * velCurrent[p][d] * func.vol;
         }
     }
     for(int p=0; p<nNodesInCell; p++)
-        weightIntegral += N[p] * detJ * weight;
+        weightIntegral += func.N[p] * func.vol;
 }

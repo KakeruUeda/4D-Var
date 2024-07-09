@@ -1,3 +1,9 @@
+/**
+ * @file Postprocess.cpp
+ * @author K.U.
+ * @date July, 2024
+ */
+
 #include "Postprocess.h"
 
 void Postprocess::extractOutletVelocity(DirectProblem &direct)
@@ -9,7 +15,7 @@ void Postprocess::extractOutletVelocity(DirectProblem &direct)
     double eps = 1e-8;
     xMax = xMax - eps;
     int index = 0;
-    
+
     std::ofstream outDirichletOutlet(direct.outputDir + "/dat/velocityDirichletPoiseuille.dat");
     for(int in=0; in<direct.grid.node.nNodesGlobal; in++){
         if(direct.grid.node.x[in][0] > xMax){
@@ -21,6 +27,22 @@ void Postprocess::extractOutletVelocity(DirectProblem &direct)
             index = index + 33;
         }
     }
+    outDirichletOutlet.close();
+
+    index = 0;
+    std::ofstream outDirichletOutlet2(direct.outputDir + "/dat/velocityDirichletPoiseuille2.dat");
+    for(int in=0; in<direct.grid.node.nNodesGlobal; in++){
+        if(direct.grid.node.x[in][0] > xMax){
+            outDirichletOutlet2 << index << " ";
+            for(int d=0; d<direct.dim; d++){
+                outDirichletOutlet2 << direct.grid.node.v[in][d] << " ";
+            }
+            outDirichletOutlet2 << std::endl;
+            index = index + 65;
+        }
+    }
+    outDirichletOutlet2.close();
+
 }
 
 void Postprocess::createData(DirectProblem &direct)
@@ -36,7 +58,7 @@ void Postprocess::createData(DirectProblem &direct)
                 }
                 voxel(k, j, i).setNearCell(direct.grid.node, direct.grid.cell, voxel.range, direct.dim);
                 for(int t=0; t<direct.snap.nSnapShot; t++){
-                    voxel(k, j, i).averageVelocity(direct.grid.cell, direct.snap.v[t],
+                    voxel(k, j, i).average(direct.grid.cell, direct.snap.v[t],
                                                    t, direct.grid.cell.nNodesInCell, direct.dim);
                 }
             }
@@ -54,8 +76,8 @@ void Postprocess::createData(DirectProblem &direct)
     if(mpi.myId == 0){
         for(int t=0; t<direct.snap.nSnapShot; t++){
             std::ofstream outData(direct.outputDir + "/data/data" + to_string(t) + ".dat");
-            outData << voxel.nx << " " << voxel.ny << " " << voxel.nz << std::endl;
-            outData << voxel.lx << " " << voxel.ly << " " << voxel.lz << std::endl;
+            //outData << voxel.nx << " " << voxel.ny << " " << voxel.nz << std::endl;
+            //outData << voxel.lx << " " << voxel.ly << " " << voxel.lz << std::endl;
             for(int k=0; k<voxel.nz; k++){
                 for(int j=0; j<voxel.ny; j++){
                     for(int i=0; i<voxel.nx; i++){
@@ -75,10 +97,13 @@ void Postprocess::createData(DirectProblem &direct)
         for(int t=0; t<direct.snap.nSnapShot; t++){
             std::ofstream outReference(direct.outputDir + "/data/reference" + to_string(t) + ".dat");
             for(int in=0; in<direct.grid.node.nNodesGlobal; in++){
-                for(int d=0; d<direct.dim; d++){
-                    outReference << direct.snap.v[t][in][d] << " ";
+                double pointX = direct.grid.node.x[in][0];
+                if(pointX > 1e0 - EPS){
+                    for(int d=0; d<direct.dim; d++){
+                        outReference << direct.snap.v[t][in][d] << " ";
+                    }
+                    outReference << std::endl;
                 }
-                outReference << std::endl;
             }
             outReference.close();
         }
