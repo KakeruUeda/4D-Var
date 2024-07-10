@@ -1,8 +1,7 @@
 /**
  * @file main.cpp
- * @brief create Structured Grid
- * @author K.Ueda
- * @date Mar 24, 2024
+ * @author k.ueda
+ * @date Mar, 2024
 */
 
 #include <iostream>

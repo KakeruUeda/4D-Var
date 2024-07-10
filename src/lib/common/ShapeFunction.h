@@ -1,3 +1,9 @@
+/**
+ * @file ShapeFunction.h
+ * @author t.otani
+ * @date ****
+*/
+
 #ifndef SHAPEFUNCTION_H
 #define SHAPEFUNCTION_H
 

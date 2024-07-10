@@ -1,6 +1,6 @@
 /**
  * @file Initialize.cpp
- * @author K.U.
+ * @author k.ueda
  * @date July, 2024
  */
 

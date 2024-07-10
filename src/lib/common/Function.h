@@ -1,3 +1,9 @@
+/**
+ * @file Define.h
+ * @author k.ueda
+ * @date July, 2024
+*/
+
 #ifndef FUNCTION_H
 #define FUNCTION_H
 

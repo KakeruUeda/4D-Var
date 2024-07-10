@@ -1,3 +1,9 @@
+/**
+ * @file MathCommon.h
+ * @author t.otani
+ * @date May, 2024
+*/
+
 #ifndef MATHCOMMON_H
 #define MATHCOMMON_H
 

@@ -1,6 +1,6 @@
 /**
  * @file Grid.cpp
- * @author K.U.
+ * @author k.ueda
  * @date Jun, 2024
  */
 

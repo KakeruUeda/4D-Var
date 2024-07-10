@@ -1,7 +1,7 @@
 /**
  * @file Postprocess.cpp
- * @author K.U.
- * @date July, 2024
+ * @author k.ueda
+ * @date Jun, 2024
  */
 
 #include "Postprocess.h"

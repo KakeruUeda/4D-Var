@@ -1,3 +1,9 @@
+/**
+ * @file Boundary.cpp
+ * @author k.ueda
+ * @date May, 2024
+*/
+
 #include "Boundary.h"
 
 void DirichletBoundary::initialize(Config &conf)

@@ -1,3 +1,9 @@
+/**
+ * @file Array.h
+ * @author k.ueda
+ * @date May, 2024
+*/
+
 #ifndef ARRAY_H
 #define ARRAY_H
 

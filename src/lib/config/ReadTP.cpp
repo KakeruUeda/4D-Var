@@ -1,3 +1,9 @@
+/**
+ * @file ReadTP.cpp
+ * @author k.ueda
+ * @date May, 2024
+*/
+
 #include "Config.h"
 
 void Config::readBasicParameter()

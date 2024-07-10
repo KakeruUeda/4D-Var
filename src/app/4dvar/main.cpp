@@ -1,3 +1,9 @@
+/**
+ * @file main.cpp
+ * @author k.ueda
+ * @date July, 2024
+*/
+
 #include <unistd.h>
 #include "InverseProblem.h"
 #include "MyMPI.h"

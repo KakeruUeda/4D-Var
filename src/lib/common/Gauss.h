@@ -1,3 +1,9 @@
+/**
+ * @file Gauss.h
+ * @author t.otani
+ * @date ****
+*/
+
 #ifndef GAUSS_H
 #define GAUSS_H
 

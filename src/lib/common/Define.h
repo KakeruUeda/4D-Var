@@ -1,3 +1,9 @@
+/**
+ * @file Define.h
+ * @author k.ueda
+ * @date May, 2024
+*/
+
 #ifndef DEFINE_H
 #define DEFINE_H
 

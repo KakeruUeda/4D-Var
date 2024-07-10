@@ -1,6 +1,6 @@
 /**
  * @file DataGrid.h
- * @author K.U.
+ * @author k.ueda
  * @date July, 2024
  */
 

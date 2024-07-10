@@ -1,3 +1,9 @@
+/**
+ * @file main.cpp
+ * @author k.ueda
+ * @date Jun, 2024
+*/
+
 #include <unistd.h>
 #include "DirectProblem.h"
 #include "Postprocess.h"

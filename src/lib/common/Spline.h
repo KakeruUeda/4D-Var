@@ -1,3 +1,9 @@
+/**
+ * @file ShapeFunction.h
+ * @author k.ueda
+ * @date July, 2024
+*/
+
 #ifndef SPLINE_H
 #define SPLINE_H
 

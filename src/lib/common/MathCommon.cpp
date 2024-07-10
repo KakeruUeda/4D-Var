@@ -1,3 +1,9 @@
+/**
+ * @file MathCommon.cpp
+ * @author t.otani
+ * @date May, 2024
+*/
+
 #include "MathCommon.h"
 
 void MathCommon::compInverseMatrix_2x2(double (&inv_a)[2][2], const double (&a)[2][2])

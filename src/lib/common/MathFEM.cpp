@@ -1,3 +1,9 @@
+/**
+ * @file MathFEM.cpp
+ * @author k.ueda
+ * @date Jun, 2024
+*/
+
 #include "MathFEM.h"
 
 void MathFEM::MathFEM::comp_dxdr2D(double (&dxdr)[2][2], std::vector<std::vector<double>> &dNdr, std::vector<std::vector<double>> &x1, const int &numOfNodeInElm)

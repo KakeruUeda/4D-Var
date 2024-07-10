@@ -1,3 +1,9 @@
+/**
+ * @file Config.cpp
+ * @author k.ueda
+ * @date May, 2024
+*/
+
 #include "Config.h"
 
 Config::Config(std::string inputFile, std::string appName)

@@ -1,3 +1,9 @@
+/**
+ * @file MyMPI.h
+ * @author k.ueda
+ * @date Jun, 2024
+*/
+
 #ifndef MYMPI_H
 #define MYMPI_H
 

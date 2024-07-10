@@ -1,3 +1,9 @@
+/**
+ * @file Config.cpp
+ * @author k.ueda
+ * @date May, 2024
+*/
+
 #ifndef CONFIG_H
 #define CONFIG_H
 

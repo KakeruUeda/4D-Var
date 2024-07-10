@@ -1,7 +1,7 @@
 /**
  * @file DirectProblem.h
- * @author K.U.
- * @date July, 2024
+ * @author k.ueda
+ * @date Jun, 2024
  */
 
 #ifndef DIRECTPROBLEM_H
