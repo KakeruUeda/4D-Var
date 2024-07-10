@@ -93,7 +93,8 @@ bool InverseProblem::checkConvergence(std::ofstream &cf, const int loop)
 
 /************************************************************
  * @brief Guess initial condition. 
- *        Usually, simulate using poiseuille inlet condition.
+ *        Getting initial velocity field for inverse problem 
+ *        using poiseuille inlet condition.
  */
 void InverseProblem::guessInitialCondition()
 {
@@ -165,7 +166,7 @@ void InverseProblem::output(const int loop)
 }
 
 /****************************************************
- * @brief Compute cost function over domain and time
+ * @brief Compute discrepancies over domain and time
  */
 void InverseProblem::compCostFunction()
 {  
