@@ -1,6 +1,6 @@
 /**
  * @file Config.cpp
- * @author k.ueda
+ * @author K.Ueda
  * @date May, 2024
 */
 
@@ -16,7 +16,7 @@
 #include "TextParser.h"
 #include "Array.h"
 #include "MyMPI.h"
-#include "define.h"
+#include "Define.h"
 #include "Tool.h"
 
 extern MyMPI mpi;

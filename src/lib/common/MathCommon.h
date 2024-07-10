@@ -7,7 +7,6 @@
 #ifndef MATHCOMMON_H
 #define MATHCOMMON_H
 
-#include <omp.h>
 #include <string>
 #include <iostream>
 #include <cmath>

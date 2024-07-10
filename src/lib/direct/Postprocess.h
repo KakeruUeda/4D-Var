@@ -1,6 +1,6 @@
 /**
  * @file Postprocess.h
- * @author k.ueda
+ * @author K.Ueda
  * @date Jun, 2024
  */
 
@@ -17,7 +17,6 @@
 #include <cstring>
 #include <sys/stat.h>
 #include <mpi.h>
-#include <omp.h>
 #include <algorithm>
 #include "DirectProblem.h"
 #include "Grid.h"

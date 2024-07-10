@@ -1,8 +1,16 @@
+//##################################################################################
+//
+// Copyright (c) 2016 Mechanical and Bioengineering Systems Lab.,
+//                    Graduate School of Engineering Science and Bioengineering,
+//                    Osaka University.
+// All rights reserved.
+//
+//##################################################################################
+
 /**
- * @file Gauss.h
- * @author t.otani
- * @date ****
-*/
+ * @file   Gauss.h
+ * @author T.Otani
+ */
 
 #ifndef GAUSS_H
 #define GAUSS_H

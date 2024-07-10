@@ -1,6 +1,6 @@
 /**
  * @file Config.cpp
- * @author k.ueda
+ * @author K.Ueda
  * @date May, 2024
 */
 

@@ -1,6 +1,6 @@
 /**
  * @file main.cpp
- * @author k.ueda
+ * @author K.Ueda
  * @date Mar, 2024
 */
 
@@ -9,7 +9,6 @@
 #include <map>
 #include <memory>
 #include <sys/stat.h>
-#include "TextParser.h"
 #include "Config.h"
 #include "MyMPI.h"
 #include "Boundary.h"

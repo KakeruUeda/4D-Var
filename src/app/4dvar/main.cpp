@@ -1,6 +1,6 @@
 /**
  * @file main.cpp
- * @author k.ueda
+ * @author K.Ueda
  * @date July, 2024
 */
 

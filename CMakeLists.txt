@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-set(CMAKE_CXX_COMPILER "/usr/local/petsc/bin/mpic++")
+set(CMAKE_CXX_COMPILER "/opt/homebrew/Cellar/open-mpi/5.0.3/bin/mpic++")
 set(base_compile_options ${base_compile_options} "-O2 -std=c++17")
 string(REPLACE " " " " compile_options ${base_compile_options})
 
@@ -18,6 +18,8 @@ message( STATUS "COMPILE_OPTIONS       : "      ${compile_options})
 message(" ")
 
 include_directories(
+  /usr/local/include
+  /opt/homebrew/Cellar/open-mpi/5.0.3/include
   /opt/homebrew/Cellar/metis/5.1.0/include
   /opt/homebrew/include/eigen3
   /opt/TextParser/include
@@ -25,8 +27,9 @@ include_directories(
 )
 
 link_directories(
+  /usr/local/lib
+  /opt/homebrew/Cellar/open-mpi/5.0.3/lib
   /opt/homebrew/Cellar/metis/5.1.0/lib
-  /opt/TextParser/lib
   /usr/local/petsc/lib
   /opt/homebrew/opt/libomp/lib
 )

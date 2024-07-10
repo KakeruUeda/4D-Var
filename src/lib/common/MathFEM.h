@@ -1,6 +1,6 @@
 /**
  * @file MathFEM.h
- * @author k.ueda
+ * @author K.Ueda
  * @date Jun, 2024
 */
 
@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include <vector>
-#include "define.h"
+#include "Define.h"
 #include "MathCommon.h"
 #include "ShapeFunction.h"
 #include "Gauss.h"

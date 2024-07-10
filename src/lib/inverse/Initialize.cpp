@@ -1,11 +1,14 @@
 /**
  * @file Initialize.cpp
- * @author k.ueda
+ * @author K.Ueda
  * @date July, 2024
  */
 
 #include "InverseProblem.h"
 
+/************************************
+ * @brief Initialize inverse problem.
+ */
 void InverseProblem::initialize(Config &conf)
 {
     PetscPrintf(MPI_COMM_WORLD, "\n*** Main initialize ***\n\n");

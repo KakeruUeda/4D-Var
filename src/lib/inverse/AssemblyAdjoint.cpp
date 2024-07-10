@@ -1,11 +1,14 @@
 /**
  * @file AssemblyAdjoint.cpp
- * @author k.ueda
+ * @author K.Ueda
  * @date July, 2024
  */
 
 #include "InverseProblem.h"
 
+/*********************************
+ * @brief Assemble adjoint system.
+ */
 void Adjoint::matrixAssemblyAdjoint(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal, 
                                     Function &func, const int ic, const int t)
 {   
@@ -50,6 +53,9 @@ void Adjoint::matrixAssemblyAdjoint(DirectProblem &main, MatrixXd &Klocal, Vecto
 
 }
 
+/**********************************************************************
+ * @brief Compute LHS element sfiffness matrix on gauss integral point. 
+ */
 void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, Function &func, 
                                       const double f, const int ii, const int jj)
 {
@@ -61,12 +67,12 @@ void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, Fun
         func.K[ii][jj] += func.dNdx[ii][k] * func.dNdx[jj][k];
     }
 
-    // MASS TERM
+    // Mass term
     Klocal(IU, JU) += func.N[ii] * func.N[jj] / main.dt * func.vol;
     Klocal(IV, JV) += func.N[ii] * func.N[jj] / main.dt * func.vol;
     Klocal(IW, JW) += func.N[ii] * func.N[jj] / main.dt * func.vol;
 
-     // DIFFUSION TERM
+     // Diffusion term
     for(int mm=0; mm<3; mm++){
         if(mm == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
         if(mm == 1){n1 = 1e0; n2 = 2e0; n3 = 1e0;}
@@ -82,31 +88,30 @@ void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, Fun
     Klocal(IW, JU) += 5e-1 * func.dNdx[ii][0] * func.dNdx[jj][2] / main.Re * func.vol;
     Klocal(IW, JV) += 5e-1 * func.dNdx[ii][1] * func.dNdx[jj][2] / main.Re * func.vol;
 
-    // ADVECTION TERM
+    // Advection term
     for(int d=0; d<main.dim; d++){
         Klocal(IU, JU) += 5e-1 * func.dNdx[ii][d] * advk1[d] * func.N[jj] * func.vol;
         Klocal(IV, JV) += 5e-1 * func.dNdx[ii][d] * advk1[d] * func.N[jj] * func.vol;
         Klocal(IW, JW) += 5e-1 * func.dNdx[ii][d] * advk1[d] * func.N[jj] * func.vol;
     }
 
-    // PRESSURE TERM
+    // Pressure term
     Klocal(IU, JP) -= func.dNdx[ii][0] * func.N[jj] * func.vol;
     Klocal(IV, JP) -= func.dNdx[ii][1] * func.N[jj] * func.vol;
     Klocal(IW, JP) -= func.dNdx[ii][2] * func.N[jj] * func.vol;  
     
-    // CONTINUITY TERM
+    // Continuity term
     Klocal(IP, JU) += func.N[ii] * func.dNdx[jj][0] * func.vol;
     Klocal(IP, JV) += func.N[ii] * func.dNdx[jj][1] * func.vol;
     Klocal(IP, JW) += func.N[ii] * func.dNdx[jj][2] * func.vol;
     
-    // DARCY TERM
+    // Darcy term
     Klocal(IU, JU) += 5e-1 * f * func.N[ii] * func.N[jj] * func.vol;
     Klocal(IV, JV) += 5e-1 * f * func.N[ii] * func.N[jj] * func.vol;
     Klocal(IW, JW) += 5e-1 * f * func.N[ii] * func.N[jj] * func.vol;   
 
-    // PSPG TERM
     /*
-    // ADVECTION TERM
+    // PSPG advection term
     for(int d=0; d<3; d++){
         Klocal(IP, JU) += 5e-1 * tau * dNdx[ii][0] * vel[d] * dNdx[jj][d] * func.vol;
         Klocal(IP, JV) += 5e-1 * tau * dNdx[ii][1] * vel[d] * dNdx[jj][d] * func.vol;
@@ -114,22 +119,25 @@ void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, Fun
     }
     */
 
-    // PRESSURE TERM
+    // PSPG pressure term
     Klocal(IP, JP) += tau * func.K[ii][jj] * func.vol;
 }
 
+/******************************************************************
+ * @brief Compute RHS element sfiffness matrix on gauss integral point. 
+ */
 void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, 
                                       Function &func, const double f, const int ii)
 {
     int n1, n2, n3;
     func.vol = func.detJ * func.weight;
 
-    // MASS TERM
+    // Mass term
     Flocal(IU) += func.N[ii] * wk1[0] / main.dt * func.vol;
     Flocal(IV) += func.N[ii] * wk1[1] / main.dt * func.vol;
     Flocal(IW) += func.N[ii] * wk1[2] / main.dt * func.vol;
                 
-    // DIFFUSION TERM
+    // Diffusion term
     for(int d=0; d<3; d++){
         if(d == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
         if(d == 1){n1 = 1e0; n2 = 2e0; n3 = 1e0;}
@@ -145,8 +153,7 @@ void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal,
     Flocal(IW) -= 5e-1 * func.dNdx[ii][0] * dwk1dx[0][2] / main.Re * func.vol;
     Flocal(IW) -= 5e-1 * func.dNdx[ii][1] * dwk1dx[1][2] / main.Re * func.vol;
                 
-    // ADVECTION TERM
-    // x dir
+    // Advection term
     Flocal(IU) -= 0.5 * 1.5 * func.N[ii] * dvk1dx[0][0] * wk1[0] * func.vol;
     Flocal(IU) -= 0.5 * 1.5 * func.N[ii] * dvkdx[0][0] * wk1[0] * func.vol;
     for(int d=0; d<main.dim; d++){
@@ -161,7 +168,6 @@ void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal,
         Flocal(IU) -= 0.5 * (-0.5) * func.N[ii] * dvk1dx[d][0] * wk2[d] * func.vol;
     }
                 
-    // y dir
     Flocal(IV) -= 0.5 * 1.5 * func.N[ii] * dvk1dx[1][1] * wk1[1] * func.vol;
     Flocal(IV) -= 0.5 * 1.5 * func.N[ii] * dvkdx[1][1] * wk1[1] * func.vol;
     for(int d=0; d<main.dim; d++){
@@ -176,7 +182,6 @@ void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal,
         Flocal(IV) -= 0.5 * (-0.5) * func.N[ii] * dvk1dx[d][1] * wk2[d] * func.vol;
     }
                 
-    // z dir
     Flocal(IW) -= 0.5 * 1.5 * func.N[ii] * dvk1dx[2][2] * wk1[2] * func.vol;
     Flocal(IW) -= 0.5 * 1.5 * func.N[ii] * dvkdx[2][2] * wk1[2] * func.vol;
     for(int d=0; d<main.dim; d++){
@@ -191,14 +196,13 @@ void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal,
         Flocal(IW) -= 0.5 * (-0.5) * func.N[ii] * dvk1dx[d][2] * wk2[d] * func.vol;
     }
     
-    // DARCY TERM
+    // Darcy term
     Flocal(IU) -= 5e-1 * f * func.N[ii] * wk1[0] * func.vol;
     Flocal(IV) -= 5e-1 * f * func.N[ii] * wk1[1] * func.vol;
     Flocal(IW) -= 5e-1 * f * func.N[ii] * wk1[2] * func.vol;
                 
-    // PSPG TERM
     /*
-    // ADVECTION TERM
+    // PSPG Advection term
     for(int mm=0; mm<3; mm++){
         Flocal(IP) -= 5e-1 * tau * dNdx[ii][0] * vel[mm] * dwgpdx[0][mm] * func.vol;
         Flocal(IP) -= 5e-1 * tau * dNdx[ii][1] * vel[mm] * dwgpdx[1][mm] * func.vol;
@@ -207,7 +211,10 @@ void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal,
     */
 }
 
-
+/***********************************************
+ * @brief Set values needed for matrix assembly 
+ *        on gauss integral points.
+ */
 void Adjoint::setValue(DirectProblem &main, Function &func, const int ic, const int t)
 {
     // main var - v
@@ -309,7 +316,9 @@ void Adjoint::setValue(DirectProblem &main, Function &func, const int ic, const 
 
 }
 
-
+/***********************************
+ * @brief Compute boundary integral.
+ */
 void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
                                Function &func, const int ic, const int ib)
 {   
@@ -345,6 +354,10 @@ void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &
     }
 }
 
+/*******************************************************************
+ * @brief Compute LHS element sfiffness matrix for boundary integral
+ *        on gauss integral point. 
+ */
 void Adjoint::boundaryInGaussIntegral(MatrixXd &Klocal, Function &func, const int ii, const int jj)
 {
     func.vol = func.detJ * func.weight;

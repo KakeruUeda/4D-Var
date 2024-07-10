@@ -1,8 +1,16 @@
+//##################################################################################
+//
+// Copyright (c) 2016 Mechanical and Bioengineering Systems Lab.,
+//                    Graduate School of Engineering Science and Bioengineering,
+//                    Osaka University.
+// All rights reserved.
+//
+//##################################################################################
+
 /**
- * @file ShapeFunction.h
- * @author t.otani
- * @date ****
-*/
+ * @file   ShapeFunction.h
+ * @author T.Otani
+ */
 
 #ifndef SHAPEFUNCTION_H
 #define SHAPEFUNCTION_H

@@ -1,11 +1,14 @@
 /**
  * @file InverseProblem.cpp
- * @author k.ueda
+ * @author K.Ueda
  * @date July, 2024
  */
 
 #include "InverseProblem.h"
 
+/***************************************************
+ * @brief construct inverse object from config param
+ */
 InverseProblem::InverseProblem(Config &conf):
 main(conf), adjoint(conf), data(conf), app(conf.app), vvox(conf.vvox), 
 dim(conf.dim), outputDir(conf.outputDir), nOMP(conf.nOMP),
@@ -15,6 +18,7 @@ planeDir(conf.planeDir)
 {
     std::string dir;
     std::string output = "output";
+
     mkdir(output.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     outputDir = "output/" + outputDir;
     mkdir(outputDir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
@@ -30,27 +34,67 @@ planeDir(conf.planeDir)
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 }
 
+/*****************************
+ * @brief Run inverse routine
+ */
 void InverseProblem::runSimulation()
-{
+{ 
     main.outputDomain();
     guessInitialCondition();
+    std::ofstream cf(outputDir + "/dat/costFunction.dat");
+
     for(int loop=0; loop<loopMax; loop++){
         PetscPrintf(MPI_COMM_WORLD, "\nOpt itr. : %d\n", loop);
-        compCostFunction();
 
+        compCostFunction();
         PetscPrintf(MPI_COMM_WORLD, "\ncostFunction = %e\n", costFunction.total);
+        costFunction.history.push_back(costFunction.total);
+        if(mpi.myId == 0){
+            cf << costFunction.term1 << " " << costFunction.term2 << " "
+               << costFunction.term3 << " " << costFunction.total;
+            cf << std::endl;
+        }
+        bool isConverged = checkConvergence(cf, loop);
+        if(isConverged) return;
+
         compFeedbackForce();
         compTimeInterpolatedFeedbackForce();
+
         output(loop);
 
         adjoint.solveAdjoint(main, outputDir, feedbackForceT, data.nData, loop);
         compOptimalCondition();
+
         double alpha = armijoCriteria(costFunction.total);
         PetscPrintf(MPI_COMM_WORLD, "\nalpha = %f\n", alpha);
         updataControlVariables(main, alpha);
     }
+
+    cf.close();
 }
 
+/******************************************
+ * @brief Check if cost function converged.
+ */
+bool InverseProblem::checkConvergence(std::ofstream &cf, const int loop)
+{    
+    if(loop >= 10){
+        double diff = costFunction.history[loop] - costFunction.history[loop-10];
+        diff = fabs(diff);
+        
+        if(diff < 1e-3){
+            PetscPrintf(MPI_COMM_WORLD, "Converged..");
+            cf.close();
+            return true;
+        }
+    }
+    return false;
+}
+
+/************************************************************
+ * @brief Guess initial condition. 
+ *        Usually, simulate using poiseuille inlet condition.
+ */
 void InverseProblem::guessInitialCondition()
 {
     main.compInitialCondition(main.grid.dirichlet.vDirichletNew, 
@@ -78,6 +122,9 @@ void InverseProblem::guessInitialCondition()
     }
 }
 
+/*****************************************************
+ * @brief Update control variables for next iteration.
+ */
 void InverseProblem::updataControlVariables(DirectProblem &main, const double alpha)
 {   
     int n = adjoint.grid.dirichlet.controlBoundaryMap.size();
@@ -92,6 +139,9 @@ void InverseProblem::updataControlVariables(DirectProblem &main, const double al
     }
 }
 
+/*****************************
+ * @brief Visualize variables.
+ */
 void InverseProblem::output(const int loop)
 {
     if(mpi.myId > 0) return;
@@ -114,6 +164,9 @@ void InverseProblem::output(const int loop)
 
 }
 
+/****************************************************
+ * @brief Compute cost function over domain and time
+ */
 void InverseProblem::compCostFunction()
 {  
     costFunction.term1 = 0e0;
@@ -218,6 +271,10 @@ void InverseProblem::compCostFunction()
     costFunction.sum();
 }
 
+/************************************************
+ * @brief Compute value for regularization term2
+ *        on gauss integral point.
+ */
 void InverseProblem::GaussIntegralRegTerm2(Function &func, double &value, const int ic, const int t)
 {
     int nc = adjoint.grid.dirichlet.nControlNodesInCell;
@@ -240,6 +297,10 @@ void InverseProblem::GaussIntegralRegTerm2(Function &func, double &value, const 
         value += u[d] * u[d] * func.vol;
 }
 
+/************************************************
+ * @brief Compute value for regularization term3 
+ *        on gauss integral point.
+ */
 void InverseProblem::GaussIntegralRegTerm3(Function &func, double &value, const int ic, const int t)
 {
     int nc = adjoint.grid.dirichlet.nControlNodesInCell;
@@ -269,6 +330,10 @@ void InverseProblem::GaussIntegralRegTerm3(Function &func, double &value, const 
     }
 }
 
+/************************************************
+ * @brief Compute value for regularization term3 
+ *        on gauss integral point.
+ */
 void InverseProblem::compFeedbackForce()
 {   
     for(int t=0; t<main.snap.nSnapShot; t++){
@@ -285,6 +350,9 @@ void InverseProblem::compFeedbackForce()
     }
 }
 
+/********************************************************
+ * @brief Assemble RHS feedback force for adjoint system.
+ */
 void InverseProblem::assembleFeedbackForce(Function &func, const int ic, const int t)
 {
     double dxdr[3][3];
@@ -319,6 +387,9 @@ void InverseProblem::assembleFeedbackForce(Function &func, const int ic, const i
     }
 }
 
+/*****************************************************************
+ * @brief Interpolate space-discrete feedback force onto CFD node.
+ */
 void InverseProblem::compInterpolatedFeeback(double (&feedback)[3], double (&point)[3])
 {
     double px = point[0] + (data.dx / 2e0);
@@ -357,6 +428,9 @@ void InverseProblem::compInterpolatedFeeback(double (&feedback)[3], double (&poi
     } 
 }
 
+/********************************************************
+ * @brief Compute feedback force on gauss integral point.
+ */
 void InverseProblem::feedbackGaussIntegral(Function &func, double (&feedback)[3], const int ic, const int t)
 {
     func.vol = func.detJ * func.weight;
@@ -368,6 +442,9 @@ void InverseProblem::feedbackGaussIntegral(Function &func, double (&feedback)[3]
     }
 }
 
+/**************************************************
+ * @brief Interpolate time-discrete feedback force.
+ */
 void InverseProblem::compTimeInterpolatedFeedbackForce()
 {
     for(int in=0; in<adjoint.grid.node.nNodesGlobal; in++){
@@ -404,7 +481,9 @@ void InverseProblem::compTimeInterpolatedFeedbackForce()
     }
 }
 
-
+/**********************************************
+ * @brief Compute gradient of control variables.
+ */
 void InverseProblem::compOptimalCondition()
 {
     int nc = adjoint.grid.dirichlet.nControlNodesInCell;
@@ -528,6 +607,10 @@ void InverseProblem::compOptimalCondition()
 
 }
 
+/*****************************************************
+ * @brief Compute value for term1 of optimal condition 
+ *        on gauss integral point.
+ */
 void InverseProblem::GaussIntegralOptimalConditionTerm1(Function &func, double (&value)[4][3], const int ic, const int t)
 {
     int nc = adjoint.grid.dirichlet.nControlNodesInCell;
@@ -555,6 +638,10 @@ void InverseProblem::GaussIntegralOptimalConditionTerm1(Function &func, double (
     }
 }
 
+/*****************************************************
+ * @brief Compute value for term2 of optimal condition 
+ *        on gauss integral point.
+ */
 void InverseProblem::GaussIntegralOptimalConditionTerm2(Function &func, double (&value)[4][3], const int ic, const int t)
 {
     int nc = adjoint.grid.dirichlet.nControlNodesInCell;
@@ -589,6 +676,10 @@ void InverseProblem::GaussIntegralOptimalConditionTerm2(Function &func, double (
     }
 }
 
+/*****************************************************
+ * @brief Compute value for term3 of optimal condition 
+ *        on gauss integral point.
+ */
 void InverseProblem::GaussIntegralOptimalConditionTerm3(Function &func, double (&value)[4][3], const int ic, const int t)
 {
     int nc = adjoint.grid.dirichlet.nControlNodesInCell;
@@ -672,7 +763,6 @@ double InverseProblem::armijoCriteria(const double fk)
         double l_tmp = fk + c1 * tmp * alpha;
 
         // printf("Almijo %e %e %e\n",fk,lk,l_tmp);
-
         if(lk <= l_tmp){
             main.grid.dirichlet.vDirichlet = vDirichletTmp;
             main.grid.dirichlet.vDirichletNew = vDirichletNewTmp;

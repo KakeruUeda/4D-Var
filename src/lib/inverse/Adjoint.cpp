@@ -1,11 +1,14 @@
 /**
  * @file Adjoint.cpp
- * @author k.ueda
+ * @author K.Ueda
  * @date July, 2024
  */
 
 #include "InverseProblem.h"
 
+/*********************************
+ * @brief Solve adjoint equation.
+ */
 void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
                              std::vector<std::vector<std::vector<double>>> &feedbackForceT,
                              const int nData, const int loop)
@@ -97,7 +100,9 @@ void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
     VecDestroy(&vecSEQ);
 }
 
-
+/*********************************
+ * @brief Set all solutions zero.
+ */
 void Adjoint::setVariablesZero(const int dim)
 {
     for(int in=0; in<grid.node.nNodesGlobal; in++){
@@ -118,6 +123,9 @@ void Adjoint::setVariablesZero(const int dim)
     }
 }
 
+/*********************************************
+ * @brief Update solutions for next time step.
+ */
 void Adjoint::updateVariables(std::string outputDir, const int dim, const int t, const int loop)
 {
     for(int in=0; in<grid.node.nNodesGlobal; in++){
@@ -155,25 +163,36 @@ void Adjoint::updateVariables(std::string outputDir, const int dim, const int t,
     }
 }
 
-
+/**************************
+ * @brief Update row index.
+ */
 void Adjoint::updateRowIndex(const int ii, const int ic)
 {
     IU =grid.cell(ic).dofStart[ii]; IV = IU + 1;  IW = IU + 2;
     IP = IU + 3; ILU = IU + 4; ILV = IU + 5; ILW = IU + 6;
 }
 
+/*****************************
+ * @brief Update column index.
+ */
 void Adjoint::updateColumnIndex(const int jj, const int ic)
 {
     JU = grid.cell(ic).dofStart[jj]; JV = JU + 1;  JW = JU + 2;
     JP = JU + 3; JLU = JU + 4; JLV = JU + 5; JLW = JU + 6;
 }
 
+/*****************************
+ * @brief Update 2D row index.
+ */
 void Adjoint::updateRowIndexPlane(const int ii, const int ic)
 {
     IU = grid.cell(ic).dofStartPlane[ii]; IV = IU + 1; IW = IU + 2;
     IP = IU + 3; ILU = IU + 4; ILV = IU + 5; ILW = IU + 6;
 }
 
+/********************************
+ * @brief Update 2D column index.
+ */
 void Adjoint::updateColumnIndexPlane(const int jj, const int ic)
 {
     JU = grid.cell(ic).dofStartPlane[jj]; JV = JU + 1; JW = JU + 2;

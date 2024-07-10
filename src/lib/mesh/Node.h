@@ -1,6 +1,6 @@
 /**
  * @file Node.h
- * @author k.ueda
+ * @author K.Ueda
  * @date Jun, 2024
  */
 
