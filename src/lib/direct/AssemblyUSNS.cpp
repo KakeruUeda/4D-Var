@@ -6,6 +6,9 @@
 
 #include "DirectProblem.h"
 
+/**************************
+ * @brief Assemble system.
+ */
 void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, Function &func, const int ic, const int t)
 {
     Gauss g2(2);
@@ -51,7 +54,9 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, Funct
 
 }
 
-
+/**********************************************************************
+ * @brief Compute element sfiffness LHS matrix on gauss integral point. 
+ */
 void DirectProblem::mainGaussIntegralLHS(MatrixXd &Klocal, Function &func, const double f, const int ii, const int jj)
 {
     int n1, n2, n3;
@@ -145,7 +150,9 @@ void DirectProblem::mainGaussIntegralLHS(MatrixXd &Klocal, Function &func, const
 
 }
 
-
+/**********************************************************************
+ * @brief Compute element sfiffness RHS vector on gauss integral point. 
+ */
 void DirectProblem::mainGaussIntegralRHS(VectorXd &Flocal, Function &func, const double f, const int ii)
 {
     int n1, n2, n3;

@@ -1,8 +1,7 @@
 /**
  * @file MathCommon.h
- * @author t.otani
- * @date May, 2024
-*/
+ * @ref  git@github.com:oubiomechlab/voxelFEMfluid.git
+ */
 
 #ifndef MATHCOMMON_H
 #define MATHCOMMON_H

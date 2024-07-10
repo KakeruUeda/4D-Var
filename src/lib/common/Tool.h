@@ -1,7 +1,7 @@
 /**
- * @file ShapeFunction.h
+ * @file   Tool.h
  * @author K.Ueda
- * @date Jun, 2024
+ * @date   Jun, 2024
 */
 
 #ifndef TOOL_H

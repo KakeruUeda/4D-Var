@@ -14,7 +14,6 @@ PetscSolver::~PetscSolver()
     //MatDestroy(&mtx);
 }
 
-
 int PetscSolver::initialize(int sizeLocal, int sizeGlobal)
 {
     nRow = nCol = sizeGlobal;

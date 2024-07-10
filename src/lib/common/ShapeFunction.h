@@ -1,15 +1,6 @@
-//##################################################################################
-//
-// Copyright (c) 2016 Mechanical and Bioengineering Systems Lab.,
-//                    Graduate School of Engineering Science and Bioengineering,
-//                    Osaka University.
-// All rights reserved.
-//
-//##################################################################################
-
 /**
- * @file   ShapeFunction.h
- * @author T.Otani
+ * @file ShapeFunction.h
+ * @ref git@github.com:oubiomechlab/voxelFEMfluid.git
  */
 
 #ifndef SHAPEFUNCTION_H

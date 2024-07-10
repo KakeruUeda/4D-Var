@@ -6,6 +6,9 @@
 
 #include "DirectProblem.h"
 
+/**************************************
+ * @brief Solve Unsteady Navier Stokes.
+ */
 void DirectProblem::solveUSNS(Application &app)
 { 
     PetscPrintf(MPI_COMM_WORLD, "\nMain solver\n");
@@ -102,98 +105,11 @@ void DirectProblem::solveUSNS(Application &app)
     VecDestroy(&vecSEQ);
 }
 
-void DirectProblem::compInitialCondition(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
-                                         std::vector<std::map<int, double>> &pDirichletTmp)
-{
-    PetscPrintf(MPI_COMM_WORLD, "\nCompute Initial Condition\n");
-    
-    double norm, norm0;
-    PetscScalar *arraySolnTmp;
-    Vec  vecSEQ;
-    VecScatter  ctx;
-    VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ); 
-
-    petsc.setMatAndVecZero(grid.cell);
-    petsc.initialAssembly();
-    setVariablesZero();
-    
-    for(int id=0; id<grid.nDofsGlobal; id++){
-        grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
-        grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
-    }   
-
-    int snapCount = 0;
-    double dtTmp = dt;
-    dt *= 3e0;
-    for(int t=0; t<timeMax; t++){
-        petsc.setValueZero();
-        grid.dirichlet.assignConstantDirichletBCs(vDirichletTmp, pDirichletTmp, grid.node, dim, t);
-        grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
-        
-        for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
-            if(grid.cell(ic).subId == mpi.myId){
-                int nDofsInCell = grid.cell(ic).dofsMap.size();
-                Function f3(grid.cell.nNodesInCell, dim);
-                MatrixXd Klocal(nDofsInCell, nDofsInCell);
-                VectorXd Flocal(nDofsInCell);
-                Klocal.setZero();
-                Flocal.setZero();
-                matrixAssemblyUSNS(Klocal, Flocal, f3, ic, t);
-                petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
-                               grid.cell(ic).dofsBCsMap, Klocal, Flocal);
-            }
-        }
-
-        petsc.solve();
-
-        VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
-        VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
-        VecGetArray(vecSEQ, &arraySolnTmp);
-
-        // update solution vector
-        for(int id=0; id<grid.nDofsGlobal; id++)
-            petsc.solution[id] = arraySolnTmp[id];
-
-        VecRestoreArray(vecSEQ, &arraySolnTmp);
-        updateVariables(t);
-
-        if(t == timeMax-1)
-            for(int in=0; in<grid.node.nNodesGlobal; in++)
-                for(int d=0; d<dim; d++)
-                    grid.node.v0[in][d] = grid.node.v[in][d];
-
-        if(mpi.myId == 0){
-            double timeNow = t * dt;
-            printf("Compute initial condition : Time = %f \n", timeNow);
-        }
-
-        MPI_Barrier(MPI_COMM_WORLD);
-    }
-    dt = dtTmp;
-    VecScatterDestroy(&ctx);
-    VecDestroy(&vecSEQ);
-}
-
-void DirectProblem::setVariablesZero()
-{
-    for(int in=0; in<grid.node.nNodesGlobal; in++){
-        for(int d=0; d<dim; d++){
-            grid.node.v[in][d] = 0e0;
-            grid.node.vPrev[in][d] = 0e0;
-        }
-        grid.node.p[in] = 0e0;
-    }
-
-    for(int t=0; t<timeMax; t++){
-        for(int in=0; in<grid.node.nNodesGlobal; in++){
-            for(int d=0; d<dim; d++){
-                grid.node.vt[t][in][d] = 0e0;
-            }
-            grid.node.pt[t][in] = 0e0;
-        }
-    }
-}
-
+/*********************************************************
+ * @brief Solve Unsteady Navier Stokes. 
+ *        This function takes boundary arguments and 
+ *        mainly created for checking armijo criteria.
+ */
 void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
                               std::vector<std::map<int, double>> &pDirichletTmp)
 { 
@@ -279,6 +195,108 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
     VecDestroy(&vecSEQ);
 }
 
+/*******************************************************************
+ * @brief Compute fully developed flow field.
+ *        Usually used to get initial condition for inverse problem.
+ */
+void DirectProblem::compInitialCondition(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
+                                         std::vector<std::map<int, double>> &pDirichletTmp)
+{
+    PetscPrintf(MPI_COMM_WORLD, "\nCompute Initial Condition\n");
+    
+    double norm, norm0;
+    PetscScalar *arraySolnTmp;
+    Vec  vecSEQ;
+    VecScatter  ctx;
+    VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ); 
+
+    petsc.setMatAndVecZero(grid.cell);
+    petsc.initialAssembly();
+    setVariablesZero();
+    
+    for(int id=0; id<grid.nDofsGlobal; id++){
+        grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
+        grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
+    }   
+
+    int snapCount = 0;
+    double dtTmp = dt;
+    dt *= 3e0;
+    for(int t=0; t<timeMax; t++){
+        petsc.setValueZero();
+        grid.dirichlet.assignConstantDirichletBCs(vDirichletTmp, pDirichletTmp, grid.node, dim, t);
+        grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
+        
+        for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
+            if(grid.cell(ic).subId == mpi.myId){
+                int nDofsInCell = grid.cell(ic).dofsMap.size();
+                Function f3(grid.cell.nNodesInCell, dim);
+                MatrixXd Klocal(nDofsInCell, nDofsInCell);
+                VectorXd Flocal(nDofsInCell);
+                Klocal.setZero();
+                Flocal.setZero();
+                matrixAssemblyUSNS(Klocal, Flocal, f3, ic, t);
+                petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
+                               grid.cell(ic).dofsBCsMap, Klocal, Flocal);
+            }
+        }
+
+        petsc.solve();
+
+        VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
+        VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
+        VecGetArray(vecSEQ, &arraySolnTmp);
+
+        // update solution vector
+        for(int id=0; id<grid.nDofsGlobal; id++)
+            petsc.solution[id] = arraySolnTmp[id];
+
+        VecRestoreArray(vecSEQ, &arraySolnTmp);
+        updateVariables(t);
+
+        if(t == timeMax-1)
+            for(int in=0; in<grid.node.nNodesGlobal; in++)
+                for(int d=0; d<dim; d++)
+                    grid.node.v0[in][d] = grid.node.v[in][d];
+
+        if(mpi.myId == 0){
+            double timeNow = t * dt;
+            printf("Compute initial condition : Time = %f \n", timeNow);
+        }
+
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
+    dt = dtTmp;
+    VecScatterDestroy(&ctx);
+    VecDestroy(&vecSEQ);
+}
+
+/********************************
+ * @brief Set all solutions zero.
+ */
+void DirectProblem::setVariablesZero()
+{
+    for(int in=0; in<grid.node.nNodesGlobal; in++){
+        for(int d=0; d<dim; d++){
+            grid.node.v[in][d] = 0e0;
+            grid.node.vPrev[in][d] = 0e0;
+        }
+        grid.node.p[in] = 0e0;
+    }
+
+    for(int t=0; t<timeMax; t++){
+        for(int in=0; in<grid.node.nNodesGlobal; in++){
+            for(int d=0; d<dim; d++){
+                grid.node.vt[t][in][d] = 0e0;
+            }
+            grid.node.pt[t][in] = 0e0;
+        }
+    }
+}
+
+/******************************
+ * @brief Update all solutions.
+ */
 void DirectProblem::updateVariables(const int t)
 {
     for(int in=0; in<grid.node.nNodesGlobal; in++){
@@ -295,6 +313,9 @@ void DirectProblem::updateVariables(const int t)
     }
 }
 
+/*****************************
+ * @brief Visualize solutions.
+ */
 void DirectProblem::outputSolution(const int t)
 {
     if(mpi.myId > 0) return;
@@ -305,6 +326,9 @@ void DirectProblem::outputSolution(const int t)
     grid.output.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::PRESSURE);
 }
 
+/**************************************************************
+ * @brief Assign time-dependent variables for adjoint equation.
+ */
 void DirectProblem::assignTimeVariables(const int t)
 {
     for(int in=0; in<grid.node.nNodesGlobal; in++){
@@ -315,6 +339,9 @@ void DirectProblem::assignTimeVariables(const int t)
     }
 }
 
+/********************************************
+ * @brief Take snapshots for error functions.
+ */
 void SnapShot::takeSnapShot(std::vector<std::vector<double>> &_v,
                             const int &snapCount, const int &nNodesGlobal, const int &dim)
 {

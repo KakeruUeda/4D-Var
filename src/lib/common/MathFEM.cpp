@@ -1,8 +1,7 @@
 /**
  * @file MathFEM.cpp
- * @author K.Ueda
- * @date Jun, 2024
-*/
+ * @ref  git@github.com:oubiomechlab/voxelFEMfluid.git
+ */
 
 #include "MathFEM.h"
 

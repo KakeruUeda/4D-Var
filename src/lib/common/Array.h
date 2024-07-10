@@ -1,7 +1,7 @@
 /**
- * @file Array.h
+ * @file   Array.h
  * @author K.Ueda
- * @date May, 2024
+ * @date   May, 2024
 */
 
 #ifndef ARRAY_H

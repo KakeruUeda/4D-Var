@@ -1,8 +1,7 @@
 /**
  * @file MathCommon.cpp
- * @author t.otani
- * @date May, 2024
-*/
+ * @ref  git@github.com:oubiomechlab/voxelFEMfluid.git
+ */
 
 #include "MathCommon.h"
 

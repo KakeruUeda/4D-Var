@@ -1,7 +1,7 @@
 /**
- * @file Define.h
+ * @file   Define.h
  * @author K.Ueda
- * @date July, 2024
+ * @date   July, 2024
 */
 
 #ifndef FUNCTION_H

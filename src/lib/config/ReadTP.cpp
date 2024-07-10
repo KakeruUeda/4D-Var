@@ -6,6 +6,9 @@
 
 #include "Config.h"
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readBasicParameter()
 {
     std::string str, base_label, label;
@@ -25,6 +28,9 @@ void Config::readBasicParameter()
         throw std::runtime_error(label + " is not set");
 }
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readPysicalParameter()
 {
     std::string str, base_label, label;
@@ -39,6 +45,9 @@ void Config::readPysicalParameter()
         throw std::runtime_error(label + " is not set");
 }
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readNRParameter()
 {
     std::string str, base_label, label;
@@ -49,7 +58,9 @@ void Config::readNRParameter()
         throw std::runtime_error(label + " is not set");
 }
 
-
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readTimeParameter()
 {
     std::string str, base_label, label;
@@ -85,6 +96,9 @@ void Config::readTimeParameter()
         throw std::runtime_error(label + " is not set");
 }
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readDarcyParameter()
 {
     std::string str, base_label, label;
@@ -99,6 +113,9 @@ void Config::readDarcyParameter()
         throw std::runtime_error(label + " is not set");
 }
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readGridParameter()
 {
     std::string str, base_label, label;
@@ -204,6 +221,9 @@ void Config::readGridParameter()
     ifsImage.close();
 }
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readBoundaryParameter()
 {
     std::string str, base_label, label;
@@ -255,6 +275,9 @@ void Config::readBoundaryParameter()
     ifsPre.close();
 }
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readControlBoundaryParameter()
 {
     std::string str, base_label, label;
@@ -278,6 +301,9 @@ void Config::readControlBoundaryParameter()
         controlBoundary = ControlBoundary::back;
 }
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readPostprocessParameter()
 {
     std::string str, base_label, label;
@@ -346,6 +372,9 @@ void Config::readPostprocessParameter()
     nCellsDataGlobal = nxData * nxData * nzData;
 }
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readInverseParameter()
 {
     std::string str, base_label, label;
@@ -412,6 +441,9 @@ void Config::readInverseParameter()
         throw std::runtime_error(label + " is not set");
 }
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readDataParameter()
 {
     std::string str, base_label, label;
@@ -542,6 +574,9 @@ void Config::readDataParameter()
     nData = num;
 }
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readStructuredGridParameter()
 {
     std::string str, base_label, label;
@@ -605,6 +640,9 @@ void Config::readStructuredGridParameter()
     return;
 }
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readStructuredBoundaryParameter()
 {
     std::string str, base_label;
@@ -671,6 +709,9 @@ void Config::readStructuredBoundaryParameter()
     return;
 }
 
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readBoundaryTypeAndValue(std::string labelType, std::string labelValue, int &tmp)
 {
     std::string bdTypeTmp;

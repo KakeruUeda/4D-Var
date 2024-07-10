@@ -54,7 +54,7 @@ void Adjoint::matrixAssemblyAdjoint(DirectProblem &main, MatrixXd &Klocal, Vecto
 }
 
 /**********************************************************************
- * @brief Compute LHS element sfiffness matrix on gauss integral point. 
+ * @brief Compute element sfiffness LHS matrix on gauss integral point. 
  */
 void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, Function &func, 
                                       const double f, const int ii, const int jj)
@@ -123,8 +123,8 @@ void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, Fun
     Klocal(IP, JP) += tau * func.K[ii][jj] * func.vol;
 }
 
-/******************************************************************
- * @brief Compute RHS element sfiffness matrix on gauss integral point. 
+/**********************************************************************
+ * @brief Compute element sfiffness RHS matrix on gauss integral point. 
  */
 void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, 
                                       Function &func, const double f, const int ii)

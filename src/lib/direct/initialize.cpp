@@ -6,6 +6,9 @@
 
 #include "DirectProblem.h"
 
+/***********************************
+ * @brief Initialize direct problem.
+ */
 void DirectProblem::initialize(Config &conf)
 {
     nu = mu / rho;

@@ -6,6 +6,9 @@
 
 #include "Boundary.h"
 
+/***************************************
+ * @brief Initialize dirichlet boundary.
+ */
 void DirichletBoundary::initialize(Config &conf)
 {
     vDirichlet.resize(conf.timeMax);
@@ -18,6 +21,10 @@ void DirichletBoundary::initialize(Config &conf)
     }
 }
 
+/***************************************
+ * @brief Initialize dirichlet boundary 
+ *        for adjoint equation.
+ */
 void DirichletBoundary::initializeAdjoint(Config &conf)
 {
     vDirichlet.resize(conf.timeMax);
@@ -38,6 +45,10 @@ void DirichletBoundary::initializeAdjoint(Config &conf)
     isBoundaryEdge = conf.isBoundaryEdge;
 }
 
+/***************************************************
+ * @brief Assign dirichlet Boundary condition's 
+ *        value and dof location to vector variable.
+ */
 void DirichletBoundary::assignDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
                                            std::vector<std::map<int, double>> &pDirichletNew, Node &node, 
                                            int &dim, const int t)
@@ -92,7 +103,10 @@ void DirichletBoundary::assignDirichletBCs(std::vector<std::map<int, std::vector
     }
 }
 
-
+/******************************************************
+ * @brief Assign constant dirichlet boundary conditions
+ *        over all simulation time steps.
+ */
 void DirichletBoundary::assignConstantDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
                                                    std::vector<std::map<int, double>> &pDirichletNew, Node &node, 
                                                    int &dim, const int t)
@@ -124,6 +138,9 @@ void DirichletBoundary::assignConstantDirichletBCs(std::vector<std::map<int, std
     }
 }
 
+/*******************************************************
+ * @brief Assign pulsatile dirichlet boundary condition.
+ */
 void DirichletBoundary::assignPulsatileBCs(const int &t, const double &dt, 
                                            const double &T, const int &nDofsGlobal)
 {
@@ -135,6 +152,9 @@ void DirichletBoundary::assignPulsatileBCs(const int &t, const double &dt,
     }
 }
 
+/*******************************************
+ * @brief Set dirichlet boundary conditions.
+ */
 void DirichletBoundary::applyDirichletBCs(Cell &cell, PetscSolver &petsc)
 {
     std::vector<int> vecTmp;
@@ -167,6 +187,9 @@ void DirichletBoundary::applyDirichletBCs(Cell &cell, PetscSolver &petsc)
     VecAssemblyEnd(petsc.rhsVec);
 }
 
+/*******************************************************
+ * @brief Set dirichlet boundary conditions for adjoint.
+ */
 void DirichletBoundary::applyDirichletBCsAdjoint(Cell &cell, PetscSolver &petsc)
 {
     std::vector<int> vecTmp;

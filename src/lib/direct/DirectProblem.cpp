@@ -6,6 +6,9 @@
 
 #include "DirectProblem.h"
 
+/***************************************************
+ * @brief Construct direct problem from config file.
+ */
 DirectProblem::DirectProblem(Config &conf) : 
 app(conf.app), dim(conf.dim), outputDir(conf.outputDir), 
 nOMP(conf.nOMP), grid(conf), snap(conf),
@@ -31,7 +34,9 @@ alpha(conf.alpha), resistance(conf.resistance)
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 }
 
-
+/**********************************************
+ * @brief Visualize partitioned domain and phi.
+ */
 void DirectProblem::outputDomain()
 {
     if(mpi.myId > 0) return;
@@ -43,19 +48,27 @@ void DirectProblem::outputDomain()
     grid.output.exportPhiVTU(vtuFile, grid.node, grid.cell);
 }
 
-
+/**************************************************
+ * @brief Simulate Unsteady Navier Stokes Equation.
+ */
 void DirectProblem::runSimulation()
 {
     outputDomain();
     solveUSNS(app);
 }
 
+/****************************************************************
+ * @brief Update row index when creating element stifness matrix.
+ */
 void DirectProblem::updateRowIndex(const int ii, const int ic)
 {
     IU = grid.cell(ic).dofStart[ii]; IV = IU + 1;  IW = IU + 2;
     IP = IU + 3; ILU = IU + 4; ILV = IU + 5; ILW = IU + 6;
 }
 
+/******************************************************************
+ * @brief Update column index when creating element stifness matrix.
+ */
 void DirectProblem::updateColumnIndex(const int jj, const int ic)
 {
     JU = grid.cell(ic).dofStart[jj]; JV = JU + 1;  JW = JU + 2;

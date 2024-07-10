@@ -1,7 +1,7 @@
 /**
- * @file MyMPI.h
+ * @file   MyMPI.h
  * @author K.Ueda
- * @date Jun, 2024
+ * @date   Jun, 2024
 */
 
 #ifndef MYMPI_H

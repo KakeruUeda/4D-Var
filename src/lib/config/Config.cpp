@@ -6,6 +6,9 @@
 
 #include "Config.h"
 
+/**************************
+ * @brief Construct config.
+ */
 Config::Config(std::string inputFile, std::string appName)
 {
     setApplication(appName);
@@ -13,6 +16,9 @@ Config::Config(std::string inputFile, std::string appName)
     tryReadConfigFile();
 }
 
+/**************************
+ * @brief Set application.
+ */
 void Config::setApplication(std::string appName)
 {   
     if     (appName == "STRGRID")  app = Application::STRGRID;
@@ -23,6 +29,9 @@ void Config::setApplication(std::string appName)
     else if (mpi.myId == 0)        std::cout << "Unknown appName" << std::endl;
 }
 
+/**************************
+ * @brief Open config file.
+ */
 void Config::tryOpenConfigFile(std::string inputFile)
 {
     try{
@@ -38,6 +47,9 @@ void Config::tryOpenConfigFile(std::string inputFile)
     }
 }
 
+/**************************
+ * @brief Read config file.
+ */
 void Config::tryReadConfigFile()
 {
     try{
@@ -51,6 +63,9 @@ void Config::tryReadConfigFile()
     }
 }
 
+/**************************
+ * @brief Read config file.
+ */
 void Config::readConfigFile()
 {
     switch(app){
@@ -89,6 +104,10 @@ void Config::readConfigFile()
     }
 }
 
+/*****************************************
+ * @brief Set velocity dirichlet boundary 
+ *        condition zero on solid nodes.
+ */
 void Config::setSolidBoundary()
 {
     std::vector<double> vecTmp;
@@ -122,6 +141,11 @@ void Config::setSolidBoundary()
     }
 }
 
+/***************************************************
+ * @brief Extract fluid domain from structured grid
+ *        to lower computational cost.
+ *        Might need to simplify.
+ */
 void Config::setFluidDomain()
 {
     int nCellsGlobalTmp = nCellsGlobal;

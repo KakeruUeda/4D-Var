@@ -1,15 +1,6 @@
-//##################################################################################
-//
-// Copyright (c) 2016 Mechanical and Bioengineering Systems Lab.,
-//                    Graduate School of Engineering Science and Bioengineering,
-//                    Osaka University.
-// All rights reserved.
-//
-//##################################################################################
-
 /**
- * @file   Gauss.h
- * @author T.Otani
+ * @file Gauss.h
+ * @ref git@github.com:oubiomechlab/voxelFEMfluid.git
  */
 
 #ifndef GAUSS_H
