@@ -15,12 +15,8 @@ target_compile_options(${main_target} PUBLIC ${compile_options_tmp})
 
 target_link_libraries( ${main_target} 
     PRIVATE
-        TP
-        petsc
-        metis
-        omp
-        config
-        mesh
+        TP petsc metis omp
+        config mesh
 )
 
 target_include_directories(${main_target} 

@@ -18,27 +18,25 @@ int main(int argc, char *argv[])
     mpi.setSizeAndRank();
     mpi.printSizeAndRank();
 
-    std::string inputFile = argv[1];
+    std::string input = argv[1];
     std::string appName = "USNS";
 
-    // Configurate using Text Parser
-    Config* conf = new Config(inputFile, appName);
+    auto conf = std::make_unique<Config>(input, appName);
     if(conf->isReadingError) 
         return EXIT_FAILURE;
-
-    if(conf->gridType == GridType::STRUCTURED)
+    
+    if(conf->gridType == GridType::STRUCTURED){
         conf->setSolidBoundary();
-
-    if(conf->extractFluid == ON)
-        conf->setFluidDomain();
-
+        if(conf->extractFluid == ON){
+            conf->setFluidDomain();
+        }
+    } 
     DirectProblem direct(*conf);
     Postprocess post(*conf);
 
     direct.initialize(*conf);
-    delete conf;
+    conf.reset();
 
-    // Solve Unstready Navier Stokes
     direct.runSimulation();
 
     //post.extractOutletVelocity(direct);

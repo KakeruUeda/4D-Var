@@ -43,7 +43,7 @@ void DirectProblem::solveUSNS(Application &app)
         grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
         
         MPI_Barrier(MPI_COMM_WORLD);
-        double timer = MPI_Wtime();
+        double timer1 = MPI_Wtime();
         
         for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){
             if(grid.cell(ic).subId == mpi.myId){
@@ -59,15 +59,15 @@ void DirectProblem::solveUSNS(Application &app)
             }
         }
         petsc.currentStatus = ASSEMBLY_OK;
-        timer = MPI_Wtime() - timer;
-        PetscPrintf(MPI_COMM_WORLD, "\nMatrix assembly = %f seconds\n", timer);
+        timer1 = MPI_Wtime() - timer1;
+        //PetscPrintf(MPI_COMM_WORLD, "\nMatrix assembly = %f seconds\n", timer);
         MPI_Barrier(MPI_COMM_WORLD); 
 
-        timer = MPI_Wtime();
+        double timer2 = MPI_Wtime();
         petsc.solve();
-        timer = MPI_Wtime() - timer;
+        timer2 = MPI_Wtime() - timer2;
 
-        PetscPrintf(MPI_COMM_WORLD, "PETSc solver = %f seconds \n", timer);
+        //PetscPrintf(MPI_COMM_WORLD, "PETSc solver = %f seconds \n", timer);
         VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
         VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
         VecGetArray(vecSEQ, &arraySolnTmp);
@@ -96,7 +96,7 @@ void DirectProblem::solveUSNS(Application &app)
 
         if(mpi.myId == 0){
             double timeNow = t * dt;
-            printf("Main Solver : Time = %f \n", timeNow);
+            printf("Assy: %fs | Solve: %fs | SimTime: %fs \n", timer1, timer2, timeNow);
         }
         MPI_Barrier(MPI_COMM_WORLD);
     }

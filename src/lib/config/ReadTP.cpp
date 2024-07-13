@@ -28,6 +28,7 @@ void Config::readBasicParameter()
         throw std::runtime_error(label + " is not set");
 }
 
+
 /*****************************
  * @brief Read text parameter.
  */

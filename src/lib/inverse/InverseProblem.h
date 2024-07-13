@@ -127,7 +127,6 @@ class InverseProblem
 
         double aCF, bCF1, bCF2, gCF;
         int loopMax;
-        int nControlNodesInCell;
 
         std::vector<int> planeDir;
         std::vector<std::vector<std::vector<double>>> feedbackForce;

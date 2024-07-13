@@ -10,11 +10,10 @@
  * @brief construct inverse object from config param
  */
 InverseProblem::InverseProblem(Config &conf):
-main(conf), adjoint(conf), data(conf), app(conf.app), vvox(conf.vvox), 
-dim(conf.dim), outputDir(conf.outputDir), nOMP(conf.nOMP),
-aCF(conf.aCF), bCF1(conf.bCF1), bCF2(conf.bCF2), gCF(conf.gCF),
-loopMax(conf.loopMax), nControlNodesInCell(conf.nControlNodesInCell),
-planeDir(conf.planeDir)
+main(conf), adjoint(conf), data(conf), app(conf.app), 
+vvox(conf.vvox), dim(conf.dim), outputDir(conf.outputDir), 
+nOMP(conf.nOMP), aCF(conf.aCF), bCF1(conf.bCF1), bCF2(conf.bCF2),
+gCF(conf.gCF), loopMax(conf.loopMax), planeDir(conf.planeDir)
 {
     std::string dir;
     std::string output = "output";
@@ -287,7 +286,7 @@ void InverseProblem::GaussIntegralRegTerm2(Function &func, double &value, const 
 
     std::vector<double> u(dim, 0e0);
 
-    for(int p=0; p<nControlNodesInCell; p++){
+    for(int p=0; p<nc; p++){
         int index = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
         for(int d=0; d<dim; d++){
             u[d] += func.N[p] * main.snap.v[t][index][d];
@@ -315,7 +314,7 @@ void InverseProblem::GaussIntegralRegTerm3(Function &func, double &value, const 
     std::vector<std::vector<double>> dudx;
     VecTool::resize(dudx, dim, dim-1);
 
-    for(int p=0; p<nControlNodesInCell; p++){
+    for(int p=0; p<nc; p++){
         int n = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
         for(int d1=0; d1<3; d1++){
             for(int d2=0; d2<2; d2++){
@@ -575,7 +574,7 @@ void InverseProblem::compOptimalCondition()
                     GaussIntegralOptimalConditionTerm3(func2d, value, ic, t);
                 }
             }
-            for(int p=0; p<nControlNodesInCell; p++){
+            for(int p=0; p<nc; p++){
                 int in = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
                 for(int d=0; d<dim; d++){
                     gradWholeNode[t][in][d] += value[p][d];
