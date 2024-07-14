@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 
     std::string input = argv[1];
     std::string appName = "FDVAR";
-
+    
     auto conf = std::make_unique<Config>(input, appName);
     if(conf->isReadingError) return EXIT_FAILURE;
 

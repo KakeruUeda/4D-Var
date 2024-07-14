@@ -321,9 +321,9 @@ void DirectProblem::outputSolution(const int t)
     if(mpi.myId > 0) return;
     std::string vtuFile;
     vtuFile = outputDir + "/solution/velocity" + to_string(t) + ".vtu";
-    grid.output.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::VELOCITY);
+    grid.vtk.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::VELOCITY);
     vtuFile = outputDir + "/solution/pressure" + to_string(t) + ".vtu";
-    grid.output.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::PRESSURE);
+    grid.vtk.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::PRESSURE);
 }
 
 /**************************************************************

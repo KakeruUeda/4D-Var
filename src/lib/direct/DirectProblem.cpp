@@ -43,9 +43,9 @@ void DirectProblem::outputDomain()
     std::string vtuFile;
 
     vtuFile = outputDir + "/domain/meshPartition.vtu";
-    grid.output.exportMeshPartitionVTU(vtuFile, grid.node, grid.cell);
+    grid.vtk.exportMeshPartitionVTU(vtuFile, grid.node, grid.cell);
     vtuFile = outputDir + "/domain/phi.vtu";
-    grid.output.exportPhiVTU(vtuFile, grid.node, grid.cell);
+    grid.vtk.exportPhiVTU(vtuFile, grid.node, grid.cell);
 }
 
 /**************************************************

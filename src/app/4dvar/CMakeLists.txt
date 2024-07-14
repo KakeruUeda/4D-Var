@@ -17,7 +17,7 @@ target_link_libraries( ${main_target}
     PRIVATE
         TP petsc metis omp direct
         inverse config mesh solver
-        boundary output common
+        boundary vtk common
 )
 
 target_include_directories(${main_target} 
@@ -28,7 +28,7 @@ target_include_directories(${main_target}
         ${PROJECT_SOURCE_DIR}/src/lib/inverse
         ${PROJECT_SOURCE_DIR}/src/lib/mesh
         ${PROJECT_SOURCE_DIR}/src/lib/solver
-        ${PROJECT_SOURCE_DIR}/src/lib/output
+        ${PROJECT_SOURCE_DIR}/src/lib/vtk
         ${PROJECT_SOURCE_DIR}/src/lib/common 
 )
 

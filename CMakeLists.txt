@@ -7,7 +7,6 @@ string(REPLACE " " " " compile_options ${base_compile_options})
 project(DataAssimilation C CXX)
 set(CMAKE_CXX_STANDARD 11)
 
-set(CMAKE_BUILD_TYPE Debug)
 set(CMAKE_MODULE_PATH  ${PROJECT_SOURCE_DIR}/cmake)
 
 message(" ")

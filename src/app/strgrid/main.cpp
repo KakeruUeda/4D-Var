@@ -12,7 +12,7 @@
 #include "Config.h"
 #include "MyMPI.h"
 #include "Boundary.h"
-#include "Output.h"
+#include "VTK.h"
 #include "Grid.h"
 #include "PetscSolver.h"
 MyMPI mpi;

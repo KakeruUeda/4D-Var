@@ -107,6 +107,14 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
         for(int id=0; id<node.nDofsOnNode[in]; id++)
                 nDofsGlobal++;
 
+    if(mpi.nId == 1){
+        setForSerial();
+    }else if(mpi.nId > 1){
+        divideWholeGrid();
+        distributeToLocal(timeMax);
+    }
+
+    /*
     // debug
     if(mpi.myId == 0){
         std::ofstream outIsDirichlet(outputDir + "/dat/isDirichlet.dat");
@@ -129,13 +137,6 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
             outDofsBCsMap << std::endl;
         }
         outDofsBCsMap.close();
-    }
-
-    if(mpi.nId == 1){
-        setForSerial();
-    }else if(mpi.nId > 1){
-        divideWholeGrid();
-        distributeToLocal(timeMax);
     }
 
     // debug
@@ -161,6 +162,25 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
         }
         outDofsBCsMapNew.close();
     }
+
+    // debug
+    if(mpi.myId == 0){
+        int i;
+        std::ofstream outCellDofsMap(outputDir + "/dat/cellDofsBCsMap.dat");
+        for(int ic=0; ic<cell.nCellsGlobal; ic++){
+            i = 0;
+            for(int p=0; p<cell.nNodesInCell; p++){
+                for(int q=0; q<node.nDofsOnNodeNew[cell(ic).nodeNew[p]]; q++){
+                    outCellDofsMap << cell(ic).dofsBCsMap[i+q] << " ";
+                }
+                outCellDofsMap << "  ";
+                i += node.nDofsOnNodeNew[cell(ic).nodeNew[p]];
+            }
+            outCellDofsMap << std::endl;
+        }
+        outCellDofsMap.close();
+    }
+    */
 
     for(int in=0; in<node.nNodesGlobal; in++){
         for(int id=0; id<node.nDofsOnNodeNew[in]; id++){
@@ -211,24 +231,6 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
         }
     }
     //////////
-
-    // debug
-    if(mpi.myId == 0){
-        int i;
-        std::ofstream outCellDofsMap(outputDir + "/dat/cellDofsBCsMap.dat");
-        for(int ic=0; ic<cell.nCellsGlobal; ic++){
-            i = 0;
-            for(int p=0; p<cell.nNodesInCell; p++){
-                for(int q=0; q<node.nDofsOnNodeNew[cell(ic).nodeNew[p]]; q++){
-                    outCellDofsMap << cell(ic).dofsBCsMap[i+q] << " ";
-                }
-                outCellDofsMap << "  ";
-                i += node.nDofsOnNodeNew[cell(ic).nodeNew[p]];
-            }
-            outCellDofsMap << std::endl;
-        }
-        outCellDofsMap.close();
-    }
 
     int *tt, tmpInt;
     int r, kk, nSize;

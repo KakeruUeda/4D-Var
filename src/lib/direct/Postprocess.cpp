@@ -69,7 +69,7 @@ void Postprocess::createData(DirectProblem &direct)
         if(mpi.myId == 0){
             std::string vtiFile;
             vtiFile = direct.outputDir + "/data/data" + to_string(t) + ".vti";
-            direct.grid.output.exportDataVTI(vtiFile, voxel, t, direct.dim);
+            direct.grid.vtk.exportDataVTI(vtiFile, voxel, t, direct.dim);
         }
     }
 

@@ -24,7 +24,7 @@ target_link_libraries( ${main_target}
         mesh
         solver
         boundary
-        output
+        vtk
         common
 )
 
@@ -36,7 +36,7 @@ target_include_directories(${main_target}
         ${PROJECT_SOURCE_DIR}/src/lib/inverse
         ${PROJECT_SOURCE_DIR}/src/lib/mesh
         ${PROJECT_SOURCE_DIR}/src/lib/solver
-        ${PROJECT_SOURCE_DIR}/src/lib/output
+        ${PROJECT_SOURCE_DIR}/src/lib/vtk
         ${PROJECT_SOURCE_DIR}/src/lib/common 
 )
 

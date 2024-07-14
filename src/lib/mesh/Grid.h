@@ -16,7 +16,7 @@
 #include "Array.h"
 #include "PetscSolver.h"
 #include "Boundary.h"
-#include "Output.h"
+#include "VTK.h"
 #include "Config.h"
 #include "Gauss.h"
 #include "ShapeFunction.h"
@@ -33,7 +33,7 @@ class Grid
         Cell cell; 
         Node node;
         DirichletBoundary dirichlet;
-        Output output;
+        VTK vtk;
         
         int nx, ny, nz;
         double lx, ly, lz, dx, dy, dz;

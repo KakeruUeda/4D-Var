@@ -118,7 +118,7 @@ void InverseProblem::guessInitialCondition()
     if(mpi.myId == 0){
         std::string vtuFile;
         vtuFile = main.outputDir + "/solution/velocityInitial.vtu";
-        main.grid.output.exportSolutionVTU(vtuFile, main.grid.node, main.grid.cell, DataType::VELOCITY);  
+        main.grid.vtk.exportSolutionVTU(vtuFile, main.grid.node, main.grid.cell, DataType::VELOCITY);  
     }
 }
 
@@ -151,15 +151,15 @@ void InverseProblem::output(const int loop)
 
     for(int t=0; t<main.snap.nSnapShot; t++){
         vtiFile = main.outputDir + "/data/data_" + to_string(loop) + "_" + to_string(t) + ".vti";
-        main.grid.output.exportVelocityDataVTI(vtiFile, data, t, main.dim);
+        main.grid.vtk.exportVelocityDataVTI(vtiFile, data, t, main.dim);
     }
     for(int t=0; t<main.timeMax; t++){
         vtuFile = outputDir + "/feedback/feedbackForceT_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-        main.grid.output.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, feedbackForceT[t]);
+        main.grid.vtk.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, feedbackForceT[t]);
         vtuFile = main.outputDir + "/solution/velocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-        main.grid.output.exportMainVariablesVTU(vtuFile, main.grid.node, main.grid.cell, t, DataType::VELOCITY);
+        main.grid.vtk.exportMainVariablesVTU(vtuFile, main.grid.node, main.grid.cell, t, DataType::VELOCITY);
         vtuFile = main.outputDir + "/solution/pressure_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-        main.grid.output.exportMainVariablesVTU(vtuFile, main.grid.node, main.grid.cell, t, DataType::PRESSURE);
+        main.grid.vtk.exportMainVariablesVTU(vtuFile, main.grid.node, main.grid.cell, t, DataType::PRESSURE);
     }
 
 }
@@ -601,7 +601,7 @@ void InverseProblem::compOptimalCondition()
         for(int t=0; t<main.timeMax; t++){
             std::string vtuFile;
             vtuFile = outputDir + "/feedback/gradWholeNode_" + to_string(t) + ".vtu";
-            main.grid.output.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, gradWholeNode[t]);
+            main.grid.vtk.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, gradWholeNode[t]);
         }
     }
 

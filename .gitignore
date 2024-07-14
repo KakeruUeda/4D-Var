@@ -4,7 +4,5 @@ output
 a.out
 *.vti
 *.vtu
-*.stl
-*.dat
 *.DS_Store
 *.vscode
