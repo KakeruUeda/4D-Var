@@ -1,7 +1,7 @@
 Base
 {
     dim = 3
-    outputDir = "stenosis50_8x8x8"
+    outputDir = "test"
     numOfOMP = 1
 }
 
@@ -25,9 +25,7 @@ Boundary
 
 Inverse
 {
-    countrolVariable = "traction"
-    inletControlBoundary = "left"
-    outletControlBoundary = "right"
+    controlBoundary = "left"
     voxelVelocity = "average"
     aCF = 5e1
     bCF1 = 0e0

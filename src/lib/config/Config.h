@@ -33,12 +33,6 @@ enum class GridType
     UNSTRUCTURED = 1
 };
 
-enum class ControlVariable
-{
-    velocity = 0,
-    traction = 1
-};
-
 enum class ControlBoundary
 {
     left = 0, right = 1, top = 2, bottom = 3,
@@ -61,10 +55,7 @@ class Config
         TextParser tp;
         Application app;
         GridType gridType;
-        ControlVariable controlVariable;
         ControlBoundary controlBoundary;
-        ControlBoundary inletControlBoundary;
-        ControlBoundary outletControlBoundary;
         VoxelVelocity vvox;
 
         // Basic parameter
@@ -133,8 +124,6 @@ class Config
 
         std::vector<int> controlBoundaryMap;
         std::vector<int> planeDir;
-        std::vector<int> inletPlaneDir;
-        std::vector<int> outletPlaneDir;
 
         std::vector<bool> isBoundaryEdge;
 

@@ -83,8 +83,6 @@ class Adjoint : public MathFEM
         std::vector<std::vector<double>> dwk1dx, dwk2dx;
         
         std::vector<int> planeDir;
-        std::vector<int> inletPlaneDir; 
-        std::vector<int> outletPlaneDir;
 
         void solveAdjoint(DirectProblem &main, std::string outputDir,
                              std::vector<std::vector<std::vector<double>>> &feedbackForceT,
@@ -99,10 +97,6 @@ class Adjoint : public MathFEM
                                      const double f, const int ii, const int jj);
         void adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, Function &func, 
                                      const double f, const int ii);
-
-        void solveAdjoint2(DirectProblem &main, std::string outputDir,
-                           std::vector<std::vector<std::vector<double>>> &feedbackForceT,
-                           const int nData, const int loop);
 
     private:
         void setVariablesZero(const int dim);
@@ -130,7 +124,6 @@ class InverseProblem
         DirectProblem main;
         Adjoint adjoint;
         CostFunction costFunction;
-        ControlVariable controlVariable;
 
         VoxelVelocity vvox;
 
@@ -138,9 +131,6 @@ class InverseProblem
         int loopMax;
 
         std::vector<int> planeDir;
-        std::vector<int> inletPlaneDir; 
-        std::vector<int> outletPlaneDir;
-
         std::vector<std::vector<std::vector<double>>> feedbackForce;
         std::vector<std::vector<std::vector<double>>> feedbackForceT;
         std::vector<std::vector<std::vector<double>>> gradWholeNode;
@@ -149,7 +139,6 @@ class InverseProblem
         
         void initialize(Config &conf);
         void runSimulation();
-        void runSimulation2();
 
         void output(const int loop);
         void guessInitialCondition();

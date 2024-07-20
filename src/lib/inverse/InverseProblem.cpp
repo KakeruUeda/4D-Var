@@ -11,9 +11,9 @@
  */
 InverseProblem::InverseProblem(Config &conf):
 main(conf), adjoint(conf), data(conf), app(conf.app), 
-controlVariable(conf.controlVariable), vvox(conf.vvox), dim(conf.dim), 
-outputDir(conf.outputDir), nOMP(conf.nOMP), aCF(conf.aCF), 
-bCF1(conf.bCF1), bCF2(conf.bCF2), gCF(conf.gCF), loopMax(conf.loopMax)
+vvox(conf.vvox), dim(conf.dim),  outputDir(conf.outputDir), 
+nOMP(conf.nOMP), aCF(conf.aCF), bCF1(conf.bCF1), bCF2(conf.bCF2), 
+gCF(conf.gCF), loopMax(conf.loopMax), planeDir(conf.planeDir)
 {
     std::string dir;
     std::string output = "output";
@@ -32,12 +32,6 @@ bCF1(conf.bCF1), bCF2(conf.bCF2), gCF(conf.gCF), loopMax(conf.loopMax)
     dir = outputDir + "/dat";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 
-    if(controlVariable == ControlVariable::velocity){
-        planeDir = conf.planeDir;
-    }else if(controlVariable == ControlVariable::traction){
-        inletPlaneDir = conf.inletPlaneDir;
-        outletPlaneDir = conf.outletPlaneDir;
-    }
 }
 
 /*****************************
@@ -68,7 +62,7 @@ void InverseProblem::runSimulation()
 
         output(loop);
 
-        adjoint.solveAdjoint2(main, outputDir, feedbackForceT, data.nData, loop);
+        adjoint.solveAdjoint(main, outputDir, feedbackForceT, data.nData, loop);
         compOptimalCondition();
 
         double alpha = armijoCriteria(costFunction.total);
@@ -276,7 +270,7 @@ void InverseProblem::compCostFunction()
             costFunction.term2 += 5e-1 * bCF1 * value;
         }
     }
-
+std::cout << "5" << std::endl;
     // term3
     for(int t=0; t<main.snap.nSnapShot; t++){
         for(int ic=0; ic<adjoint.grid.dirichlet.controlNodeInCell.size(); ic++){
@@ -298,6 +292,7 @@ void InverseProblem::compCostFunction()
             costFunction.term3 += 5e-1 * bCF2 * value;
         }
     }
+    std::cout << "5" << std::endl;
     costFunction.sum();
 }
 
