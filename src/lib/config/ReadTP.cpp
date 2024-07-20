@@ -138,6 +138,31 @@ void Config::readGridParameter()
     else if(gridTypeString == "Unstructured")
         gridType = GridType::UNSTRUCTURED;
 
+    if(gridType == GridType::STRUCTURED){
+        int tmpInt[dim];
+        double tmpDouble[dim];
+
+        label = base_label + "/nx";
+        if(!tp.getInspectedVector(label, tmpInt, dim))
+            throw std::runtime_error(label + " is not set.");
+
+        nx = tmpInt[0];
+        ny = tmpInt[1];
+        nz = tmpInt[2];
+
+        label = base_label + "/lx";
+        if(!tp.getInspectedVector(label, tmpDouble, dim))
+            throw std::runtime_error(label + " is not set");
+
+        lx = tmpDouble[0];
+        ly = tmpDouble[1];
+        lz = tmpDouble[2];
+
+        dx = lx / (double)nx;
+        dy = ly / (double)ny;
+        dz = lz / (double)nz;
+    }
+
     std::string ON_OFF;
 
     label = base_label + "/extractFluid";
@@ -381,32 +406,105 @@ void Config::readInverseParameter()
     std::string str, base_label, label;
     base_label = "/Inverse"; 
     
-    label = base_label + "/ControlBoundary";
-
+    label = base_label + "/controlVariable";
+    
     if(!tp.getInspectedValue(label, str))
         throw std::runtime_error(label + " is not set");
 
-    planeDir.resize(2, 0);
-    
-    if(str == "left"){
-        controlBoundary = ControlBoundary::left;
-        planeDir[0] = 1, planeDir[1] = 2;
+    if(str == "velocity"){
+        controlVariable = ControlVariable::velocity;
     }else if(str == "right"){
-        controlBoundary = ControlBoundary::right;
-        planeDir[0] = 1, planeDir[1] = 2;
-    }else if(str == "top"){
-        controlBoundary = ControlBoundary::top;
-        planeDir[0] = 0, planeDir[1] = 2;
-    }else if(str == "bottom"){
-        controlBoundary = ControlBoundary::bottom;
-        planeDir[0] = 0, planeDir[1] = 2;
-    }else if(str == "front"){
-        controlBoundary = ControlBoundary::front;
-        planeDir[0] = 0, planeDir[1] = 1;
-    }else if(str == "back"){
-        controlBoundary = ControlBoundary::back;
-        planeDir[0] = 0, planeDir[1] = 1;
+        controlVariable = ControlVariable::traction;
+    }else{
+        throw std::runtime_error("Undefined controlVariable");  
     }
+
+    if(controlVariable == ControlVariable::velocity){
+        label = base_label + "/controlBoundary";
+        if(!tp.getInspectedValue(label, str))
+            throw std::runtime_error(label + " is not set");
+
+        planeDir.resize(2, 0);
+    
+        if(str == "left"){
+            controlBoundary = ControlBoundary::left;
+            planeDir[0] = 1, planeDir[1] = 2;
+        }else if(str == "right"){
+            controlBoundary = ControlBoundary::right;
+            planeDir[0] = 1, planeDir[1] = 2;
+        }else if(str == "top"){
+            controlBoundary = ControlBoundary::top;
+            planeDir[0] = 0, planeDir[1] = 2;
+        }else if(str == "bottom"){
+            controlBoundary = ControlBoundary::bottom;
+            planeDir[0] = 0, planeDir[1] = 2;
+        }else if(str == "front"){
+            controlBoundary = ControlBoundary::front;
+            planeDir[0] = 0, planeDir[1] = 1;
+        }else if(str == "back"){
+            controlBoundary = ControlBoundary::back;
+            planeDir[0] = 0, planeDir[1] = 1;
+        }else{
+            throw std::runtime_error("Undefined controlBoundary");
+        }
+    }else if(controlVariable == ControlVariable::traction){
+        label = base_label + "/inletControlBoundary";
+        if(!tp.getInspectedValue(label, str))
+            throw std::runtime_error(label + " is not set");
+
+        inletPlaneDir.resize(2, 0);
+    
+        if(str == "left"){
+            inletControlBoundary = ControlBoundary::left;
+            inletPlaneDir[0] = 1, inletPlaneDir[1] = 2;
+        }else if(str == "right"){
+            inletControlBoundary = ControlBoundary::right;
+            inletPlaneDir[0] = 1, inletPlaneDir[1] = 2;
+        }else if(str == "top"){
+            inletControlBoundary = ControlBoundary::top;
+            inletPlaneDir[0] = 0, inletPlaneDir[1] = 2;
+        }else if(str == "bottom"){
+            inletControlBoundary = ControlBoundary::bottom;
+            inletPlaneDir[0] = 0, inletPlaneDir[1] = 2;
+        }else if(str == "front"){
+            inletControlBoundary = ControlBoundary::front;
+            inletPlaneDir[0] = 0, inletPlaneDir[1] = 1;
+        }else if(str == "back"){
+            inletControlBoundary = ControlBoundary::back;
+            inletPlaneDir[0] = 0, inletPlaneDir[1] = 1;
+        }else{
+            throw std::runtime_error("Undefined controlBoundary");
+        }   
+
+        label = base_label + "/outletControlBoundary";
+        if(!tp.getInspectedValue(label, str))
+            throw std::runtime_error(label + " is not set");
+
+        outletPlaneDir.resize(2, 0);
+    
+        if(str == "left"){
+            outletControlBoundary = ControlBoundary::left;
+            outletPlaneDir[0] = 1, outletPlaneDir[1] = 2;
+        }else if(str == "right"){
+            outletControlBoundary = ControlBoundary::right;
+            outletPlaneDir[0] = 1, outletPlaneDir[1] = 2;
+        }else if(str == "top"){
+            outletControlBoundary = ControlBoundary::top;
+            outletPlaneDir[0] = 0, outletPlaneDir[1] = 2;
+        }else if(str == "bottom"){
+            outletControlBoundary = ControlBoundary::bottom;
+            outletPlaneDir[0] = 0, outletPlaneDir[1] = 2;
+        }else if(str == "front"){
+            outletControlBoundary = ControlBoundary::front;
+            outletPlaneDir[0] = 0, outletPlaneDir[1] = 1;
+        }else if(str == "back"){
+            outletControlBoundary = ControlBoundary::back;
+            outletPlaneDir[0] = 0, outletPlaneDir[1] = 1;
+        }else{
+            throw std::runtime_error("Undefined controlBoundary");
+        }      
+    }
+
 
     label = base_label + "/voxelVelocity";
 

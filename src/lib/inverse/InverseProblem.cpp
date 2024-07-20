@@ -11,9 +11,9 @@
  */
 InverseProblem::InverseProblem(Config &conf):
 main(conf), adjoint(conf), data(conf), app(conf.app), 
-vvox(conf.vvox), dim(conf.dim), outputDir(conf.outputDir), 
-nOMP(conf.nOMP), aCF(conf.aCF), bCF1(conf.bCF1), bCF2(conf.bCF2),
-gCF(conf.gCF), loopMax(conf.loopMax), planeDir(conf.planeDir)
+controlVariable(conf.controlVariable), vvox(conf.vvox), dim(conf.dim), 
+outputDir(conf.outputDir), nOMP(conf.nOMP), aCF(conf.aCF), 
+bCF1(conf.bCF1), bCF2(conf.bCF2), gCF(conf.gCF), loopMax(conf.loopMax)
 {
     std::string dir;
     std::string output = "output";
@@ -31,6 +31,13 @@ gCF(conf.gCF), loopMax(conf.loopMax), planeDir(conf.planeDir)
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     dir = outputDir + "/dat";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+
+    if(controlVariable == ControlVariable::velocity){
+        planeDir = conf.planeDir;
+    }else if(controlVariable == ControlVariable::traction){
+        inletPlaneDir = conf.inletPlaneDir;
+        outletPlaneDir = conf.outletPlaneDir;
+    }
 }
 
 /*****************************
@@ -44,7 +51,7 @@ void InverseProblem::runSimulation()
 
     for(int loop=0; loop<loopMax; loop++){
         PetscPrintf(MPI_COMM_WORLD, "\nOpt itr. : %d\n", loop);
-
+        
         compCostFunction();
         PetscPrintf(MPI_COMM_WORLD, "\ncostFunction = %e\n", costFunction.total);
         costFunction.history.push_back(costFunction.total);
@@ -61,7 +68,7 @@ void InverseProblem::runSimulation()
 
         output(loop);
 
-        adjoint.solveAdjoint(main, outputDir, feedbackForceT, data.nData, loop);
+        adjoint.solveAdjoint2(main, outputDir, feedbackForceT, data.nData, loop);
         compOptimalCondition();
 
         double alpha = armijoCriteria(costFunction.total);
@@ -156,10 +163,35 @@ void InverseProblem::output(const int loop)
     for(int t=0; t<main.timeMax; t++){
         vtuFile = outputDir + "/feedback/feedbackForceT_" + to_string(loop) + "_" + to_string(t) + ".vtu";
         main.grid.vtk.exportFeedbackForceVTU(vtuFile, main.grid.node, main.grid.cell, feedbackForceT[t]);
-        vtuFile = main.outputDir + "/solution/velocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-        main.grid.vtk.exportMainVariablesVTU(vtuFile, main.grid.node, main.grid.cell, t, DataType::VELOCITY);
-        vtuFile = main.outputDir + "/solution/pressure_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-        main.grid.vtk.exportMainVariablesVTU(vtuFile, main.grid.node, main.grid.cell, t, DataType::PRESSURE);
+    }
+
+    if(main.grid.gridType == GridType::STRUCTURED){
+        for(int t=0; t<main.timeMax; t++){
+            std::vector<std::vector<double>> vvti;
+            std::vector<double> pvti;
+
+            int nNodesGlobalPrev = (main.grid.nx+1) * (main.grid.ny+1) * (main.grid.nz+1);
+            VecTool::resize(vvti, nNodesGlobalPrev, dim);
+            VecTool::resize(pvti, nNodesGlobalPrev);
+    
+            for(int in=0; in<main.grid.node.nNodesGlobal; in++){
+                for(int d=0; d<dim; d++){
+                    vvti[main.grid.node.sortNode[in]][d] = main.grid.node.vt[t][in][d];
+                }
+                pvti[main.grid.node.sortNode[in]] = main.grid.node.pt[t][in];
+            }
+            std::string vtiFile;
+            vtiFile = main.outputDir + "/solution/solution_" + to_string(loop) + "_" + to_string(t) + ".vti";
+            main.grid.vtk.exportSolutionVTI(vtiFile, vvti, pvti, main.grid.nx, main.grid.ny, main.grid.nz, 
+                                                                 main.grid.dx, main.grid.dy, main.grid.dz);
+        }
+    }else{
+        for(int t=0; t<main.timeMax; t++){
+            vtuFile = main.outputDir + "/solution/velocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+            main.grid.vtk.exportMainVariablesVTU(vtuFile, main.grid.node, main.grid.cell, t, DataType::VELOCITY);
+            vtuFile = main.outputDir + "/solution/pressure_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+            main.grid.vtk.exportMainVariablesVTU(vtuFile, main.grid.node, main.grid.cell, t, DataType::PRESSURE);
+        }
     }
 
 }
@@ -167,7 +199,7 @@ void InverseProblem::output(const int loop)
 /****************************************************
  * @brief Compute discrepancies over domain and time
  */
-void InverseProblem::compCostFunction()
+void InverseProblem::compCostFunction() 
 {  
     costFunction.term1 = 0e0;
     costFunction.term2 = 0e0;
@@ -186,8 +218,7 @@ void InverseProblem::compCostFunction()
         case VoxelVelocity::AVERAGE:
             for(int t=0; t<main.snap.nSnapShot; t++){
                 for(int ic=0; ic<data.nCellsGlobal; ic++){
-                    data(ic).average(main.grid.cell, main.snap.v[t],
-                             t, main.grid.cell.nNodesInCell, main.dim);
+                    data(ic).average(main.grid.cell, main.snap.v[t], t, main.dim);
                 }
             }
         break;
@@ -195,8 +226,7 @@ void InverseProblem::compCostFunction()
         case VoxelVelocity::INTERPOLATION:
             for(int t=0; t<main.snap.nSnapShot; t++){
                 for(int ic=0; ic<data.nCellsGlobal; ic++){
-                    data(ic).interpolate(main.grid.node, main.grid.cell, 
-                                         main.snap.v[t], t, main.dim);
+                    data(ic).interpolate(main.grid.node, main.grid.cell, main.snap.v[t], t, main.dim);
                 }
             }
         break;
@@ -456,12 +486,15 @@ void InverseProblem::compTimeInterpolatedFeedbackForce()
             y2.push_back(feedbackForce[t][in][1]);  
             y3.push_back(feedbackForce[t][in][2]); 
         }
+
         Spline splineX;
         Spline splineY;
         Spline splineZ;
+
         splineX.setPoints(x, y1);
         splineY.setPoints(x, y2);
         splineZ.setPoints(x, y3);
+
         for(int t=0; t<adjoint.timeMax; t++){
             double n = t * main.dt;
             if(t == 0){

@@ -11,6 +11,11 @@ gridType(conf.gridType), cell(conf), node(conf), dirichlet(conf),
 nNodesGlobal(conf.nNodesGlobal), nCellsGlobal(conf.nCellsGlobal),
 nDofsGlobal(0), nDofsLocal(0), dim(conf.dim)
 {
+    if(gridType == GridType::STRUCTURED){
+        nx = conf.nx; ny = conf.ny; nz = conf.nz;
+        lx = conf.lx; ly = conf.ly; lz = conf.lz;
+        dx = conf.dx; dy = conf.dy; dz = conf.dz;
+    }
 }
 
 void Grid::setStructuredGrid(const int nxCells, const int nyCells, const int nzCells, 

@@ -86,6 +86,7 @@ class DirectProblem
         void updateVariables(const int t);
         void assignTimeVariables(const int t);
         void outputSolution(const int t);
+        void outputSolutionVTI(const int t);
         void setVariablesZero();
         void updateRowIndex(const int ii, const int ic);
         void updateColumnIndex(const int ii, const int ic);

@@ -1,0 +1,88 @@
+Base
+{
+    dim = 3
+    outputDir = "stenosis50_8x8x8"
+    numOfOMP = 1
+}
+
+Grid
+{
+    type = "Structured"
+    nx = (64, 64, 64) 
+    lx = (2.0, 2.0, 2.0)
+    extractFluid = "ON"
+    nNodesInCell = 8
+    node = "input/stenosis/data8x8x8/node.dat"
+    cell = "input/stenosis/data8x8x8/cell.dat"
+    image = "input/stenosis/data8x8x8/image.dat"
+}
+
+Boundary
+{
+    velocityDirichlet = "input/stenosis/data8x8x8/velocityDirichletPoiseuille_upstream.dat"
+    pressureDirichlet = "input/stenosis/data8x8x8/pressureDirichlet.dat"
+}
+
+Inverse
+{
+    countrolVariable = "traction"
+    inletControlBoundary = "left"
+    outletControlBoundary = "right"
+    voxelVelocity = "average"
+    aCF = 5e1
+    bCF1 = 0e0
+    bCF2 = 0e0
+    gCF = 0e0
+    loopMAX = 200
+}
+
+Data
+{
+    nSnapShot = 11
+    snapInterval = 5
+    snapTimeBeginItr = 0
+    nNodesInDataCell = 8
+    nxData = (8, 8, 8)
+    lxData = (2.0, 2.0, 2.0)
+    nControlNodesInCell = 4
+    controlBoundary = "input/stenosis/data8x8x8/controlBoundary.dat"
+    controlCellMap = "input/stenosis/data8x8x8/controlCellMap.dat"
+    controlNodeInCell = "input/stenosis/data8x8x8/controlNodeInCell.dat"
+    data0 = "input/stenosis/data8x8x8/data0.dat"
+    data1 = "input/stenosis/data8x8x8/data1.dat"
+    data2 = "input/stenosis/data8x8x8/data2.dat"
+    data3 = "input/stenosis/data8x8x8/data3.dat"
+    data4 = "input/stenosis/data8x8x8/data4.dat"
+    data5 = "input/stenosis/data8x8x8/data5.dat"
+    data6 = "input/stenosis/data8x8x8/data6.dat"
+    data7 = "input/stenosis/data8x8x8/data7.dat"
+    data8 = "input/stenosis/data8x8x8/data8.dat"
+    data9 = "input/stenosis/data8x8x8/data9.dat"
+    data10 = "input/stenosis/data8x8x8/data10.dat"
+}
+
+PysicalParameter
+{   
+    rho = 50
+    mu = 1   
+}
+
+NRParameter
+{
+    NRtolerance = 1e-5
+}
+
+TimeParameter
+{
+    dt = 0.02
+    timeMax = 51
+    pulsatileFlow = "OFF"
+    pulseBeginItr = 100
+    T = 1.0
+}
+
+DarcyParameter
+{
+    alpha = 1e-3
+    resistance = 1e2
+}

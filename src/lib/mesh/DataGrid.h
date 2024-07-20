@@ -24,6 +24,9 @@ struct VoxelInfo
 {
     int centerCell;
     bool isIncluded;
+    int nNodesInCell;
+    double dx, dy, dz; 
+    
     std::vector<std::vector<double>> vCFD;
     std::vector<std::vector<double>> vMRI;
     std::vector<std::vector<double>> ve;
@@ -34,11 +37,12 @@ struct VoxelInfo
     void setNearCell(Node &node, Cell &cell, const double &range, const int &dim);
     void setCellOnCenterPoint(Node &node, Cell &cell, const int &dim);
     void average(Cell &cell, std::vector<std::vector<double>> &_v, 
-                 const int t, const int nNodesInCell, const int dim);
+                 const int t, const int dim);
+    double compSmoothing(Function &func, const double a, const int dim, const int p);
     void interpolate(Node &node, Cell &cell, std::vector<std::vector<double>> &_v, 
                      const int &t, const int &dim);
-    void gaussIntegral(Function &func, std::vector<std::vector<double>> &velCurrent, double &weightIntegral, 
-                      const int nNodesInCell, const int t, const int dim);
+    void gaussIntegral(Function &func, std::vector<std::vector<double>> &velCurrent, std::vector<double> &smoothing,
+                       double &weightIntegral, const int nNodesInCell, const int t, const int dim);
 };
 
 class DataGrid
@@ -79,6 +83,8 @@ class DataGrid
         
         void initialize(Config &conf, Node &node, Cell &cell, const int &dim);
         void compEdgeValue(const int t);
+    
+    private:
         std::vector<VoxelInfo> data;
 };
 

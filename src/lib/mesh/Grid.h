@@ -36,7 +36,8 @@ class Grid
         VTK vtk;
         
         int nx, ny, nz;
-        double lx, ly, lz, dx, dy, dz;
+        double lx, ly, lz;
+        double dx, dy, dz;
 
         int dim;
         int extractFluid;

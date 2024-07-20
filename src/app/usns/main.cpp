@@ -22,6 +22,7 @@ int main(int argc, char *argv[])
     std::string appName = "USNS";
 
     auto conf = std::make_unique<Config>(input, appName);
+
     if(conf->isReadingError) 
         return EXIT_FAILURE;
     
@@ -31,6 +32,9 @@ int main(int argc, char *argv[])
             conf->setFluidDomain();
         }
     } 
+    std::vector<int> sortNode;
+    sortNode = conf->sortNode;
+    
     DirectProblem direct(*conf);
     Postprocess post(*conf);
 
@@ -39,7 +43,7 @@ int main(int argc, char *argv[])
 
     direct.runSimulation();
 
-    //post.extractOutletVelocity(direct);
+    //post.extractOutletVelocity(direct, sortNode);
     post.createData(direct);
 
     PetscFinalize(); 

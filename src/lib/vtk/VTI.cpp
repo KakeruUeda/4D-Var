@@ -129,3 +129,73 @@ void VTK::exportVelocityDataVTI(const std::string file, DataGrid &data,
     }
 }
 
+void VTK::exportSolutionVTI(const string &file, std::vector<std::vector<double>> &v, std::vector<double> &p,
+                            const int nx, const int ny, const int nz, const double dx, const double dy, const double dz)
+{
+    FILE *fp; 
+    fp=fopen(file.c_str(),"w");
+
+    if(fp==NULL){
+        cout <<file << " open error" << endl;
+        exit(1);
+    }
+
+    fprintf(fp,"<?xml version=\"1.0\"?>\n");
+    fprintf(fp,"<VTKFile type=\"ImageData\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
+    fprintf(fp,"<ImageData WholeExtent= \"%d %d %d %d %d %d\" Origin= \"%e %e %e\" Spacing= \"%e %e %e\" >\n",0,nx,0,ny,0,nz,0e0,0e0,0e0,dx,dy,dz);  
+    fprintf(fp,"<Piece Extent= \"%d %d %d %d %d %d\">\n",0,nx,0,ny,0,nz);  
+    fprintf(fp,"<PointData>\n");
+    fprintf(fp,"<DataArray type=\"Float64\" Name=\"velocity\" NumberOfComponents=\"3\" format=\"ascii\">\n");
+    for(int i=0;i<(nx+1)*(ny+1)*(nz+1);i++){
+        fprintf(fp,"%e %e %e\n", v[i][0],v[i][1],v[i][2]);
+    }
+    fprintf(fp,"</DataArray>\n");
+    fprintf(fp,"<DataArray type=\"Float64\" Name=\"pressure\" NumberOfComponents=\"1\" format=\"ascii\">\n");
+    for(int i=0;i<(nx+1)*(ny+1)*(nz+1);i++){
+        fprintf(fp,"%e\n",p[i]);
+    }
+    fprintf(fp,"</DataArray>\n");
+    fprintf(fp,"</PointData>\n");
+    fprintf(fp,"</Piece>\n");
+    fprintf(fp,"</ImageData>\n");
+    fprintf(fp,"</VTKFile>\n");
+    fclose(fp);
+}
+
+void VTK::exportAdjointSolutionVTI(const string &file, std::vector<std::vector<double>> &w, std::vector<double> &q, std::vector<std::vector<double>> &l,
+                                   const int nx, const int ny, const int nz, const double dx, const double dy, const double dz)
+{
+    FILE *fp; 
+    fp=fopen(file.c_str(),"w");
+
+    if(fp==NULL){
+        cout <<file << " open error" << endl;
+        exit(1);
+    }
+
+    fprintf(fp,"<?xml version=\"1.0\"?>\n");
+    fprintf(fp,"<VTKFile type=\"ImageData\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
+    fprintf(fp,"<ImageData WholeExtent= \"%d %d %d %d %d %d\" Origin= \"%e %e %e\" Spacing= \"%e %e %e\" >\n",0,nx,0,ny,0,nz,0e0,0e0,0e0,dx,dy,dz);  
+    fprintf(fp,"<Piece Extent= \"%d %d %d %d %d %d\">\n",0,nx,0,ny,0,nz);  
+    fprintf(fp,"<PointData>\n");
+    fprintf(fp,"<DataArray type=\"Float64\" Name=\"w\" NumberOfComponents=\"3\" format=\"ascii\">\n");
+    for(int i=0;i<(nx+1)*(ny+1)*(nz+1);i++){
+        fprintf(fp,"%e %e %e\n", w[i][0], w[i][1], w[i][2]);
+    }
+    fprintf(fp,"</DataArray>\n");
+    fprintf(fp,"<DataArray type=\"Float64\" Name=\"q\" NumberOfComponents=\"1\" format=\"ascii\">\n");
+    for(int i=0;i<(nx+1)*(ny+1)*(nz+1);i++){
+        fprintf(fp,"%e\n", q[i]);
+    }
+    fprintf(fp,"</DataArray>\n");
+    fprintf(fp,"<DataArray type=\"Float64\" Name=\"l\" NumberOfComponents=\"3\" format=\"ascii\">\n");
+    for(int i=0;i<(nx+1)*(ny+1)*(nz+1);i++){
+        fprintf(fp,"%e %e %e\n", l[i][0], l[i][1], l[i][2]);
+    }
+    fprintf(fp,"</DataArray>\n");
+    fprintf(fp,"</PointData>\n");
+    fprintf(fp,"</Piece>\n");
+    fprintf(fp,"</ImageData>\n");
+    fprintf(fp,"</VTKFile>\n");
+    fclose(fp);
+}

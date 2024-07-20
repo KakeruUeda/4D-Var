@@ -1,7 +1,7 @@
 Base
 {
     dim = 3
-    outputDir = "straightTube2"
+    outputDir = "bentTube"
     numOfOMP = 1
 }
 
@@ -10,35 +10,35 @@ Grid
     type = "Structured"
     extractFluid = "ON"
     nNodesInCell = 8
-    node = "input/straightTube/node.dat"
-    cell = "input/straightTube/cell.dat"
-    image = "input/straightTube/image.dat"
+    node = "input/bentTube/node.dat"
+    cell = "input/bentTube/cell.dat"
+    image = "input/bentTube/image.dat"
 }
 
 Boundary
 {
-    velocityDirichlet = "input/straightTube/velocityDirichletPoiseuille.dat"
-    pressureDirichlet = "input/straightTube/pressureDirichlet.dat"
+    velocityDirichlet = "input/bentTube/velocityDirichlet.dat"
+    pressureDirichlet = "input/bentTube/pressureDirichlet.dat"
 }
 
 PysicalParameter
 {   
-    rho = 200
+    rho = 50
     mu = 1   
 }
 
 TimeParameter
 {
-    dt = 0.01
-    timeMax = 1000
+    dt = 0.05
+    timeMax = 100
     pulsatileFlow = "ON"
-    pulseBeginItr = 100
+    pulseBeginItr = 10000
     T = 1.0
 }
 
 DarcyParameter
 {
-    alpha = 1e-1
+    alpha = 1e-3
     resistance = 1e2
 }
 
@@ -46,8 +46,8 @@ Postprocess
 {
     isSnapShot = "ON"
     nSnapShot = 10
-    snapInterval = 5
-    snapTimeBeginItr = 375
+    snapInterval = 2
+    snapTimeBeginItr = 120
     nNodesInDataCell = 8
     origin = (1.0, 0.0, 0.0)
     nxData = (12, 12, 12)

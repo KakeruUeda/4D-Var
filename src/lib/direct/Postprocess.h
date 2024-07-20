@@ -30,7 +30,7 @@ class Postprocess
 
         DataGrid voxel;
 
-        void extractOutletVelocity(DirectProblem &direct);
+        void extractOutletVelocity(DirectProblem &direct, std::vector<int> sortNode);
         void createData(DirectProblem &direct);
 };
 

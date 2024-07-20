@@ -34,7 +34,11 @@ int main(int argc, char *argv[])
 
     conf.reset();
 
-    inverse.runSimulation();
+    if(inverse.controlVariable == ControlVariable::velocity)
+        inverse.runSimulation();
+    else if(inverse.controlVariable == ControlVariable::traction){
+        inverse.runSimulation2();
+    }
 
     PetscPrintf(MPI_COMM_WORLD, "\nTerminate\n");
     PetscFinalize(); 

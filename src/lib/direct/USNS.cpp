@@ -78,7 +78,7 @@ void DirectProblem::solveUSNS(Application &app)
 
         VecRestoreArray(vecSEQ, &arraySolnTmp);
         updateVariables(t);
-        outputSolution(t);
+        outputSolutionVTI(t);
 
         if(app == Application::FDVAR)
             assignTimeVariables(t);
@@ -220,8 +220,6 @@ void DirectProblem::compInitialCondition(std::vector<std::map<int, std::vector<d
     }   
 
     int snapCount = 0;
-    double dtTmp = dt;
-    dt *= 3e0;
     for(int t=0; t<timeMax; t++){
         petsc.setValueZero();
         grid.dirichlet.assignConstantDirichletBCs(vDirichletTmp, pDirichletTmp, grid.node, dim, t);
@@ -266,7 +264,6 @@ void DirectProblem::compInitialCondition(std::vector<std::map<int, std::vector<d
 
         MPI_Barrier(MPI_COMM_WORLD);
     }
-    dt = dtTmp;
     VecScatterDestroy(&ctx);
     VecDestroy(&vecSEQ);
 }
@@ -324,6 +321,30 @@ void DirectProblem::outputSolution(const int t)
     grid.vtk.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::VELOCITY);
     vtuFile = outputDir + "/solution/pressure" + to_string(t) + ".vtu";
     grid.vtk.exportSolutionVTU(vtuFile, grid.node, grid.cell, DataType::PRESSURE);
+}
+
+void DirectProblem::outputSolutionVTI(const int t)
+{
+    if(mpi.myId > 0) return;
+
+    std::vector<std::vector<double>> vvti;
+    std::vector<double> pvti;
+
+    int nNodesGlobalPrev = (grid.nx+1) * (grid.ny+1) * (grid.nz+1);
+
+    VecTool::resize(vvti, nNodesGlobalPrev, dim);
+    VecTool::resize(pvti, nNodesGlobalPrev);
+    
+    for(int in=0; in<grid.node.nNodesGlobal; in++){
+        for(int d=0; d<dim; d++){
+            vvti[grid.node.sortNode[in]][d] = grid.node.v[in][d];
+        }
+        pvti[grid.node.sortNode[in]] = grid.node.p[in];
+    }
+
+    std::string vtiFile;
+    vtiFile = outputDir + "/solution/solution" + to_string(t) + ".vti";
+    grid.vtk.exportSolutionVTI(vtiFile, vvti, pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 
 /**************************************************************

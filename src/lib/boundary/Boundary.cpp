@@ -145,7 +145,8 @@ void DirichletBoundary::assignPulsatileBCs(const int &t, const double &dt,
                                            const double &T, const int &nDofsGlobal)
 {
     double timeNow = t * dt;
-    double pulse = 0.25 * cos((2e0 * PI / T) * timeNow) + 0.75;
+    //double pulse = 0.25 * cos((2e0 * PI / T) * timeNow) + 0.75;
+    double pulse = 0.25 * sin((2e0 * PI / T) * timeNow) + 1.0;
     for(int id=0; id<nDofsGlobal; id++){
         if(dirichletBCsValueNew[id] > 0)
             dirichletBCsValueNew[id] = dirichletBCsValueNewInit[id] * pulse;

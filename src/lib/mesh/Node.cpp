@@ -16,6 +16,7 @@ void Node::initialize(Config &conf)
     map.resize(nNodesGlobal);
     dofsMap.resize(nNodesGlobal);
     dofsBCsMap.resize(nNodesGlobal);
+    sortNode.resize(nNodesGlobal);
 
     //// add ////
     isDirichletWall.resize(nNodesGlobal);
@@ -59,6 +60,75 @@ void Node::initialize(Config &conf)
     for(int in=0; in<nNodesGlobal; in++)
         for(int d=0; d<conf.dim; d++)
             x[in][d] = conf.node[in][d];
+
+    for(int in=0; in<nNodesGlobal; in++)
+        sortNode[in] = conf.sortNode[in];
+}
+
+void Node::initializeTraction(Config &conf, std::vector<int> &controlBoundaryMap)
+{
+    // initialize variables
+    x.resize(nNodesGlobal, std::vector<double>(conf.dim));
+    nDofsOnNode.resize(nNodesGlobal);
+    isDirichlet.resize(nNodesGlobal);
+    subId.resize(nNodesGlobal);
+    map.resize(nNodesGlobal);
+    dofsMap.resize(nNodesGlobal);
+    dofsBCsMap.resize(nNodesGlobal);
+    sortNode.resize(nNodesGlobal);
+
+    //// add ////
+    isDirichletWall.resize(nNodesGlobal);
+    dofsMapWall.resize(nNodesGlobal);
+    dofsBCsMapWall.resize(nNodesGlobal);
+    /////////////
+
+    for(int in=0; in<nNodesGlobal; in++){
+        nDofsOnNode[in] = conf.dim + 1;
+    }
+
+    for(int ib=0; ib<controlBoundaryMap.size(); ib++){
+       nDofsOnNode[controlBoundaryMap[ib]] += conf.dim;
+    }
+
+    for(int in=0; in<nNodesGlobal; in++){
+        isDirichlet[in].resize(nDofsOnNode[in], false);
+    }
+
+    int tmp = 0;
+
+    for(int in=0; in<nNodesGlobal; in++){
+        dofsMap[in].resize(nDofsOnNode[in]);
+        dofsBCsMap[in].resize(nDofsOnNode[in]);
+        for(int id=0; id<nDofsOnNode[in]; id++){
+            dofsMap[in][id] = tmp;
+            dofsBCsMap[in][id] = tmp;
+            tmp++;
+        }
+    }
+
+    /// add ///
+    for(int in=0; in<nNodesGlobal; in++){
+        isDirichletWall[in].resize(nDofsOnNode[in], false);
+    }
+    tmp = 0;
+    for(int in=0; in<nNodesGlobal; in++){
+        dofsMapWall[in].resize(nDofsOnNode[in]);
+        dofsBCsMapWall[in].resize(nDofsOnNode[in]);
+        for(int id=0; id<nDofsOnNode[in]; id++){
+            dofsMapWall[in][id] = tmp;
+            dofsBCsMapWall[in][id] = tmp;
+            tmp++;
+        }
+    }
+    /////////////
+
+    for(int in=0; in<nNodesGlobal; in++)
+        for(int d=0; d<conf.dim; d++)
+            x[in][d] = conf.node[in][d];
+
+    for(int in=0; in<nNodesGlobal; in++)
+        sortNode[in] = conf.sortNode[in];
 }
 
 void Node::initializeNew()
@@ -127,6 +197,7 @@ void Node::initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap)
     map.resize(nNodesGlobal);
     dofsMap.resize(nNodesGlobal);
     dofsBCsMap.resize(nNodesGlobal);
+    sortNode.resize(nNodesGlobal);
 
     /// add ///
     isDirichletWall.resize(nNodesGlobal);
@@ -177,4 +248,69 @@ void Node::initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap)
     for(int in=0; in<nNodesGlobal; in++)
         for(int d=0; d<conf.dim; d++)
             x[in][d] = conf.node[in][d];
+
+    for(int in=0; in<nNodesGlobal; in++)
+        sortNode[in] = conf.sortNode[in];
+}
+
+void Node::initializeAdjointTraction(Config &conf)
+{
+    // initialize variables
+    x.resize(nNodesGlobal, std::vector<double>(conf.dim));
+    nDofsOnNode.resize(nNodesGlobal);
+    isDirichlet.resize(nNodesGlobal);
+    subId.resize(nNodesGlobal);
+    map.resize(nNodesGlobal);
+    dofsMap.resize(nNodesGlobal);
+    dofsBCsMap.resize(nNodesGlobal);
+    sortNode.resize(nNodesGlobal);
+
+    /// add ///
+    isDirichletWall.resize(nNodesGlobal);
+    dofsMapWall.resize(nNodesGlobal);
+    dofsBCsMapWall.resize(nNodesGlobal);
+    ///////////
+
+    for(int in=0; in<nNodesGlobal; in++){
+        nDofsOnNode[in] = conf.dim + 1;
+    }
+
+    for(int in=0; in<nNodesGlobal; in++){
+        isDirichlet[in].resize(nDofsOnNode[in], false);
+    }
+
+    int tmp = 0;
+
+    for(int in=0; in<nNodesGlobal; in++){
+        dofsMap[in].resize(nDofsOnNode[in]);
+        dofsBCsMap[in].resize(nDofsOnNode[in]);
+        for(int id=0; id<nDofsOnNode[in]; id++){
+            dofsMap[in][id] = tmp;
+            dofsBCsMap[in][id] = tmp;
+            tmp++;
+        }
+    }
+
+    /// add ///
+    for(int in=0; in<nNodesGlobal; in++){
+        isDirichletWall[in].resize(nDofsOnNode[in], false);
+    }
+    tmp = 0;
+    for(int in=0; in<nNodesGlobal; in++){
+        dofsMapWall[in].resize(nDofsOnNode[in]);
+        dofsBCsMapWall[in].resize(nDofsOnNode[in]);
+        for(int id=0; id<nDofsOnNode[in]; id++){
+            dofsMapWall[in][id] = tmp;
+            dofsBCsMapWall[in][id] = tmp;
+            tmp++;
+        }
+    }
+    /////////////
+
+    for(int in=0; in<nNodesGlobal; in++)
+        for(int d=0; d<conf.dim; d++)
+            x[in][d] = conf.node[in][d];
+
+    for(int in=0; in<nNodesGlobal; in++)
+        sortNode[in] = conf.sortNode[in];
 }

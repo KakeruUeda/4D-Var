@@ -11,10 +11,10 @@
  */
 void InverseProblem::initialize(Config &conf)
 {
-    PetscPrintf(MPI_COMM_WORLD, "\n*** Main initialize ***\n\n");
-
     main.nu = main.mu / main.rho;
     main.Re = 1e0 / main.nu; 
+    adjoint.nu = adjoint.mu / adjoint.rho;
+    adjoint.Re = 1e0 / adjoint.nu; 
 
     VecTool::resize(main.grid.node.v0, main.grid.node.nNodesGlobal, dim);
     VecTool::resize(main.grid.node.v, main.grid.node.nNodesGlobal, dim);
@@ -23,33 +23,14 @@ void InverseProblem::initialize(Config &conf)
     VecTool::resize(main.grid.node.p, main.grid.node.nNodesGlobal);
     VecTool::resize(main.grid.node.pt, main.timeMax, main.grid.node.nNodesGlobal);
     VecTool::resize(main.snap.v, main.snap.nSnapShot, main.grid.nNodesGlobal, dim);
-
     VecTool::resize(main.vgp, dim);
     VecTool::resize(main.advgp, dim);
     VecTool::resize(main.dvgpdx, dim, dim);
-
-    main.grid.dirichlet.initialize(conf);
-    main.grid.cell.initialize(conf);
-    main.grid.node.initialize(conf);
-    main.grid.prepareMatrix(main.petsc, main.outputDir, main.timeMax);
-
-    VecTool::resize(main.petsc.solution, main.grid.nDofsGlobal);
-    VecTool::resize(main.grid.dirichlet.dirichletBCsValue, main.grid.nDofsGlobal);
-    VecTool::resize(main.grid.dirichlet.dirichletBCsValueNew, main.grid.nDofsGlobal);
-    VecTool::resize(main.grid.dirichlet.dirichletBCsValueInit, main.grid.nDofsGlobal);
-    VecTool::resize(main.grid.dirichlet.dirichletBCsValueNewInit, main.grid.nDofsGlobal);
-
-    PetscPrintf(MPI_COMM_WORLD, "\n*** Adjoint initialize ***\n\n");
-
-    adjoint.nu = adjoint.mu / adjoint.rho;
-    adjoint.Re = 1e0 / adjoint.nu; 
-
     VecTool::resize(adjoint.grid.node.w, adjoint.grid.node.nNodesGlobal, dim);
     VecTool::resize(adjoint.grid.node.wPrev, adjoint.grid.node.nNodesGlobal, dim);
     VecTool::resize(adjoint.grid.node.q, adjoint.grid.node.nNodesGlobal);
     VecTool::resize(adjoint.grid.node.l, main.grid.nNodesGlobal, dim);
     VecTool::resize(adjoint.grid.node.lt, adjoint.timeMax, adjoint.grid.nNodesGlobal, dim);
-
     VecTool::resize(adjoint.vk, dim);
     VecTool::resize(adjoint.vk1, dim);
     VecTool::resize(adjoint.vk2, dim);
@@ -62,11 +43,29 @@ void InverseProblem::initialize(Config &conf)
     VecTool::resize(adjoint.wk2, dim);
     VecTool::resize(adjoint.dwk1dx, dim, dim);
     VecTool::resize(adjoint.dwk2dx, dim, dim);
-    
+
+    main.grid.dirichlet.initialize(conf);
     adjoint.grid.dirichlet.initializeAdjoint(conf);
+
+    main.grid.cell.initialize(conf);
     adjoint.grid.cell.initializeAdjoint(conf);
-    adjoint.grid.node.initializeAdjoint(conf, adjoint.grid.dirichlet.controlBoundaryMap);
+
+    if(controlVariable == ControlVariable::velocity){
+        main.grid.node.initialize(conf);
+        adjoint.grid.node.initializeAdjoint(conf, adjoint.grid.dirichlet.controlBoundaryMap);
+    }else if(controlVariable == ControlVariable::traction){
+        main.grid.node.initializeTraction(conf, adjoint.grid.dirichlet.controlBoundaryMap);
+        adjoint.grid.node.initializeAdjointTraction(conf);
+    }
+    
+    main.grid.prepareMatrix(main.petsc, main.outputDir, main.timeMax);
     adjoint.grid.prepareMatrix(adjoint.petsc, outputDir, adjoint.timeMax);
+
+    VecTool::resize(main.petsc.solution, main.grid.nDofsGlobal);
+    VecTool::resize(main.grid.dirichlet.dirichletBCsValue, main.grid.nDofsGlobal);
+    VecTool::resize(main.grid.dirichlet.dirichletBCsValueNew, main.grid.nDofsGlobal);
+    VecTool::resize(main.grid.dirichlet.dirichletBCsValueInit, main.grid.nDofsGlobal);
+    VecTool::resize(main.grid.dirichlet.dirichletBCsValueNewInit, main.grid.nDofsGlobal);
     
     for(int ic=0; ic<adjoint.grid.cell.nCellsGlobal; ic++){
         int count = 0;

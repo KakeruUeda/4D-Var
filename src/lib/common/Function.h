@@ -1,5 +1,5 @@
 /**
- * @file   Define.h
+ * @file   Function.h
  * @author K.Ueda
  * @date   July, 2024
 */

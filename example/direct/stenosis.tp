@@ -1,0 +1,57 @@
+Base
+{
+    dim = 3
+    outputDir = "stenosis50"
+    numOfOMP = 1
+}
+
+Grid
+{
+    type = "Structured"
+    nx = (128, 64, 64) 
+    lx = (4.0, 2.0, 2.0)
+    extractFluid = "ON"
+    nNodesInCell = 8
+    node = "input/stenosis/node.dat"
+    cell = "input/stenosis/cell.dat"
+    image = "input/stenosis/image.dat"
+}
+
+Boundary
+{
+    velocityDirichlet = "input/stenosis/velocityDirichletPoiseuille2.dat"
+    pressureDirichlet = "input/stenosis/pressureDirichlet.dat"
+}
+
+PysicalParameter
+{   
+    rho = 50
+    mu = 1   
+}
+
+TimeParameter
+{
+    dt = 0.02
+    timeMax = 1000
+    pulsatileFlow = "ON"
+    pulseBeginItr = 200
+    T = 1.0
+}
+
+DarcyParameter
+{
+    alpha = 1e-3
+    resistance = 1e2
+}
+
+Postprocess
+{
+    isSnapShot = "ON"
+    nSnapShot = 11
+    snapInterval = 5
+    snapTimeBeginItr = 200
+    nNodesInDataCell = 8
+    origin = (0.5, 0.0, 0.0)
+    nxData = (8, 8, 8)
+    lxData = (2.0, 2.0, 2.0)
+}

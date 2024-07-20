@@ -16,6 +16,12 @@ nCellsGlobal(conf.nCellsDataGlobal),
 nNodesInCell(conf.nNodesInCellData), 
 data(conf.nCellsDataGlobal)
 {
+    for(int ic=0; ic<conf.nCellsDataGlobal; ic++){
+        data[ic].dx = dx;
+        data[ic].dy = dy;
+        data[ic].dz = dz;
+        data[ic].nNodesInCell = nNodesInCell;
+    }
     if(conf.app == Application::USNS){
         xOrigin = conf.xOrigin; 
         yOrigin = conf.yOrigin; 
@@ -39,6 +45,7 @@ data(conf.nCellsDataGlobal)
 void DataGrid::initialize(Config &conf, Node &node, Cell &cell, const int &dim)
 {   
     range = 5e-1 * sqrt(dx*dx + dy*dy + dz*dz);
+    //range = 2 * dx + dx;
 
     for(int t=0; t<conf.nSnapShot; t++){
         for(int k=0; k<nz; k++){
@@ -143,19 +150,23 @@ void VoxelInfo::setCellOnCenterPoint(Node &node, Cell &cell, const int &dim)
         dx = fabs(xCurrent[0][0] - xCurrent[1][0]);
         dy = fabs(xCurrent[0][1] - xCurrent[3][1]);
         dz = fabs(xCurrent[0][2] - xCurrent[4][2]);
+
         std::vector<double> N(cell.nNodesInCell, 0e0);
         ShapeFunction3D::C3D8_N(N, 0e0, 0e0, 0e0);
+
         for(int d=0; d<dim; d++){
             point[d] = 0e0;
             for(int p=0; p<cell.nNodesInCell; p++){
                 point[d] += N[p] * node.x[cell(ic).node[p]][d];
             }
         }
+
         distance = 0e0;
         for(int d=0; d<dim; d++){
             diff[d] = fabs(point[d] - center[d]);
             distance += diff[d] * diff[d];
         }
+
         distance = sqrt(distance);
         if(distance < minDistance){
             minDistance = distance;
@@ -165,6 +176,7 @@ void VoxelInfo::setCellOnCenterPoint(Node &node, Cell &cell, const int &dim)
             }
         } 
     }
+
     if(minDiff[0] > dx/2e0) isIncluded = false;
     if(minDiff[1] > dy/2e0) isIncluded = false;
     if(minDiff[2] > dz/2e0) isIncluded = false;
@@ -229,10 +241,11 @@ void VoxelInfo::interpolate(Node &node, Cell &cell, std::vector<std::vector<doub
 }
 
 void VoxelInfo::average(Cell &cell, std::vector<std::vector<double>> &_v, 
-                        const int t, const int nNodesInCell, const int dim)
+                        const int t, const int dim)
 {
     if(cellChildren.size() == 0) return;
-    
+    double a = 0.1 * std::min(std::min(dx, dy), dz);
+
     double weightIntegral = 0e0;
     Function func3d(nNodesInCell, dim);
 
@@ -246,10 +259,14 @@ void VoxelInfo::average(Cell &cell, std::vector<std::vector<double>> &_v,
                 func3d.xCurrent[p][d] = cell(cellChildren[ic]).x[p][d];
             }
         }
-        
+
+        std::vector<double> smoothing(nNodesInCell, 1e0);
+        //for(int p=0; p<nNodesInCell; p++)
+            //smoothing[p] = compSmoothing(func3d, a, dim, p);
+
         double dxdr[3][3];
         Gauss gauss(2);
-        
+
         for(int i1=0; i1<2; i1++){
             for(int i2=0; i2<2; i2++){
                 for(int i3=0; i3<2; i3++){
@@ -258,7 +275,7 @@ void VoxelInfo::average(Cell &cell, std::vector<std::vector<double>> &_v,
                     MathFEM::MathFEM::comp_dxdr(dxdr, func3d.dNdr, func3d.xCurrent, nNodesInCell);
                     func3d.detJ = MathCommon::compDeterminant_3x3(dxdr);
                     func3d.weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
-                    gaussIntegral(func3d, velCurrent, weightIntegral, nNodesInCell, t, dim);
+                    gaussIntegral(func3d, velCurrent, smoothing, weightIntegral, nNodesInCell, t, dim);
                 }
             }
         }
@@ -267,8 +284,44 @@ void VoxelInfo::average(Cell &cell, std::vector<std::vector<double>> &_v,
         vCFD[t][d] /= weightIntegral;
 }
 
-void VoxelInfo::gaussIntegral(Function &func, std::vector<std::vector<double>> &velCurrent, double &weightIntegral, 
-                              const int nNodesInCell, const int t, const int dim)
+double VoxelInfo::compSmoothing(Function &func, const double a, const int dim, const int p)
+{
+    double sinc_x, sinc_y, sinc_z;
+    double kai_x, kai_y, kai_z;
+
+    std::vector<double> center(dim, 0e0);
+    ShapeFunction3D::C3D8_N(func.N, 0e0, 0e0, 0e0);
+    for(int p=0; p<nNodesInCell; p++){
+        for(int d=0; d<dim; d++){
+            center[d] += func.N[p] * func.xCurrent[p][d];
+        }
+    }
+
+    double x0 = center[0];
+    double y0 = center[1];
+    double z0 = center[2];
+    
+    auto sinc = [](double x) { 
+        if(x == 0) return 1e0; 
+        return sin(PI * x) / (PI * x); 
+    };
+    
+    sinc_x = sinc((func.xCurrent[p][0] - x0) / dx);
+    sinc_y = sinc((func.xCurrent[p][1] - y0) / dy);
+    sinc_z = sinc((func.xCurrent[p][2] - z0) / dz);
+
+    kai_x = 1 / (1 + exp(-(func.xCurrent[p][0] - (x0 - 4 * dx / 2)) / a)) 
+          - 1 / (1 + exp(-(func.xCurrent[p][0] - (x0 + 4 * dx / 2)) / a));
+    kai_y = 1 / (1 + exp(-(func.xCurrent[p][1] - (y0 - 4 * dy / 2)) / a)) 
+          - 1 / (1 + exp(-(func.xCurrent[p][1] - (y0 + 4 * dy / 2)) / a));
+    kai_z = 1 / (1 + exp(-(func.xCurrent[p][2] - (z0 - 4 * dz / 2)) / a)) 
+          - 1 / (1 + exp(-(func.xCurrent[p][2] - (z0 + 4 * dz / 2)) / a));
+
+    return sinc_x * sinc_y * sinc_z * kai_x * kai_y * kai_z;
+}
+
+void VoxelInfo::gaussIntegral(Function &func, std::vector<std::vector<double>> &velCurrent, std::vector<double> &smoothing,
+                              double &weightIntegral, const int nNodesInCell, const int t, const int dim)
 {
     func.vol = func.detJ * func.weight;
     for(int d=0; d<dim; d++){
@@ -277,5 +330,5 @@ void VoxelInfo::gaussIntegral(Function &func, std::vector<std::vector<double>> &
         }
     }
     for(int p=0; p<nNodesInCell; p++)
-        weightIntegral += func.N[p] * func.vol;
+        weightIntegral += func.N[p] * smoothing[p] * func.vol;
 }

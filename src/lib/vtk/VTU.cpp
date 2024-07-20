@@ -13,7 +13,7 @@ void VTK::exportMeshPartitionVTU(const std::string &file, Node &node, Cell &cell
         std::cout << file << " open error" << std::endl;
         exit(1);
     }
-    fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt32\">\n");
+    fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
     fprintf(fp, "<UnstructuredGrid>\n");
     fprintf(fp, "<Piece NumberOfPoints= \"%d\" NumberOfCells= \"%d\" >\n", node.nNodesGlobal, cell.nCellsGlobal);
     fprintf(fp, "<Points>\n");
@@ -70,7 +70,7 @@ void VTK::exportPhiVTU(const std::string &file, Node &node, Cell &cell)
         std::cout << file << " open error" << std::endl;
         exit(1);
     }
-    fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt32\">\n");
+    fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
     fprintf(fp, "<UnstructuredGrid>\n");
     fprintf(fp, "<Piece NumberOfPoints= \"%d\" NumberOfCells= \"%d\" >\n", node.nNodesGlobal, cell.nCellsGlobal);
     fprintf(fp, "<Points>\n");
@@ -119,7 +119,7 @@ void VTK::exportSolutionVTU(const std::string &file, Node &node, Cell &cell, Dat
         std::cout << file << " open error" << std::endl;
         exit(1);
     }
-    fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt32\">\n");
+    fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
     fprintf(fp, "<UnstructuredGrid>\n");
     fprintf(fp, "<Piece NumberOfPoints= \"%d\" NumberOfCells= \"%d\" >\n", node.nNodesGlobal, cell.nCellsGlobal);
     fprintf(fp, "<Points>\n");
@@ -170,7 +170,6 @@ void VTK::exportSolutionVTU(const std::string &file, Node &node, Cell &cell, Dat
     fprintf(fp, "</VTKFile>\n");
     fclose(fp);
 }
-
 
 void VTK::exportMainVariablesVTU(const std::string &file, Node &node, Cell &cell, const int t, DataType dataType)
 {
@@ -241,7 +240,7 @@ void VTK::exportAdjointSolutionVTU(const std::string &file, Node &node, Cell &ce
         std::cout << file << " open error" << std::endl;
         exit(1);
     }
-    fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt32\">\n");
+    fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
     fprintf(fp, "<UnstructuredGrid>\n");
     fprintf(fp, "<Piece NumberOfPoints= \"%d\" NumberOfCells= \"%d\" >\n", node.nNodesGlobal, cell.nCellsGlobal);
     fprintf(fp, "<Points>\n");
@@ -309,7 +308,7 @@ void VTK::exportFeedbackForceVTU(const std::string &file, Node &node, Cell &cell
         std::cout << file << " open error" << std::endl;
         exit(1);
     }
-    fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt32\">\n");
+    fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
     fprintf(fp, "<UnstructuredGrid>\n");
     fprintf(fp, "<Piece NumberOfPoints= \"%d\" NumberOfCells= \"%d\" >\n", node.nNodesGlobal, cell.nCellsGlobal);
     fprintf(fp, "<Points>\n");
@@ -358,7 +357,7 @@ void VTK::exportSnapShotVTU(const std::string &file, Node &node, Cell &cell, Sna
         std::cout << file << " open error" << std::endl;
         exit(1);
     }
-    fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt32\">\n");
+    fprintf(fp, "<VTKFile type=\"UnstructuredGrid\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
     fprintf(fp, "<UnstructuredGrid>\n");
     fprintf(fp, "<Piece NumberOfPoints= \"%d\" NumberOfCells= \"%d\" >\n", node.nNodesGlobal, cell.nCellsGlobal);
     fprintf(fp, "<Points>\n");

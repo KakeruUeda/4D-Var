@@ -25,6 +25,7 @@ class Node
         
         int nNodesGlobal, nNodesLocal;
 
+        std::vector<int> sortNode;
         std::vector<int> map, mapNew;
         std::vector<int> subId;
         std::vector<int> nDofsOnNode, nDofsOnNodeNew;
@@ -57,8 +58,10 @@ class Node
         std::vector<std::vector<double>> qt;
 
         void initialize(Config &conf);
+        void initializeTraction(Config &conf, std::vector<int> &controlBoundaryMap);
         void initializeNew();
         void initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap);
+        void initializeAdjointTraction(Config &conf);
 };
 
 class SnapShot
