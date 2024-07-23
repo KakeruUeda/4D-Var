@@ -192,7 +192,9 @@ void Config::readGridParameter()
         throw std::runtime_error(label + " is not set");
 
     std::ifstream ifsNode(nodeFile);
-
+    if(!ifsNode.is_open()){
+        throw std::runtime_error("Failed to open file: " + nodeFile);
+    }
     while(getline(ifsNode, str)){
         std::istringstream iss(str);
         std::vector<double> nodeTmp;
@@ -214,7 +216,9 @@ void Config::readGridParameter()
         throw std::runtime_error(label + " is not set");
 
     std::ifstream ifsCell(cellFile);
-
+    if(!ifsCell.is_open()){
+        throw std::runtime_error("Failed to open file: " + cellFile);
+    }
     while(getline(ifsCell, str)){
         std::istringstream iss(str);
         std::vector<int> cellTmp;
@@ -236,7 +240,9 @@ void Config::readGridParameter()
         throw std::runtime_error(label + " is not set");
     
     std::ifstream ifsImage(imageFile);
-
+    if(!ifsImage.is_open()){
+        throw std::runtime_error("Failed to open file: " + imageFile);
+    }
     while(getline(ifsImage, str)){
         std::istringstream iss(str);
         for(int d=0; d<4; d++){
@@ -264,7 +270,9 @@ void Config::readBoundaryParameter()
         throw std::runtime_error(label + " is not set");
 
     std::ifstream ifsVel(velFile);
-
+    if(!ifsVel.is_open()){
+        throw std::runtime_error("Failed to open file: " + velFile);
+    }
      while(getline(ifsVel, str)){
         int index;
         std::istringstream iss(str);
@@ -286,7 +294,9 @@ void Config::readBoundaryParameter()
         throw std::runtime_error(label + " is not set");
 
     std::ifstream ifsPre(preFile);
-     
+    if(!ifsPre.is_open()){
+        throw std::runtime_error("Failed to open file: " + preFile);
+    }
      while(getline(ifsPre, str)){
         int index;
         std::istringstream iss(str);
@@ -527,6 +537,9 @@ void Config::readDataParameter()
         throw std::runtime_error(label + " is not set");
 
     std::ifstream ifsControlBoundary(controlBoundaryFile);
+    if(!ifsControlBoundary.is_open()){
+        throw std::runtime_error("Failed to open file: " + controlBoundaryFile);
+    }
     while(getline(ifsControlBoundary, str)){
         std::istringstream iss(str);
         getline(iss, str, ' ');
@@ -541,6 +554,9 @@ void Config::readDataParameter()
         throw std::runtime_error(label + " is not set");
 
     std::ifstream ifscontrolCellMap(controlCellMapFile);
+    if(!ifscontrolCellMap.is_open()){
+        throw std::runtime_error("Failed to open file: " + controlCellMapFile);
+    }
     while(getline(ifscontrolCellMap, str)){
         std::istringstream iss(str);
         getline(iss, str, ' ');
@@ -555,6 +571,9 @@ void Config::readDataParameter()
         throw std::runtime_error(label + " is not set");
 
     std::ifstream ifsControlNodeInCell(controlNodeInCellFile);
+    if(!ifsControlNodeInCell.is_open()){
+        throw std::runtime_error("Failed to open file: " + controlNodeInCellFile);
+    }
     while(getline(ifsControlNodeInCell, str)){
         std::istringstream iss(str);
         std::vector<int> ctrTmp;
@@ -573,12 +592,14 @@ void Config::readDataParameter()
     while(1){
         label = base_label + "/data" + std::to_string(num);
         
-        if(num >= nSnapShot)
-            break;
+        if(num >= nSnapShot) break;
         if(!tp.getInspectedValue(label, dataFile))
             throw std::runtime_error(label + " is not set");
         
         std::ifstream ifsData(dataFile);
+        if(!ifsData.is_open()){
+            throw std::runtime_error("Failed to open file: " + dataFile);
+        }
         std::vector<std::vector<double>> velocityDataTmp;
         while(getline(ifsData, str)){
             int index;
@@ -774,4 +795,160 @@ void Config::readBoundaryTypeAndValue(std::string labelType, std::string labelVa
     tmp++;
 
     return;
+}
+
+/*****************************
+ * @brief Read text parameter.
+ */
+void Config::readPostInverseBasicParameter()
+{
+    std::string str, base_label, label;
+    base_label = "/PostInverseBasic";
+
+    label = base_label + "/gridType";
+    std::string gridTypeString;
+
+    if(!tp.getInspectedValue(label, gridTypeString))
+        throw std::runtime_error(label + " is not set");
+    
+    if(gridTypeString != "Structured" && gridTypeString != "Unstructured")
+        throw std::runtime_error("Unknown GridType");  
+
+    if(gridTypeString == "Structured")
+        gridType = GridType::STRUCTURED;
+    else if(gridTypeString == "Unstructured")
+        gridType = GridType::UNSTRUCTURED;
+
+    if(gridType == GridType::STRUCTURED){
+        int tmpInt[dim];
+        double tmpDouble[dim];
+
+        label = base_label + "/nx";
+        if(!tp.getInspectedVector(label, tmpInt, dim))
+            throw std::runtime_error(label + " is not set.");
+
+        nx = tmpInt[0];
+        ny = tmpInt[1];
+        nz = tmpInt[2];
+
+        label = base_label + "/lx";
+        if(!tp.getInspectedVector(label, tmpDouble, dim))
+            throw std::runtime_error(label + " is not set");
+
+        lx = tmpDouble[0];
+        ly = tmpDouble[1];
+        lz = tmpDouble[2];
+
+        dx = lx / (double)nx;
+        dy = ly / (double)ny;
+        dz = lz / (double)nz;
+    }
+
+    label = base_label + "/nNodesInCell";
+    if(!tp.getInspectedValue(label, nNodesInCell))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/nRef";
+    if(!tp.getInspectedValue(label, nRef))
+        throw std::runtime_error(label + " is not set");
+}
+
+/*****************************
+ * @brief Read text parameter.
+ */
+void Config::readPostInverseVelocityParameter()
+{
+    std::string str, base_label, label;
+    base_label = "/PostInverseVelocity";
+
+    int num = 0;
+    std::string velRefFile;
+    velRef.resize(nRef);
+
+    while(1){
+        if(num >= nRef) break;
+        label = base_label + "/velRef" + std::to_string(num);
+
+        if(!tp.getInspectedValue(label, velRefFile))
+            throw std::runtime_error(label + " is not set");
+        
+        std::ifstream ifsVelRef(velRefFile);
+        if(!ifsVelRef.is_open()){
+            throw std::runtime_error("Failed to open file: " + velRefFile);
+        }
+        std::vector<std::vector<double>> velRefTmp;
+
+        while(getline(ifsVelRef, str)){
+            std::istringstream iss(str);
+            std::vector<double> tmp;
+            for(int d=0; d<dim; d++){
+                getline(iss, str, ' ');
+                tmp.push_back(stod(str));
+            }
+            velRefTmp.push_back(tmp);
+        } 
+        ifsVelRef.close();
+        velRef[num] = velRefTmp;
+        num++;
+    }
+
+    num = 0;
+    std::string velOptFile;
+    velOpt.resize(nRef);
+
+    while(1){
+        if(num >= nRef) break;
+        label = base_label + "/velOpt" + std::to_string(num);
+
+        if(!tp.getInspectedValue(label, velOptFile))
+            throw std::runtime_error(label + " is not set");
+        
+        std::ifstream ifsVelOpt(velOptFile);
+        if(!ifsVelOpt.is_open()){
+            throw std::runtime_error("Failed to open file: " + velOptFile);
+        }
+        std::vector<std::vector<double>> velOptTmp;
+
+        while(getline(ifsVelOpt, str)){
+            std::istringstream iss(str);
+            std::vector<double> tmp;
+            for(int d=0; d<dim; d++){
+                getline(iss, str, ' ');
+                tmp.push_back(stod(str));
+            }
+            velOptTmp.push_back(tmp);
+        } 
+        ifsVelOpt.close();
+        velOpt[num] = velOptTmp;
+        num++;
+    }
+}
+
+/*****************************
+ * @brief Read text parameter.
+ */
+void Config::readPostInverseFlowRateParameter()
+{
+    std::string str, base_label, label;
+    base_label = "/PostInverseFrowRate";
+    
+    label = base_label + "/crossSection";
+    if(!tp.getInspectedValue(label, str))
+        throw std::runtime_error(label + " is not set");
+    
+    label = base_label + "/flowRateVelDir";
+    if(!tp.getInspectedValue(label, flowRateVelDir))
+        throw std::runtime_error(label + " is not set");
+
+    if(str == "xy"){
+        crossSection = CrossSection::XY;
+    }else if(str == "yz"){
+        crossSection = CrossSection::YZ;
+    }else if(str == "zx"){
+        crossSection = CrossSection::ZX;
+    }
+
+    label = base_label + "/crossPoint";
+    if(!tp.getInspectedValue(label, crossPoint))
+        throw std::runtime_error(label + " is not set");
 }

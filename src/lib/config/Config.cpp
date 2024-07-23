@@ -26,6 +26,8 @@ void Config::setApplication(std::string appName)
     else if(appName == "USNS")     app = Application::USNS;
     else if(appName == "TDVAR")    app = Application::TDVAR;
     else if(appName == "FDVAR")    app = Application::FDVAR;
+    else if(appName == "FLOWRATE") app = Application::FLOWRATE;
+    else if(appName == "MAE")      app = Application::MAE;
     else if (mpi.myId == 0)        std::cout << "Unknown appName" << std::endl;
 }
 
@@ -95,6 +97,13 @@ void Config::readConfigFile()
             readDarcyParameter();
             readInverseParameter();
             readDataParameter();
+            break;
+
+        case Application::FLOWRATE:
+            readBasicParameter();
+            readPostInverseBasicParameter();
+            readPostInverseVelocityParameter();
+            readPostInverseFlowRateParameter();
             break;
 
         default:

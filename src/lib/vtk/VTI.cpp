@@ -129,6 +129,34 @@ void VTK::exportVelocityDataVTI(const std::string file, DataGrid &data,
     }
 }
 
+void VTK::exportNodeVTI(const string &file, std::vector<std::vector<double>> &node,
+                        const int nx, const int ny, const int nz, const double dx, const double dy, const double dz)
+{
+    FILE *fp; 
+    fp=fopen(file.c_str(),"w");
+
+    if(fp==NULL){
+        cout <<file << " open error" << endl;
+        exit(1);
+    }
+
+    fprintf(fp,"<?xml version=\"1.0\"?>\n");
+    fprintf(fp,"<VTKFile type=\"ImageData\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
+    fprintf(fp,"<ImageData WholeExtent= \"%d %d %d %d %d %d\" Origin= \"%e %e %e\" Spacing= \"%e %e %e\" >\n",0,nx,0,ny,0,nz,0e0,0e0,0e0,dx,dy,dz);  
+    fprintf(fp,"<Piece Extent= \"%d %d %d %d %d %d\">\n",0,nx,0,ny,0,nz);  
+    fprintf(fp,"<PointData>\n");
+    fprintf(fp,"<DataArray type=\"Float64\" Name=\"velocity\" NumberOfComponents=\"3\" format=\"ascii\">\n");
+    for(int i=0;i<(nx+1)*(ny+1)*(nz+1);i++){
+        fprintf(fp,"%e %e %e\n", node[i][0],node[i][1],node[i][2]);
+    }
+    fprintf(fp,"</DataArray>\n");
+    fprintf(fp,"</PointData>\n");
+    fprintf(fp,"</Piece>\n");
+    fprintf(fp,"</ImageData>\n");
+    fprintf(fp,"</VTKFile>\n");
+    fclose(fp);
+}
+
 void VTK::exportSolutionVTI(const string &file, std::vector<std::vector<double>> &v, std::vector<double> &p,
                             const int nx, const int ny, const int nz, const double dx, const double dy, const double dz)
 {

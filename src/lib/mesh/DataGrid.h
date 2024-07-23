@@ -34,8 +34,8 @@ struct VoxelInfo
     std::vector<int> cellChildren;
     std::vector<double> vEX;
 
-    void setNearCell(Node &node, Cell &cell, const double &range, const int &dim);
-    void setCellOnCenterPoint(Node &node, Cell &cell, const int &dim);
+    void setNearCell(Node &node, Cell &cell, const double range, const int dim);
+    void setCellOnCenterPoint(Node &node, Cell &cell, const int dim);
     void average(Cell &cell, std::vector<std::vector<double>> &_v, 
                  const int t, const int dim);
     double compSmoothing(Function &func, const double a, const int dim, const int p);

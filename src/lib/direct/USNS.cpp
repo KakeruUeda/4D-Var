@@ -220,7 +220,7 @@ void DirectProblem::compInitialCondition(std::vector<std::map<int, std::vector<d
     }   
 
     int snapCount = 0;
-    for(int t=0; t<timeMax; t++){
+    for(int t=0; t<timeMax+20; t++){
         petsc.setValueZero();
         grid.dirichlet.assignConstantDirichletBCs(vDirichletTmp, pDirichletTmp, grid.node, dim, t);
         grid.dirichlet.applyDirichletBCs(grid.cell, petsc);

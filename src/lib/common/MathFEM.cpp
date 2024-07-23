@@ -20,7 +20,7 @@ void MathFEM::MathFEM::comp_dxdr2D(double (&dxdr)[2][2], std::vector<std::vector
 void MathFEM::comp_dNdx2D(std::vector<std::vector<double>> &dNdx, std::vector<std::vector<double>> &dNdr, const double (&dxdr)[2][2], const int &numOfNodeInElm)
 {
     double drdx[2][2];
-    MathCommon::compInverseMatrix_2x2(drdx, dxdr);
+    MathCommon::compostinverseMatrix_2x2(drdx, dxdr);
 
     for(int p=0; p<numOfNodeInElm; p++){
         for(int i=0; i<2; i++){
@@ -47,7 +47,7 @@ void MathFEM::MathFEM::comp_dxdr(double (&dxdr)[3][3], std::vector<std::vector<d
 void MathFEM::comp_dNdx(std::vector<std::vector<double>> &dNdx, std::vector<std::vector<double>> &dNdr, const double (&dxdr)[3][3], const int &numOfNodeInElm)
 {
     double drdx[3][3];
-    MathCommon::compInverseMatrix_3x3(drdx, dxdr);
+    MathCommon::compostinverseMatrix_3x3(drdx, dxdr);
 
     for(int p=0;p<numOfNodeInElm;p++){
         for(int i=0; i<3; i++){

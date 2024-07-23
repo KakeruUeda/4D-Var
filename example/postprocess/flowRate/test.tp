@@ -1,0 +1,48 @@
+Base
+{
+    dim = 3
+    outputDir = "flowRate4x4x4_interpolation"
+    numOfOMP = 1
+}
+
+PostInverseBasic
+{
+    gridType = "Structured"
+    nx = (64, 64, 64)
+    lx = (2.0, 2.0, 2.0)
+    nNodesInCell = 8
+    nRef = 11
+}
+
+PostInverseVelocity
+{
+    velRef0  = "../../inverse/input/straightTube/data8x8x8/reference0.dat"
+    velRef1  = "../../inverse/input/straightTube/data8x8x8/reference1.dat"
+    velRef2  = "../../inverse/input/straightTube/data8x8x8/reference2.dat"
+    velRef3  = "../../inverse/input/straightTube/data8x8x8/reference3.dat"
+    velRef4  = "../../inverse/input/straightTube/data8x8x8/reference4.dat"
+    velRef5  = "../../inverse/input/straightTube/data8x8x8/reference5.dat"
+    velRef6  = "../../inverse/input/straightTube/data8x8x8/reference6.dat"
+    velRef7  = "../../inverse/input/straightTube/data8x8x8/reference7.dat"
+    velRef8  = "../../inverse/input/straightTube/data8x8x8/reference8.dat"
+    velRef9  = "../../inverse/input/straightTube/data8x8x8/reference9.dat"
+    velRef10 = "../../inverse/input/straightTube/data8x8x8/reference10.dat"
+    velOpt0  = "../../inverse/output/straightTube4x4x4_Interpolation/main/dat/velocity15_0.dat"
+    velOpt1  = "../../inverse/output/straightTube4x4x4_Interpolation/main/dat/velocity15_1.dat"
+    velOpt2  = "../../inverse/output/straightTube4x4x4_Interpolation/main/dat/velocity15_2.dat"
+    velOpt3  = "../../inverse/output/straightTube4x4x4_Interpolation/main/dat/velocity15_3.dat"
+    velOpt4  = "../../inverse/output/straightTube4x4x4_Interpolation/main/dat/velocity15_4.dat"
+    velOpt5  = "../../inverse/output/straightTube4x4x4_Interpolation/main/dat/velocity15_5.dat"
+    velOpt6  = "../../inverse/output/straightTube4x4x4_Interpolation/main/dat/velocity15_6.dat"
+    velOpt7  = "../../inverse/output/straightTube4x4x4_Interpolation/main/dat/velocity15_7.dat"
+    velOpt8  = "../../inverse/output/straightTube4x4x4_Interpolation/main/dat/velocity15_8.dat"
+    velOpt9  = "../../inverse/output/straightTube4x4x4_Interpolation/main/dat/velocity15_9.dat"
+    velOpt10 = "../../inverse/output/straightTube4x4x4_Interpolation/main/dat/velocity15_10.dat"
+}
+
+PostInverseFrowRate
+{
+    crossSection = "yz"
+    flowRateVelDir = 0
+    crossPoint = 32
+}

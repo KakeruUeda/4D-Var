@@ -5,7 +5,7 @@
 
 #include "MathCommon.h"
 
-void MathCommon::compInverseMatrix_2x2(double (&inv_a)[2][2], const double (&a)[2][2])
+void MathCommon::compostinverseMatrix_2x2(double (&inv_a)[2][2], const double (&a)[2][2])
 {   
     double det;
     det = a[0][0]*a[1][1]-a[0][1]*a[1][0];
@@ -16,7 +16,7 @@ void MathCommon::compInverseMatrix_2x2(double (&inv_a)[2][2], const double (&a)[
     inv_a[1][1] =  a[0][0]/det;
 }
 
-void MathCommon::compInverseMatrix_3x3(double (&inv_a)[3][3], const double (&a)[3][3])
+void MathCommon::compostinverseMatrix_3x3(double (&inv_a)[3][3], const double (&a)[3][3])
 {
     double det;
     det = compDeterminant_3x3(a);

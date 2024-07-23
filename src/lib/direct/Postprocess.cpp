@@ -32,6 +32,7 @@ void Postprocess::extractOutletVelocity(DirectProblem &direct, std::vector<int> 
 
 void Postprocess::createData(DirectProblem &direct)
 {
+    //voxel.range = 5e-1 * voxel.dx;
     voxel.range = 5e-1 * sqrt(voxel.dx * voxel.dx + voxel.dy * voxel.dy + voxel.dz * voxel.dz);
     //voxel.range = 2 * voxel.dx + voxel.dx;
     
@@ -81,17 +82,33 @@ void Postprocess::createData(DirectProblem &direct)
 
     if(mpi.myId == 0){
         for(int t=0; t<direct.snap.nSnapShot; t++){
-            std::ofstream outReference(direct.outputDir + "/data/reference" + to_string(t) + ".dat");
+            std::vector<std::vector<double>> velRef;
+            std::vector<std::vector<double>> velRef2;
+            int n = (direct.grid.nx+1) * (direct.grid.ny+1) * (direct.grid.nz+1);
+            VecTool::resize(velRef, n, direct.dim);
             for(int in=0; in<direct.grid.node.nNodesGlobal; in++){
-                double pointX = direct.grid.node.x[in][0];
-                if(pointX > 1e0 - EPS){
-                    for(int d=0; d<direct.dim; d++){
-                        outReference << direct.snap.v[t][in][d] << " ";
+                velRef[direct.grid.node.sortNode[in]] = direct.snap.v[t][in];
+            }
+            std::ofstream outReference(direct.outputDir + "/data/reference" + to_string(t) + ".dat");
+            for(int k=0; k<direct.grid.nz+1; k++){
+                for(int j=0; j<direct.grid.ny+1; j++){
+                    for(int i=0; i<direct.grid.nx+1; i++){
+                        int index = i + j * (direct.grid.nx+1) + k * (direct.grid.nx+1) * (direct.grid.ny+1);
+                        if(i >= direct.grid.nx/2){
+                            for(int d=0; d<direct.dim; d++){
+                                outReference << velRef[index][d] << " ";
+                            }
+                            velRef2.push_back(velRef[index]);
+                            outReference << std::endl;
+                        }
                     }
-                    outReference << std::endl;
                 }
             }
             outReference.close();
+            
+            std::string vtiFile;
+            vtiFile = direct.outputDir + "/data/reference" + to_string(t) + ".vti";
+            direct.grid.vtk.exportNodeVTI(vtiFile, velRef2, direct.grid.nx/2, direct.grid.ny, direct.grid.nz, direct.grid.dx, direct.grid.dy, direct.grid.dz);
         }
     }
 

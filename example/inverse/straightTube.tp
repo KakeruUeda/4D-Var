@@ -1,0 +1,86 @@
+Base
+{
+    dim = 3
+    outputDir = "straightTube4x4x4_Interpolation"
+    numOfOMP = 1
+}
+
+Grid
+{
+    type = "Structured"
+    nx = (64, 64, 64) 
+    lx = (2.0, 2.0, 2.0)
+    extractFluid = "ON"
+    nNodesInCell = 8
+    node = "input/straightTube/data4x4x4/node.dat"
+    cell = "input/straightTube/data4x4x4/cell.dat"
+    image = "input/straightTube/data4x4x4/image.dat"
+}
+
+Boundary
+{
+    velocityDirichlet = "input/straightTube/data4x4x4/velocityDirichletPoiseuille.dat"
+    pressureDirichlet = "input/straightTube/data4x4x4/pressureDirichlet.dat"
+}
+
+Inverse
+{
+    controlBoundary = "left"
+    voxelVelocity = "interpolation"
+    aCF = 5e1
+    bCF1 = 0e0
+    bCF2 = 0e0
+    gCF = 0e0
+    loopMAX = 100
+}
+
+Data
+{
+    nSnapShot = 11
+    snapInterval = 5
+    snapTimeBeginItr = 0
+    nNodesInDataCell = 8
+    nxData = (4, 4, 4)
+    lxData = (2.0, 2.0, 2.0)
+    nControlNodesInCell = 4
+    controlBoundary = "input/straightTube/data4x4x4/controlBoundary.dat"
+    controlCellMap = "input/straightTube/data4x4x4/controlCellMap.dat"
+    controlNodeInCell = "input/straightTube/data4x4x4/controlNodeInCell.dat"
+    data0 = "input/straightTube/data4x4x4/data0.dat"
+    data1 = "input/straightTube/data4x4x4/data1.dat"
+    data2 = "input/straightTube/data4x4x4/data2.dat"
+    data3 = "input/straightTube/data4x4x4/data3.dat"
+    data4 = "input/straightTube/data4x4x4/data4.dat"
+    data5 = "input/straightTube/data4x4x4/data5.dat"
+    data6 = "input/straightTube/data4x4x4/data6.dat"
+    data7 = "input/straightTube/data4x4x4/data7.dat"
+    data8 = "input/straightTube/data4x4x4/data8.dat"
+    data9 = "input/straightTube/data4x4x4/data9.dat"
+    data10 = "input/straightTube/data4x4x4/data10.dat"
+}
+
+PysicalParameter
+{   
+    rho = 100
+    mu = 1   
+}
+
+NRParameter
+{
+    NRtolerance = 1e-5
+}
+
+TimeParameter
+{
+    dt = 0.02
+    timeMax = 51
+    pulsatileFlow = "OFF"
+    pulseBeginItr = 100
+    T = 1.0
+}
+
+DarcyParameter
+{
+    alpha = 1e-3
+    resistance = 1e2
+}

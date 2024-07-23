@@ -36,6 +36,8 @@ class VTK
                                const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
         void exportAdjointSolutionVTI(const string &file, std::vector<std::vector<double>> &w, std::vector<double> &q, std::vector<std::vector<double>> &l,
                                       const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
+        void exportNodeVTI(const string &file, std::vector<std::vector<double>> &node,
+                           const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
 
         // VTU
         void exportMeshPartitionVTU(const std::string &file, Node &node, Cell &cell);

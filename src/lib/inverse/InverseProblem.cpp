@@ -188,6 +188,26 @@ void InverseProblem::output(const int loop)
         }
     }
 
+    if(main.grid.gridType == GridType::STRUCTURED){
+        for(int t=0; t<main.snap.nSnapShot; t++){
+            std::vector<std::vector<double>> velRef;
+            int n = (main.grid.nx+1) * (main.grid.ny+1) * (main.grid.nz+1);
+            VecTool::resize(velRef, n, main.dim);
+            for(int in=0; in<main.grid.node.nNodesGlobal; in++){
+                velRef[main.grid.node.sortNode[in]] = main.snap.v[t][in];
+            }
+            std::ofstream outReference(main.outputDir + "/dat/velocity" + to_string(loop) + "_" + to_string(t) + ".dat");
+            for(int in=0; in<n; in++){
+                for(int d=0; d<main.dim; d++){
+                    outReference << velRef[in][d] << " ";
+                }    
+                outReference << std::endl;
+            }
+            outReference.close();
+        }
+    }
+
+
 }
 
 /****************************************************
@@ -270,7 +290,7 @@ void InverseProblem::compCostFunction()
             costFunction.term2 += 5e-1 * bCF1 * value;
         }
     }
-std::cout << "5" << std::endl;
+
     // term3
     for(int t=0; t<main.snap.nSnapShot; t++){
         for(int ic=0; ic<adjoint.grid.dirichlet.controlNodeInCell.size(); ic++){
@@ -292,7 +312,7 @@ std::cout << "5" << std::endl;
             costFunction.term3 += 5e-1 * bCF2 * value;
         }
     }
-    std::cout << "5" << std::endl;
+
     costFunction.sum();
 }
 
@@ -609,7 +629,7 @@ void InverseProblem::compOptimalCondition()
                 }
             }
         }
-
+        /*
         for(int in=0; in<adjoint.grid.node.nNodesGlobal; in++){
             if(adjoint.grid.dirichlet.isBoundaryEdge[in]){
                 for(int d=0; d<dim; d++){
@@ -617,6 +637,7 @@ void InverseProblem::compOptimalCondition()
                 }
             }
         }
+        */
         for(int ib=0; ib<adjoint.grid.dirichlet.controlBoundaryMap.size(); ib++){
             int in = adjoint.grid.dirichlet.controlBoundaryMap[ib];
             for(int d=0; d<dim; d++){

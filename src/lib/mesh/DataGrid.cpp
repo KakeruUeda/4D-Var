@@ -44,6 +44,7 @@ data(conf.nCellsDataGlobal)
 
 void DataGrid::initialize(Config &conf, Node &node, Cell &cell, const int &dim)
 {   
+    //range = 5e-1 * dx;
     range = 5e-1 * sqrt(dx*dx + dy*dy + dz*dz);
     //range = 2 * dx + dx;
 
@@ -105,7 +106,7 @@ void DataGrid::compEdgeValue(const int t)
 
 }
 
-void VoxelInfo::setNearCell(Node &node, Cell &cell, const double &range, const int &dim)
+void VoxelInfo::setNearCell(Node &node, Cell &cell, const double range, const int dim)
 {
     double distance;
     double diff[dim];
@@ -126,7 +127,7 @@ void VoxelInfo::setNearCell(Node &node, Cell &cell, const double &range, const i
     }
 }
 
-void VoxelInfo::setCellOnCenterPoint(Node &node, Cell &cell, const int &dim)
+void VoxelInfo::setCellOnCenterPoint(Node &node, Cell &cell, const int dim)
 {
     double distance;
     std::vector<double> diff(dim);

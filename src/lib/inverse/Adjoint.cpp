@@ -151,6 +151,14 @@ void Adjoint::updateVariables(const int dim, const int t)
                 grid.node.l[in][d] = petsc.solution[n1+dim+1+d];
         }
     }
+
+    for(int in=0; in<grid.node.nNodesGlobal; in++){
+        if(grid.dirichlet.isBoundaryEdge[in]){
+            for(int d=0; d<dim; d++){
+                grid.node.l[in][d] = 0e0;
+            }
+        }   
+    }
     
     for(int in=0; in<grid.node.nNodesGlobal; in++){
         for(int d=0; d<dim; d++){

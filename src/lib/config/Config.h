@@ -24,7 +24,8 @@ extern MyMPI mpi;
 enum class Application
 {
     STRGRID = 0, SNS = 1, USNS = 2,
-    TDVAR = 3,  FDVAR = 4
+    TDVAR = 3,  FDVAR = 4, 
+    FLOWRATE = 5, MAE = 6
 };
 
 enum class GridType
@@ -46,6 +47,13 @@ enum class VoxelVelocity
     INTERPOLATION = 2
 };
 
+enum class CrossSection
+{
+    XY = 0,
+    YZ = 1,
+    ZX = 2
+};
+
 class Config
 {
     public:
@@ -57,6 +65,7 @@ class Config
         GridType gridType;
         ControlBoundary controlBoundary;
         VoxelVelocity vvox;
+        CrossSection crossSection;
 
         // Basic parameter
         int dim, nOMP;
@@ -143,6 +152,13 @@ class Config
         std::vector<std::vector<int>> controlNodeInCell;
         std::vector<int> controlCellMap;
 
+        // post inverse parameter
+        int nRef;
+        int crossPoint;
+        int flowRateVelDir;
+        std::vector<std::vector<std::vector<double>>> velRef;
+        std::vector<std::vector<std::vector<double>>> velOpt;
+
         void setSolidBoundary();
         void setFluidDomain();
 
@@ -168,6 +184,9 @@ class Config
         void readPostprocessParameter();
         void readInverseParameter();
         void readDataParameter();
+        void readPostInverseBasicParameter();
+        void readPostInverseVelocityParameter();
+        void readPostInverseFlowRateParameter();
 
         void readBoundaryTypeAndValue(std::string labelType, 
                                       std::string labelValue, int &tmp);
