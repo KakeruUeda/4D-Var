@@ -1,4 +1,4 @@
-set(main_target "strgrid")
+set(main_target "Strgrid")
 
 set(compile_options_tmp ${base_compile_options})
 string(REPLACE " " ";" compile_options_tmp ${compile_options_tmp})
