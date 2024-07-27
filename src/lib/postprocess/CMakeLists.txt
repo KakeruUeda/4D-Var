@@ -14,7 +14,7 @@ target_include_directories(postinverse
         ${PROJECT_SOURCE_DIR}/src/lib/mesh
         ${PROJECT_SOURCE_DIR}/src/lib/boundary
         ${PROJECT_SOURCE_DIR}/src/lib/solver
-        ${PROJECT_SOURCE_DIR}/src/lib/vtk
+        ${PROJECT_SOURCE_DIR}/src/lib/fileIO
 )
 
 target_compile_options(postinverse PUBLIC ${compile_options_tmp})

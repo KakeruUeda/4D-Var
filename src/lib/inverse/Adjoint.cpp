@@ -10,8 +10,8 @@
  * @brief Solve adjoint equation.
  */
 void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
-                             std::vector<std::vector<std::vector<double>>> &feedbackForceT,
-                             const int nData, const int loop)
+                           std::vector<std::vector<std::vector<double>>> &feedbackForceT,
+                           const int outputItr, const int loop)
 {
     PetscPrintf(MPI_COMM_WORLD, "\nADJOINT SOLVER\n");
     PetscScalar *arraySolnTmp;
@@ -86,13 +86,8 @@ void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
             petsc.solution[id] = arraySolnTmp[id];
 
         VecRestoreArray(vecSEQ, &arraySolnTmp);
-        updateVariables(main.dim, t);
-
-        if(grid.gridType == GridType::STRUCTURED){
-            outputSolutionVTI(outputDir, t, loop);
-        }else{
-            outputSolution(outputDir, t, loop);
-        }
+        updateSolutions();
+        updateTimeSolutions(t);
 
         if(mpi.myId == 0){
             double timeNow = t * dt;
@@ -129,10 +124,35 @@ void Adjoint::setVariablesZero(const int dim)
     }
 }
 
+/**********************************
+ * @brief Update solutions for VTI.
+ */
+void Adjoint::updateSolutionsVTI()
+{    
+    for(int in=0; in<grid.node.nNodesGlobal; in++){
+        for(int d=0; d<dim; d++){
+            grid.node.wvti[grid.node.sortNode[in]][d] = grid.node.w[in][d];
+            grid.node.lvti[grid.node.sortNode[in]][d] = grid.node.l[in][d];
+        }
+        grid.node.qvti[grid.node.sortNode[in]] = grid.node.q[in];
+    }   
+}
+
+void Adjoint::updateSolutionsVTI(const int t)
+{    
+    for(int in=0; in<grid.node.nNodesGlobal; in++){
+        for(int d=0; d<dim; d++){
+            grid.node.wvti[grid.node.sortNode[in]][d] = grid.node.wt[t][in][d];
+            grid.node.lvti[grid.node.sortNode[in]][d] = grid.node.lt[t][in][d];
+        }
+        grid.node.qvti[grid.node.sortNode[in]] = grid.node.qt[t][in];
+    }   
+}
+
 /*********************************************
  * @brief Update solutions for next time step.
  */
-void Adjoint::updateVariables(const int dim, const int t)
+void Adjoint::updateSolutions()
 {
     for(int in=0; in<grid.node.nNodesGlobal; in++){
         int n1 = 0;
@@ -151,7 +171,6 @@ void Adjoint::updateVariables(const int dim, const int t)
                 grid.node.l[in][d] = petsc.solution[n1+dim+1+d];
         }
     }
-
     for(int in=0; in<grid.node.nNodesGlobal; in++){
         if(grid.dirichlet.isBoundaryEdge[in]){
             for(int d=0; d<dim; d++){
@@ -159,51 +178,69 @@ void Adjoint::updateVariables(const int dim, const int t)
             }
         }   
     }
-    
+}
+
+void Adjoint::updateTimeSolutions(const int t)
+{
     for(int in=0; in<grid.node.nNodesGlobal; in++){
         for(int d=0; d<dim; d++){
+            grid.node.wt[t][in][d] = grid.node.w[in][d];
             grid.node.lt[t][in][d] = grid.node.l[in][d];
         }
+        grid.node.qt[t][in] = grid.node.q[in];
     }
 }
 
-void Adjoint::outputSolution(std::string outputDir, const int t, const int loop)
+void Adjoint::outputSolutionsVTU(const int t)
 {
     if(mpi.myId > 0) return;
-    
+
     std::string vtuFile;
-    vtuFile = outputDir + "/solution/w_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-    grid.vtk.exportAdjointSolutionVTU(vtuFile, grid.node, grid.cell, DataType::ADJOINT_W);
-    vtuFile = outputDir + "/solution/q_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-    grid.vtk.exportAdjointSolutionVTU(vtuFile, grid.node, grid.cell, DataType::ADJOINT_Q);
-    vtuFile = outputDir + "/solution/l_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-    grid.vtk.exportAdjointSolutionVTU(vtuFile, grid.node, grid.cell, DataType::ADJOINT_L);
+    vtuFile = outputDir + "/w_" + "_" + to_string(t) + ".vtu";
+    VTK::exportVectorPointDataVTU(vtuFile, "w", grid.node, grid.cell, grid.node.w);
+    vtuFile = outputDir + "/q_" + "_" + to_string(t) + ".vtu";
+    VTK::exportScalarPointDataVTU(vtuFile, "q", grid.node, grid.cell, grid.node.q);
+    vtuFile = outputDir + "/l_" + to_string(t) + ".vtu";
+    VTK::exportVectorPointDataVTU(vtuFile, "l", grid.node, grid.cell, grid.node.l);
 }
 
-void Adjoint::outputSolutionVTI(std::string outputDir, const int t, const int loop)
+void Adjoint::outputSolutionsVTU(const int t, const int loop)
 {
     if(mpi.myId > 0) return;
 
-    std::vector<std::vector<double>> wvti;
-    std::vector<std::vector<double>> lvti;
-    std::vector<double> qvti;
+    std::string vtuFile;
+    vtuFile = outputDir + "/adjoint/w_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+    VTK::exportVectorPointDataVTU(vtuFile, "w", grid.node, grid.cell, grid.node.w);
+    vtuFile = outputDir + "/adjoint/q_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+    VTK::exportScalarPointDataVTU(vtuFile, "q", grid.node, grid.cell, grid.node.q);
+    vtuFile = outputDir + "/adjoint/l_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+    VTK::exportVectorPointDataVTU(vtuFile, "l", grid.node, grid.cell, grid.node.l);
+}
 
-    int nNodesGlobalPrev = (grid.nx+1) * (grid.ny+1) * (grid.nz+1);
-    VecTool::resize(wvti, nNodesGlobalPrev, dim);
-    VecTool::resize(lvti, nNodesGlobalPrev, dim);
-    VecTool::resize(qvti, nNodesGlobalPrev);
-    
-    for(int in=0; in<grid.node.nNodesGlobal; in++){
-        for(int d=0; d<dim; d++){
-            wvti[grid.node.sortNode[in]][d] = grid.node.w[in][d];
-            lvti[grid.node.sortNode[in]][d] = grid.node.l[in][d];
-        }
-        qvti[grid.node.sortNode[in]] = grid.node.q[in];
-    }
+void Adjoint::outputSolutionsVTI(const int t)
+{
+    if(mpi.myId > 0) return;
 
     std::string vtiFile;
-    vtiFile = outputDir + "/solution/solution" + to_string(t) + ".vti";
-    grid.vtk.exportAdjointSolutionVTI(vtiFile, wvti, qvti, lvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+    vtiFile = outputDir +  "/w_" + to_string(t) + ".vti";
+    VTK::exportVectorPointDataVTI(vtiFile, "w", grid.node.wvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+    vtiFile = outputDir +  "/q_" + to_string(t) + ".vti";
+    VTK::exportScalarPointDataVTI(vtiFile, "q", grid.node.qvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+    vtiFile = outputDir +  "/l_" + to_string(t) + ".vti";
+    VTK::exportVectorPointDataVTI(vtiFile, "l", grid.node.lvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+}
+
+void Adjoint::outputSolutionsVTI(const int t, const int loop)
+{
+    if(mpi.myId > 0) return;
+
+    std::string vtiFile;
+    vtiFile = outputDir +  "/adjoint/w_" + to_string(loop) + "_" + to_string(t) + ".vti";
+    VTK::exportVectorPointDataVTI(vtiFile, "w", grid.node.wvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+    vtiFile = outputDir +  "/adjoint/q_" + to_string(loop) + "_" + to_string(t) + ".vti";
+    VTK::exportScalarPointDataVTI(vtiFile, "q", grid.node.qvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+    vtiFile = outputDir +  "/adjoint/l_" + to_string(loop) + "_" + to_string(t) + ".vti";
+    VTK::exportVectorPointDataVTI(vtiFile, "l", grid.node.lvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 
 /**************************

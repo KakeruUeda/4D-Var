@@ -52,6 +52,7 @@ class Cell
 
         int nCellsGlobal;
         int nNodesInCell;
+        int nCellsStructuredGlobal;
 
         void initialize(Config &conf);
         void initializeAdjoint(Config &conf);

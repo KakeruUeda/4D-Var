@@ -41,6 +41,10 @@ void Cell::initialize(Config &conf)
     if(conf.nNodesInCell == 8)
         for(int ic=0; ic<nCellsGlobal; ic++)
             data[ic].cellType = VTK_HEXAHEDRON;
+
+    if(conf.gridType == GridType::STRUCTURED){
+        nCellsStructuredGlobal = conf.nx * conf.ny * conf.nz;
+    }
 }
 
 
@@ -75,4 +79,7 @@ void Cell::initializeAdjoint(Config &conf)
         for(int ic=0; ic<nCellsGlobal; ic++)
             data[ic].cellType = VTK_HEXAHEDRON;
 
+    if(conf.gridType == GridType::STRUCTURED){
+        nCellsStructuredGlobal = conf.nx * conf.ny * conf.nz;
+    }
 }

@@ -16,7 +16,7 @@ target_include_directories(mesh
         ${PROJECT_SOURCE_DIR}/src/lib/config
         ${PROJECT_SOURCE_DIR}/src/lib/boundary
         ${PROJECT_SOURCE_DIR}/src/lib/mesh
-        ${PROJECT_SOURCE_DIR}/src/lib/vtk
+        ${PROJECT_SOURCE_DIR}/src/lib/fileIO
         ${PROJECT_SOURCE_DIR}/src/lib/solver
 )
 

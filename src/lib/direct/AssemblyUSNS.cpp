@@ -221,14 +221,17 @@ void DirectProblem::mainGaussIntegralRHS(VectorXd &Flocal, Function &func, const
 }
 
 
-
 void DirectProblem::setVelocityValue(Function &func, const int ic, const int t)
 {
     for(int d=0; d<dim; d++){
         advgp[d] = 0e0;
         vgp[d] = 0e0;
         for(int p=0; p<grid.cell.nNodesInCell; p++){
-            advgp[d] += func.N[p] * (1.5 * grid.node.v[grid.cell(ic).node[p]][d] - 0.5 * grid.node.vPrev[grid.cell(ic).node[p]][d]);
+            if(t == 0){
+                advgp[d] += func.N[p] * grid.node.v[grid.cell(ic).node[p]][d];
+            }else{
+                advgp[d] += func.N[p] * (1.5 * grid.node.v[grid.cell(ic).node[p]][d] - 0.5 * grid.node.vPrev[grid.cell(ic).node[p]][d]);
+            }
             vgp[d] += func.N[p] * grid.node.v[grid.cell(ic).node[p]][d];
         }
     }

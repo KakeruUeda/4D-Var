@@ -6,6 +6,7 @@ target_sources(vtk
     PRIVATE
         VTI.cpp
         VTU.cpp
+        BIN.cpp
 )
 
 target_include_directories(vtk

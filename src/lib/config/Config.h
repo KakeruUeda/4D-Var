@@ -69,6 +69,7 @@ class Config
 
         // Basic parameter
         int dim, nOMP;
+        int outputItr;
         std::string outputDir;
 
         // Physical parameter

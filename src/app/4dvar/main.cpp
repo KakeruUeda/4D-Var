@@ -33,7 +33,6 @@ int main(int argc, char *argv[])
     inverse.initialize(*conf);
 
     conf.reset();
-
     inverse.runSimulation();
 
     PetscPrintf(MPI_COMM_WORLD, "\nTerminate\n");

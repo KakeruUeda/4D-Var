@@ -472,6 +472,10 @@ void Config::readInverseParameter()
     if(!tp.getInspectedValue(label, gCF))
         throw std::runtime_error(label + " is not set");
 
+    label = base_label + "/outputItr";
+    if(!tp.getInspectedValue(label, outputItr))
+        throw std::runtime_error(label + " is not set");
+
     label = base_label + "/loopMax";
     if(!tp.getInspectedValue(label, loopMax))
         throw std::runtime_error(label + " is not set");

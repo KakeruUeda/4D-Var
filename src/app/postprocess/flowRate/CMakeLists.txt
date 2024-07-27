@@ -27,7 +27,7 @@ target_include_directories(${main_target}
         ${PROJECT_SOURCE_DIR}/src/lib/inverse
         ${PROJECT_SOURCE_DIR}/src/lib/mesh
         ${PROJECT_SOURCE_DIR}/src/lib/solver
-        ${PROJECT_SOURCE_DIR}/src/lib/vtk
+        ${PROJECT_SOURCE_DIR}/src/lib/fileIO
         ${PROJECT_SOURCE_DIR}/src/lib/common 
         ${PROJECT_SOURCE_DIR}/src/lib/postprocess 
 )

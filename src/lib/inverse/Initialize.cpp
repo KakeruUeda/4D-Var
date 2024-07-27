@@ -49,6 +49,8 @@ void InverseProblem::initialize(Config &conf)
     VecTool::resize(adjoint.grid.node.q, adjoint.grid.node.nNodesGlobal);
     VecTool::resize(adjoint.grid.node.l, main.grid.nNodesGlobal, dim);
     VecTool::resize(adjoint.grid.node.lt, adjoint.timeMax, adjoint.grid.nNodesGlobal, dim);
+    VecTool::resize(adjoint.grid.node.wt, adjoint.timeMax, adjoint.grid.nNodesGlobal, dim);
+    VecTool::resize(adjoint.grid.node.qt, adjoint.timeMax, adjoint.grid.nNodesGlobal);
 
     VecTool::resize(adjoint.vk, dim);
     VecTool::resize(adjoint.vk1, dim);
@@ -58,8 +60,10 @@ void InverseProblem::initialize(Config &conf)
     VecTool::resize(adjoint.dvkdx, dim, dim);
     VecTool::resize(adjoint.dvk1dx, dim, dim);
     VecTool::resize(adjoint.dvk2dx, dim, dim);
+    VecTool::resize(adjoint.wk, dim);
     VecTool::resize(adjoint.wk1, dim);
     VecTool::resize(adjoint.wk2, dim);
+    VecTool::resize(adjoint.dwkdx, dim, dim);
     VecTool::resize(adjoint.dwk1dx, dim, dim);
     VecTool::resize(adjoint.dwk2dx, dim, dim);
     
@@ -92,6 +96,8 @@ void InverseProblem::initialize(Config &conf)
     VecTool::resize(gradWholeNode, main.timeMax, main.grid.node.nNodesGlobal, dim);
     VecTool::resize(grad, main.timeMax, adjoint.grid.dirichlet.controlBoundaryMap.size(), dim);
     VecTool::resize(X, main.timeMax, adjoint.grid.dirichlet.controlBoundaryMap.size(), dim);
+    VecTool::resize(X0, main.grid.node.nNodesGlobal, dim);
+    VecTool::resize(gradInitVel, main.grid.node.nNodesGlobal, dim);
 
     VecTool::resize(adjoint.vgp, dim);
     VecTool::resize(adjoint.advgp, dim);

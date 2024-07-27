@@ -267,14 +267,13 @@ void Adjoint::setValue(DirectProblem &main, Function &func, const int ic, const 
 
     // main var - adv
     for(int d=0; d<main.dim; d++){
-        advk1[d] = 0e0;
+        advk1[d] = 0e0; 
         advk2[d] = 0e0;
         for(int p=0; p<grid.cell.nNodesInCell; p++){
             int n = grid.cell(ic).node[p];
             if(t == 0){
-                advk1[d] += func.N[p] * (1.5 * main.grid.node.v0[n][d]
-                          - 0.5 * main.grid.node.v0[n][d]);
-                advk2[d] +=func. N[p] * (1.5 * main.grid.node.vt[t][n][d]
+                advk1[d] += func.N[p] * main.grid.node.v0[n][d];
+                advk2[d] += func. N[p] * (1.5 * main.grid.node.vt[t][n][d]
                           - 0.5 * main.grid.node.v0[n][d]);
             }else if(t == 1){
                 advk1[d] += func.N[p] * (1.5 * main.grid.node.vt[t-1][n][d]

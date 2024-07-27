@@ -42,8 +42,7 @@ int main(int argc, char *argv[])
     conf.reset();
 
     direct.runSimulation();
-
-    //post.extractOutletVelocity(direct, sortNode);
+    
     post.createData(direct);
 
     PetscFinalize(); 

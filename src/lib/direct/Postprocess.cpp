@@ -32,9 +32,7 @@ void Postprocess::extractOutletVelocity(DirectProblem &direct, std::vector<int> 
 
 void Postprocess::createData(DirectProblem &direct)
 {
-    //voxel.range = 5e-1 * voxel.dx;
     voxel.range = 5e-1 * sqrt(voxel.dx * voxel.dx + voxel.dy * voxel.dy + voxel.dz * voxel.dz);
-    //voxel.range = 2 * voxel.dx + voxel.dx;
     
     for(int k=0; k<voxel.nz; k++){
         for(int j=0; j<voxel.ny; j++){
@@ -56,15 +54,13 @@ void Postprocess::createData(DirectProblem &direct)
         if(mpi.myId == 0){
             std::string vtiFile;
             vtiFile = direct.outputDir + "/data/data" + to_string(t) + ".vti";
-            direct.grid.vtk.exportDataVTI(vtiFile, voxel, t, direct.dim);
+            VTK::exportVelocityDataVTI(vtiFile, voxel, t);
         }
     }
 
     if(mpi.myId == 0){
         for(int t=0; t<direct.snap.nSnapShot; t++){
             std::ofstream outData(direct.outputDir + "/data/data" + to_string(t) + ".dat");
-            //outData << voxel.nx << " " << voxel.ny << " " << voxel.nz << std::endl;
-            //outData << voxel.lx << " " << voxel.ly << " " << voxel.lz << std::endl;
             for(int k=0; k<voxel.nz; k++){
                 for(int j=0; j<voxel.ny; j++){
                     for(int i=0; i<voxel.nx; i++){
@@ -106,9 +102,9 @@ void Postprocess::createData(DirectProblem &direct)
             }
             outReference.close();
             
-            std::string vtiFile;
-            vtiFile = direct.outputDir + "/data/reference" + to_string(t) + ".vti";
-            direct.grid.vtk.exportNodeVTI(vtiFile, velRef2, direct.grid.nx/2, direct.grid.ny, direct.grid.nz, direct.grid.dx, direct.grid.dy, direct.grid.dz);
+            //std::string vtiFile;
+            //vtiFile = direct.outputDir + "/data/reference" + to_string(t) + ".vti";
+            //direct.grid.vtk.exportNodeVTI(vtiFile, velRef2, direct.grid.nx/2, direct.grid.ny, direct.grid.nz, direct.grid.dx, direct.grid.dy, direct.grid.dz);
         }
     }
 
