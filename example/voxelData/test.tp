@@ -1,0 +1,33 @@
+Base
+{
+    dim = 3
+    outputDir = "test"
+    numOfOMP = 1
+}
+
+Grid
+{
+    type = "Structured"
+    nx = (128, 64, 64) 
+    lx = (4.0, 2.0, 2.0)
+    extractFluid = "OFF"
+    nNodesInCell = 8
+    node = "../usns/input/unilateralStenosis/node.dat"
+    cell = "../usns/input/unilateralStenosis/cell.dat"
+    image = "../usns/input/unilateralStenosis/image.dat"
+}
+
+VoxelCreation
+{
+    stepMax = 2
+    nSnapShot = 10
+    snapInterval = 2
+    snapTimeBeginItr = 120
+    nNodesInDataCell = 8
+    inputDir = "../usns/output/unilateralStenosis/input"
+    origin = (1.0, 0.0, 0.0)
+    nxData = (12, 12, 12)
+    lxData = (1.0, 1.0, 1.0)
+    nxOpt = (32, 32, 32)
+    lxOpt = (1.0, 1.0, 1.0)
+}

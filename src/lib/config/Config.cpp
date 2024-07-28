@@ -21,14 +21,14 @@ Config::Config(std::string inputFile, std::string appName)
  */
 void Config::setApplication(std::string appName)
 {   
-    if     (appName == "STRGRID")  app = Application::STRGRID;
-    else if(appName == "SNS")      app = Application::SNS;
-    else if(appName == "USNS")     app = Application::USNS;
-    else if(appName == "TDVAR")    app = Application::TDVAR;
-    else if(appName == "FDVAR")    app = Application::FDVAR;
-    else if(appName == "FLOWRATE") app = Application::FLOWRATE;
-    else if(appName == "MAE")      app = Application::MAE;
-    else if (mpi.myId == 0)        std::cout << "Unknown appName" << std::endl;
+    if     (appName == "STRGRID")   app = Application::STRGRID;
+    else if(appName == "SNS")       app = Application::SNS;
+    else if(appName == "USNS")      app = Application::USNS;
+    else if(appName == "VOXELDATA") app = Application::VOXELDATA;
+    else if(appName == "FDVAR")     app = Application::FDVAR;
+    else if(appName == "FLOWRATE")  app = Application::FLOWRATE;
+    else if(appName == "MAE")       app = Application::MAE;
+    else if (mpi.myId == 0)         std::cout << "Unknown appName" << std::endl;
 }
 
 /**************************
@@ -86,6 +86,12 @@ void Config::readConfigFile()
             readPysicalParameter();
             readDarcyParameter();
             readPostprocessParameter();
+            break;
+        
+        case Application::VOXELDATA:
+            readBasicParameter();
+            readGridParameter();
+            readVoxelCreationParameter();
             break;
 
         case Application::FDVAR:
@@ -320,5 +326,4 @@ void Config::setFluidDomain()
             }
         }
     }
-
 }

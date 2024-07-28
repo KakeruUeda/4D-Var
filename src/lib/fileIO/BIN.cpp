@@ -9,7 +9,7 @@
 void BIN::exportScalarDataBIN(const std::string &file, std::vector<double> &vec)
 {
     std::ofstream ofs(file, std::ios::binary);
-    if (!ofs) {
+    if(!ofs) {
         std::cerr << "Could not open " << file << std::endl;
         return;
     }
@@ -17,7 +17,7 @@ void BIN::exportScalarDataBIN(const std::string &file, std::vector<double> &vec)
     ofs.write(reinterpret_cast<const char*>(vec.data()), vec.size() * sizeof(double));
 
     ofs.close();
-    if (!ofs.good()) {
+    if(!ofs.good()) {
         std::cerr << "Error occurred at writing time." << std::endl;
     }
 }
@@ -30,11 +30,11 @@ void BIN::exportVectorDataBIN(const std::string &file, std::vector<std::vector<d
         return;
     }
 
-    size_t rows = vec.size();
+    int rows = vec.size();
     ofs.write(reinterpret_cast<const char*>(&rows), sizeof(rows));
     
     for(const auto& row : vec){
-        size_t cols = row.size();
+        int cols = row.size();
         ofs.write(reinterpret_cast<const char*>(&cols), sizeof(cols));
         ofs.write(reinterpret_cast<const char*>(row.data()), cols * sizeof(double));
     }
@@ -49,8 +49,7 @@ void BIN::importScalarDataBIN(const std::string &file, std::vector<double> &vec)
 {
     std::ifstream ifs(file, std::ios::binary);
     if(!ifs){
-        std::cerr << "Couldn't open file: " << file << std::endl;
-        return;
+        throw std::runtime_error("Couldn't open file: " + file);
     }
 
     ifs.seekg(0, std::ios::end);
@@ -58,14 +57,13 @@ void BIN::importScalarDataBIN(const std::string &file, std::vector<double> &vec)
     ifs.seekg(0, std::ios::beg);
 
     if(size % sizeof(double) != 0){
-        std::cerr << "File size error: " << file << std::endl;
-        return;
+        throw std::runtime_error("File size error: " + file);
     }
 
     vec.resize(size / sizeof(double));
 
     if(!ifs.read(reinterpret_cast<char*>(vec.data()), size)){
-        std::cerr << "Couldn't read file: " << file << std::endl;
+        throw std::runtime_error("Couldn't read file: " + file);
     }
 
     ifs.close();
@@ -75,28 +73,24 @@ void BIN::importVectorDataBIN(const std::string &file, std::vector<std::vector<d
 {
     std::ifstream ifs(file, std::ios::binary);
     if(!ifs){
-        std::cerr << "Couldn't open file: " << file << std::endl;
-        return;
+        throw std::runtime_error("Couldn't open file: " + file);
     }
 
-    size_t rows;
+    int rows;
     if(!ifs.read(reinterpret_cast<char*>(&rows), sizeof(rows))) {
-        std::cerr << "Failed to read rows: " << file << std::endl;
-        return;
+        throw std::runtime_error("Failed to read rows: " + file);
     }
-
+ 
     vec.resize(rows);
 
-    for(size_t j=0; j<rows; j++){
-        size_t cols;
+    for(int j=0; j<rows; j++){
+        int cols;
         if(!ifs.read(reinterpret_cast<char*>(&cols), sizeof(cols))) {
-            std::cerr << "Failed to read cols: " << file << std::endl;
-            return;
+            throw std::runtime_error("Failed to read cols: " + file);
         }
         vec[j].resize(cols);
         if(!ifs.read(reinterpret_cast<char*>(vec[j].data()), cols * sizeof(double))){
-            std::cerr << "Couldn't read file: " << file << std::endl;
-            return;
+            throw std::runtime_error("Couldn't read file: " + file);
         }
     }
 

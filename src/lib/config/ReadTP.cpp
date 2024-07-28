@@ -956,3 +956,94 @@ void Config::readPostInverseFlowRateParameter()
     if(!tp.getInspectedValue(label, crossPoint))
         throw std::runtime_error(label + " is not set");
 }
+
+/*****************************
+ * @brief Read text parameter.
+ */
+void Config::readVoxelCreationParameter()
+{
+    std::string str, base_label, label;
+
+    int tmpInt[dim];
+    double tmpDouble[dim];
+
+    base_label = "/VoxelCreation";
+
+    label = base_label + "/inputDir";
+    if(!tp.getInspectedValue(label, inputDir))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/stepMax";
+    if(!tp.getInspectedValue(label, stepMax))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/nSnapShot";
+    if(!tp.getInspectedValue(label, nSnapShot))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/snapInterval";
+    if(!tp.getInspectedValue(label, snapInterval))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/snapTimeBeginItr";
+    if(!tp.getInspectedValue(label, snapTimeBeginItr))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/nNodesInDataCell";
+    if(!tp.getInspectedValue(label, nNodesInCellData))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/origin";
+    if (!tp.getInspectedVector(label, tmpDouble, dim))
+        throw std::runtime_error(label + " is not set");
+
+    xOrigin = tmpDouble[0];
+    yOrigin = tmpDouble[1];
+    zOrigin = tmpDouble[2];
+
+    label = base_label + "/nxData";
+    if (!tp.getInspectedVector(label, tmpInt, dim))
+        throw std::runtime_error(label + " is not set");
+
+    nxData = tmpInt[0];
+    nyData = tmpInt[1];
+    nzData = tmpInt[2];
+
+    label = base_label + "/lxData";
+    if(!tp.getInspectedVector(label, tmpDouble, dim))
+        throw std::runtime_error(label + " is not set");
+
+    lxData = tmpDouble[0];
+    lyData = tmpDouble[1];
+    lzData = tmpDouble[2];
+
+    dxData = lxData / (double)nxData;
+    dyData = lyData / (double)nyData;
+    dzData = lzData / (double)nzData;
+
+    nCellsDataGlobal = nxData * nxData * nzData;
+
+    label = base_label + "/nxOpt";
+    if(!tp.getInspectedVector(label, tmpInt, dim))
+        throw std::runtime_error(label + " is not set");
+
+    nxOpt = tmpInt[0];
+    nyOpt = tmpInt[1];
+    nzOpt = tmpInt[2];
+
+    label = base_label + "/lxOpt";
+    if(!tp.getInspectedVector(label, tmpDouble, dim))
+        throw std::runtime_error(label + " is not set");
+
+    lxOpt = tmpDouble[0];
+    lyOpt = tmpDouble[1];
+    lzOpt = tmpDouble[2];
+
+    dxOpt = lxOpt / (double)nxOpt;
+    dyOpt = lyOpt / (double)nyOpt;
+    dzOpt = lzOpt / (double)nzOpt;
+
+    nCellsOptGlobal = nxOpt * nxOpt * nzOpt;
+    nNodesOptGlobal = (nxOpt+1) * (nyOpt+1) * (nzOpt+1);
+}
+

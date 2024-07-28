@@ -6,7 +6,6 @@
 
 #include <unistd.h>
 #include "DirectProblem.h"
-#include "Postprocess.h"
 #include "MyMPI.h"
 MyMPI mpi;
 
@@ -36,14 +35,10 @@ int main(int argc, char *argv[])
     sortNode = conf->sortNode;
     
     DirectProblem direct(*conf);
-    Postprocess post(*conf);
-
     direct.initialize(*conf);
-    conf.reset();
 
+    conf.reset();
     direct.runSimulation();
-    
-    post.createData(direct);
 
     PetscFinalize(); 
 

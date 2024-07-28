@@ -1,15 +1,15 @@
 set(compile_options_tmp ${base_compile_options})
 string(REPLACE " " ";" compile_options_tmp ${compile_options_tmp})
 
-add_library(vtk STATIC)
-target_sources(vtk
+add_library(io STATIC)
+target_sources(io
     PRIVATE
         VTI.cpp
         VTU.cpp
         BIN.cpp
 )
 
-target_include_directories(vtk
+target_include_directories(io
     PUBLIC  
         ${PROJECT_SOURCE_DIR}/src/lib/common
         ${PROJECT_SOURCE_DIR}/src/lib/config
@@ -18,4 +18,4 @@ target_include_directories(vtk
         ${PROJECT_SOURCE_DIR}/src/lib/solver
 )
 
-target_compile_options(vtk PUBLIC ${compile_options_tmp})
+target_compile_options(io PUBLIC ${compile_options_tmp})

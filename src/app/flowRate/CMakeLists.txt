@@ -1,4 +1,4 @@
-set(main_target "MAE")
+set(main_target "FlowRate")
 
 set(compile_options_tmp ${base_compile_options})
 string(REPLACE " " ";" compile_options_tmp ${compile_options_tmp})
@@ -15,9 +15,8 @@ target_compile_options(${main_target} PUBLIC ${compile_options_tmp})
 
 target_link_libraries( ${main_target} 
     PRIVATE
-        TP petsc metis omp direct
-        inverse config mesh solver
-        boundary vtk common postinverse
+        TP petsc metis omp config boundary
+        mesh io common solver postinverse
 )
 
 target_include_directories(${main_target} 

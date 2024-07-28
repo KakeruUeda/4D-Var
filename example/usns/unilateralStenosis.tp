@@ -1,0 +1,57 @@
+Base
+{
+    dim = 3
+    outputDir = "unilateralStenosis"
+    numOfOMP = 1
+}
+
+Grid
+{
+    type = "Structured"
+    nx = (128, 64, 64) 
+    lx = (4.0, 2.0, 2.0)
+    extractFluid = "ON"
+    nNodesInCell = 8
+    node = "input/unilateralStenosis/node.dat"
+    cell = "input/unilateralStenosis/cell.dat"
+    image = "input/unilateralStenosis/image.dat"
+}
+
+Boundary
+{
+    velocityDirichlet = "input/unilateralStenosis/velocityDirichletPoiseuille.dat"
+    pressureDirichlet = "input/unilateralStenosis/pressureDirichlet.dat"
+}
+
+PysicalParameter
+{   
+    rho = 50
+    mu = 1   
+}
+
+TimeParameter
+{
+    dt = 0.01
+    timeMax = 2
+    pulsatileFlow = "ON"
+    pulseBeginItr = 10
+    T = 1.0
+}
+
+DarcyParameter
+{
+    alpha = 1e-3
+    resistance = 1e2
+}
+
+Postprocess
+{
+    isSnapShot = "OFF"
+    nSnapShot = 11
+    snapInterval = 5
+    snapTimeBeginItr = 400
+    nNodesInDataCell = 8
+    origin = (0.0, 0.0, 0.0)
+    nxData = (18, 14, 14)
+    lxData = (9.0, 7.0, 7.0)
+}

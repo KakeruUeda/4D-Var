@@ -17,7 +17,7 @@ timeMax(conf.timeMax), pulsatileFlow(conf.pulsatileFlow),
 pulseBeginItr(conf.pulseBeginItr), T(conf.T),
 alpha(conf.alpha), resistance(conf.resistance)  
 {
-    if(app != Application::FDVAR){
+    if(app == Application::USNS){
         std::string dir;
         std::string output = "output";
         mkdir(output.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
@@ -30,6 +30,8 @@ alpha(conf.alpha), resistance(conf.resistance)
         dir = outputDir + "/solution";
         mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
         dir = outputDir + "/dat";
+        mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+        dir = outputDir + "/input";
         mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     }
 }
@@ -48,42 +50,6 @@ void DirectProblem::outputDomain()
     VTK::exportMeshPartitionVTU(vtuFile, grid.node, grid.cell);
     vtuFile = outputDir + "/domain/phi.vtu";
     VTK::exportPhiVTU(vtuFile, grid.node, grid.cell);
-
-    /*
-    std::vector<double> vtiNodeScalar;
-    vtiNodeScalar.resize(grid.node.nNodesStructuredGlobal, 1e0);
-    std::vector<std::vector<double>> vtiNodeVector;
-    vtiNodeVector.resize(grid.node.nNodesStructuredGlobal, std::vector<double>(3, 2e0));
-    std::vector<double> vtiCellScalar;
-    vtiCellScalar.resize(grid.cell.nCellsStructuredGlobal, 3e0);
-    std::vector<std::vector<double>> vtiCellVector;
-    vtiCellVector.resize(grid.cell.nCellsStructuredGlobal, std::vector<double>(3, 4e0));
-    std::vector<double> vtuNodeScalar;
-    vtuNodeScalar.resize(grid.node.nNodesGlobal, 5e0);
-    std::vector<std::vector<double>> vtuNodeVector;
-    vtuNodeVector.resize(grid.node.nNodesGlobal, std::vector<double>(3, 6e0));
-    std::vector<double> vtuCellScalar;
-    vtuCellScalar.resize(grid.cell.nCellsGlobal, 7e0);
-    std::vector<std::vector<double>>  vtuCellVector;
-    vtuCellVector.resize(grid.cell.nCellsGlobal, std::vector<double>(3, 8e0));
-
-    vtiFile = outputDir + "/domain/vtiNodeScalar.vti";
-    VTK::exportScalarPointDataVTI(vtiFile, "vtiNodeScalar", vtiNodeScalar, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
-    vtiFile = outputDir + "/domain/vtiNodeVector.vti";
-    VTK::exportVectorPointDataVTI(vtiFile, "vtiNodeVector", vtiNodeVector, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
-    vtiFile = outputDir + "/domain/vtiCellScalar.vti";
-    VTK::exportScalarCellDataVTI(vtiFile, "vtiCellScalar", vtiCellScalar, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
-    vtiFile = outputDir + "/domain/vtiCellVector.vti";
-    VTK::exportVectorCellDataVTI(vtiFile, "vtiCellVector", vtiCellVector, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
-    vtuFile = outputDir + "/domain/vtuNodeScalar.vtu";
-    VTK::exportScalarPointDataVTU(vtuFile, "vtuNodeScalar", grid.node, grid.cell, vtuNodeScalar);
-    vtuFile = outputDir + "/domain/vtuNodeVector.vtu";
-    VTK::exportVectorPointDataVTU(vtuFile, "vtuNodeVector", grid.node, grid.cell, vtuNodeVector);
-    vtuFile = outputDir + "/domain/vtuCellScalar.vtu";
-    VTK::exportScalarCellDataVTU(vtuFile, "vtuCellScalar", grid.node, grid.cell, vtuCellScalar);
-    vtuFile = outputDir + "/domain/vtuCellVector.vtu";
-    VTK::exportVectorCellDataVTU(vtuFile, "vtuCellVector", grid.node, grid.cell, vtuCellVector);
-    */
 }
 
 /**************************************************
@@ -93,6 +59,13 @@ void DirectProblem::runSimulation()
 {
     outputDomain();
     solveUSNS(app);
+
+    std::string binFile;
+    for(int t=0; t<timeMax; t++){
+        updateSolutionsVTI(t);
+        binFile = outputDir + "/input/velocity_" + to_string(t) + ".bin";
+        BIN::exportVectorDataBIN(binFile, grid.node.vvti);
+    }
 }
 
 /****************************************************************

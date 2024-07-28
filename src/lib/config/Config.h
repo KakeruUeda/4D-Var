@@ -24,7 +24,7 @@ extern MyMPI mpi;
 enum class Application
 {
     STRGRID = 0, SNS = 1, USNS = 2,
-    TDVAR = 3,  FDVAR = 4, 
+    VOXELDATA = 3,  FDVAR = 4, 
     FLOWRATE = 5, MAE = 6
 };
 
@@ -115,6 +115,15 @@ class Config
         int nNodesInCellData;
         int nCellsDataGlobal;
 
+        // Voxel creation
+        int nxOpt, nyOpt, nzOpt;
+        double lxOpt, lyOpt, lzOpt;
+        double dxOpt, dyOpt, dzOpt;
+        int nCellsOptGlobal;
+        int nNodesOptGlobal;
+        int stepMax;
+        std::string inputDir;
+
         // Boundary parameter for stgrid
         std::vector<std::string> bdStr;
         std::vector<std::string> bdType;
@@ -188,7 +197,7 @@ class Config
         void readPostInverseBasicParameter();
         void readPostInverseVelocityParameter();
         void readPostInverseFlowRateParameter();
-
+        void readVoxelCreationParameter();
         void readBoundaryTypeAndValue(std::string labelType, 
                                       std::string labelValue, int &tmp);
 };

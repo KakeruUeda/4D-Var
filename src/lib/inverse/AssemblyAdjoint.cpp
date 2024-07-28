@@ -361,12 +361,12 @@ void Adjoint::boundaryInGaussIntegral(MatrixXd &Klocal, Function &func, const in
 {
     func.vol = func.detJ * func.weight;
     
-    Klocal(IU, JLU) -= func.N[ii] * func.N[jj] * func.vol;
-    Klocal(IV, JLV) -= func.N[ii] * func.N[jj] * func.vol;
-    Klocal(IW, JLW) -= func.N[ii] * func.N[jj] * func.vol;
-    Klocal(ILU, JU) -= func.N[ii] * func.N[jj] * func.vol; 
-    Klocal(ILV, JV) -= func.N[ii] * func.N[jj] * func.vol; 
-    Klocal(ILW, JW) -= func.N[ii] * func.N[jj] * func.vol; 
+    Klocal(IU, JLU) += func.N[ii] * func.N[jj] * func.vol;
+    Klocal(IV, JLV) += func.N[ii] * func.N[jj] * func.vol;
+    Klocal(IW, JLW) += func.N[ii] * func.N[jj] * func.vol;
+    Klocal(ILU, JU) += func.N[ii] * func.N[jj] * func.vol; 
+    Klocal(ILV, JV) += func.N[ii] * func.N[jj] * func.vol; 
+    Klocal(ILW, JW) += func.N[ii] * func.N[jj] * func.vol; 
 }
 
 

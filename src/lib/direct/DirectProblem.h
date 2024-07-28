@@ -95,6 +95,7 @@ private:
     void setVariablesZero();
     void updateRowIndex(const int ii, const int ic);
     void updateColumnIndex(const int ii, const int ic);
+    void compVorticity(const int t);
 };
 
 #endif

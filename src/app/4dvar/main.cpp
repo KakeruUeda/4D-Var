@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
     conf.reset();
     inverse.runSimulation();
 
-    PetscPrintf(MPI_COMM_WORLD, "\nTerminate\n");
+    PetscPrintf(MPI_COMM_WORLD, "\nTerminated.\n");
     PetscFinalize(); 
 
     return EXIT_SUCCESS;

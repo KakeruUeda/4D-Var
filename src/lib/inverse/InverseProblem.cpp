@@ -301,7 +301,7 @@ void InverseProblem::compCostFunction()
             double volume = data.dx * data.dy * data.dz;
             double deltaT = main.dt * main.snap.snapInterval;
             for(int d=0; d<dim; d++){
-                data(ic).ve[t][d] = data(ic).vMRI[t][d] - data(ic).vCFD[t][d];
+                data(ic).ve[t][d] = data(ic).vCFD[t][d] - data(ic).vMRI[t][d];
                 dev += data(ic).ve[t][d] * data(ic).ve[t][d];
             }
             costFunction.term1 += 5e-1 * aCF * dev * volume * deltaT;

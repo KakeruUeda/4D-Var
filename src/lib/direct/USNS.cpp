@@ -78,12 +78,14 @@ void DirectProblem::solveUSNS(Application &app)
 
         VecRestoreArray(vecSEQ, &arraySolnTmp);
         updateSolutions();
+        updateTimeSolutions(t);
 
         // visualize
         switch(grid.gridType){
             case GridType::STRUCTURED:
-                updateSolutionsVTI(t);
+                updateSolutionsVTI();
                 outputSolutionsVTI(t);
+                compVorticity(t);
             break;
             case GridType::UNSTRUCTURED:
                 outputSolutionsVTU(t);
@@ -367,9 +369,9 @@ void DirectProblem::outputSolutionsVTI(const int t)
     if(mpi.myId > 0) return;
 
     std::string vtiFile;
-    vtiFile = outputDir + "/velocity" + to_string(t) + ".vti";
+    vtiFile = outputDir + "/solution/velocity" + to_string(t) + ".vti";
     VTK::exportVectorPointDataVTI(vtiFile, "velocity", grid.node.vvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
-    vtiFile = outputDir + "/pressure" + to_string(t) + ".vti";
+    vtiFile = outputDir + "/solution/pressure" + to_string(t) + ".vti";
     VTK::exportScalarPointDataVTI(vtiFile, "pressure", grid.node.pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 
@@ -381,9 +383,9 @@ void DirectProblem::outputSolutionsVTU(const int t)
     if(mpi.myId > 0) return;
 
     std::string vtuFile;
-    vtuFile = outputDir + "/velocity" + to_string(t) + ".vtu";
+    vtuFile = outputDir + "/solution/velocity" + to_string(t) + ".vtu";
     VTK::exportVectorPointDataVTU(vtuFile, "velocity", grid.node, grid.cell, grid.node.v);
-    vtuFile = outputDir + "/pressure" + to_string(t) + ".vtu";
+    vtuFile = outputDir + "/solution//pressure" + to_string(t) + ".vtu";
     VTK::exportScalarPointDataVTU(vtuFile, "pressure", grid.node, grid.cell, grid.node.p);
 }
 
@@ -426,6 +428,41 @@ void SnapShot::takeSnapShot(std::vector<std::vector<double>> &_v,
             v[snapCount][in][d] = _v[in][d];
         }
     }
+}
+
+void DirectProblem::compVorticity(const int t)
+{
+    if(mpi.myId != 0) return;
+
+    std::vector<std::vector<double>> omega((grid.nx+1)*(grid.ny+1)*(grid.nz+1), std::vector<double>(3, 0e0));
+    for(int k=1; k<grid.nz; k++){
+        for(int j=1; j<grid.ny; j++){
+            for(int i=1; i<grid.nx; i++){
+                int n = i + j*(grid.nx+1) + k*(grid.nx+1)*(grid.ny+1);
+                int n_iminus1 = i-1 + j*(grid.nx+1) + k*(grid.nx+1)*(grid.ny+1);
+                int n_iplus1  = i+1 + j*(grid.nx+1) + k*(grid.nx+1)*(grid.ny+1);
+                int n_jminus1 = i + (j-1)*(grid.nx+1) + k*(grid.nx+1)*(grid.ny+1);
+                int n_jplus1  = i + (j+1)*(grid.nx+1) + k*(grid.nx+1)*(grid.ny+1);
+                int n_kminus1 = i + j*(grid.nx+1) + (k-1)*(grid.nx+1)*(grid.ny+1);
+                int n_kplus1  = i + j*(grid.nx+1) + (k+1)*(grid.nx+1)*(grid.ny+1);
+                double dw_dy = (grid.node.vvti[n_jplus1][2] - grid.node.vvti[n_jminus1][2]) / (2.0 * grid.dy);
+                double dv_dz = (grid.node.vvti[n_kplus1][1] - grid.node.vvti[n_kminus1][1]) / (2.0 * grid.dz);
+                double du_dz = (grid.node.vvti[n_kplus1][0] - grid.node.vvti[n_kminus1][0]) / (2.0 * grid.dz);
+                double dw_dx = (grid.node.vvti[n_iplus1][2] - grid.node.vvti[n_iminus1][2]) / (2.0 * grid.dx);
+                double dv_dx = (grid.node.vvti[n_iplus1][1] - grid.node.vvti[n_iminus1][1]) / (2.0 * grid.dx);
+                double du_dy = (grid.node.vvti[n_jplus1][0] - grid.node.vvti[n_jminus1][0]) / (2.0 * grid.dy);
+
+                omega[n][0] = dw_dy - dv_dz;
+                omega[n][1] = du_dz - dw_dx;
+                omega[n][2] = dv_dx - du_dy;
+
+            }
+        }
+    }
+    
+    std::string vtiFile;
+    vtiFile = outputDir + "/solution/vorticity" + to_string(t) + ".vti";
+    VTK::exportVectorPointDataVTI(vtiFile, "vorticity", omega, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 
 
