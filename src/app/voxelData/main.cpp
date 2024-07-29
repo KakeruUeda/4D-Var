@@ -25,9 +25,9 @@ int main(int argc, char *argv[])
     mkdir(output.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     conf.outputDir = "output/" + conf.outputDir;
     mkdir(conf.outputDir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-    dir = conf.outputDir + "/bin";
+    dir = conf.outputDir + "/input_bin";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-    dir = conf.outputDir + "/vtk";
+    dir = conf.outputDir + "/input_vtk";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 
     Cell cell; Node node;

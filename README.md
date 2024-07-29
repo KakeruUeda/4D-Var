@@ -13,7 +13,7 @@ This C++ code supports both foward and inverse analyses in CFD using the Message
 ・**UnsteadyNavierStokesSolver**: Solves Unsteady Navier-Stokes equation. <br>
 ・**4DVar (Four-Dimensional Variational Data Assimilation)**: Solves inverse problem. <br> 
 ## Examples
-&nbsp;&nbsp;&nbsp; Direct Solver (8 MPI Processes) <br>
+&nbsp;&nbsp;&nbsp; Foward Solver (8 MPI Processes) <br>
 <img src="images/vessel_group.png" alt="Image description" width="600"> <br>
 &nbsp;&nbsp;&nbsp; Example - MPI Performance <br>
 <img src="images/mpi_performance.png" alt="Image description" width="270"> <br>
