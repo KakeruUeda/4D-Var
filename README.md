@@ -2,9 +2,15 @@
 ## Overview
 This C++ code supports both foward and inverse analyses in CFD using the Message Passing Interface (MPI). The inverse routine addresses forward and adjoint equations to optimize control variables, including the inlet Dirichlet boundary condition and the initial velocity field. These physical equations are discretized on an orthogonal grid employing the Finite Element Method (FEM).
 ## Dependencies
-・METIS: Parallel Domain Partitioning <br>
 ・PETSc: The Portable, Extensible Toolkit for Scientific Computation <br>
+・METIS: Parallel Domain Partitioning <br>
 ・TextParser: Text Parsing Library for input <br>
+
+See: <br>
+https://petsc.org/release/ <br>
+https://github.com/KarypisLab/METIS <br>
+https://github.com/avr-aics-riken/TextParser <br>
+
 ## Usage
     * sh build.sh
     * cd /<example_dir>
