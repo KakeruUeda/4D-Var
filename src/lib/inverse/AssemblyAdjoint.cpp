@@ -12,9 +12,6 @@
 void Adjoint::matrixAssemblyAdjoint(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal, 
                                     Function &func, const int ic, const int t)
 {   
-    Gauss g2(2);
-    double dxdr[3][3];
-    
     for(int p=0; p<grid.cell.nNodesInCell; p++){
         for(int d=0; d<main.dim; d++){
             func.xCurrent[p][d] = grid.node.x[grid.cell(ic).node[p]][d];
@@ -23,22 +20,12 @@ void Adjoint::matrixAssemblyAdjoint(DirectProblem &main, MatrixXd &Klocal, Vecto
     double he = fabs(func.xCurrent[1][0] - func.xCurrent[0][0]);
     double f = main.resistance * main.alpha * (1e0 - grid.cell(ic).phi) 
                                      / (main.alpha + grid.cell(ic).phi);
-
+    
+    Gauss g2(2);
     for(int i1=0; i1<2; i1++){
         for(int i2=0; i2<2; i2++){
             for(int i3=0; i3<2; i3++){
-                ShapeFunction3D::C3D8_N(func.N, g2.point[i1], g2.point[i2], g2.point[i3]);
-                ShapeFunction3D::C3D8_dNdr(func.dNdr, g2.point[i1], g2.point[i2], g2.point[i3]);
-
-                MathFEM::comp_dxdr(dxdr, func.dNdr, func.xCurrent, grid.cell.nNodesInCell);
-                MathFEM::comp_dNdx(func.dNdx, func.dNdr, dxdr, grid.cell.nNodesInCell);
-
-                func.detJ = MathCommon::compDeterminant_3x3(dxdr);
-                func.weight = g2.weight[i1] * g2.weight[i2] * g2.weight[i3];
-
-                setValue(main, func, ic, t);
-                tau = MathFEM::comp_tau(wk1, he, main.Re, main.dt);
-
+                setValuesInGaussIntegral(main, func, g2, he, i1, i2, i3, ic, t);
                 for(int ii=0; ii<grid.cell.nNodesInCell; ii++){  
                     updateRowIndex(ii, ic);
                     for(int jj=0; jj<grid.cell.nNodesInCell; jj++){  
@@ -50,7 +37,27 @@ void Adjoint::matrixAssemblyAdjoint(DirectProblem &main, MatrixXd &Klocal, Vecto
             }
         }
     }
+}
 
+/**************************************
+ * @brief Set values in gauss integral.
+ */
+void Adjoint::setValuesInGaussIntegral(DirectProblem &main, Function &func, Gauss &g2, const double he,
+                                      const int i1, const int i2, const int i3, const int ic, const int t)
+{
+    double dxdr[3][3];
+
+    ShapeFunction3D::C3D8_N(func.N, g2.point[i1], g2.point[i2], g2.point[i3]);
+    ShapeFunction3D::C3D8_dNdr(func.dNdr, g2.point[i1], g2.point[i2], g2.point[i3]);
+
+    MathFEM::comp_dxdr(dxdr, func.dNdr, func.xCurrent, grid.cell.nNodesInCell);
+    MathFEM::comp_dNdx(func.dNdx, func.dNdr, dxdr, grid.cell.nNodesInCell);
+
+    func.detJ = MathCommon::compDeterminant_3x3(dxdr);
+    func.weight = g2.weight[i1] * g2.weight[i2] * g2.weight[i3];
+
+    setValue(main, func, ic, t);
+    tau = MathFEM::comp_tau(wk1, he, main.Re, main.dt);
 }
 
 /**********************************************************************

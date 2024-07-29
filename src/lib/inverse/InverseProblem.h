@@ -51,8 +51,9 @@ struct CostFunction
 class Adjoint
 {
 public:
-    Adjoint(Config &conf) : grid(conf), dim(conf.dim), planeDir(conf.planeDir), timeMax(conf.timeMax), 
-                            rho(conf.rho), mu(conf.mu), dt(conf.dt), alpha(conf.alpha), resistance(conf.resistance)
+    Adjoint(Config &conf) : 
+    grid(conf), dim(conf.dim), planeDir(conf.planeDir), timeMax(conf.timeMax),
+    rho(conf.rho), mu(conf.mu), dt(conf.dt), alpha(conf.alpha), resistance(conf.resistance)
     {
     }
 
@@ -86,14 +87,15 @@ public:
     std::vector<int> planeDir;
 
     void solveAdjoint(DirectProblem &main, std::string outputDir,
-                      std::vector<std::vector<std::vector<double>>> &feedbackForceT,
-                      const int outputItr, const int loop);
+                      std::vector<std::vector<std::vector<double>>> &feedbackForceT);
     void setValue(DirectProblem &main, Function &func, const int ic, const int t);
     void matrixAssemblyAdjoint(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
                                Function &func, const int ic, const int t);
     void boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal,
                           Function &func, const int ic, const int ib);
     void boundaryInGaussIntegral(MatrixXd &Klocal, Function &func, const int ii, const int jj);
+    void setValuesInGaussIntegral(DirectProblem &main, Function &func, Gauss &g2, const double he,
+                                  const int i1, const int i2, const int i3, const int ic, const int t);
     void adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, Function &func,
                                  const double f, const int ii, const int jj);
     void adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, Function &func,
@@ -137,6 +139,8 @@ public:
     int loopMax;
     int outputItr;
 
+    bool isConverged_X, isConverged_X0;
+
     std::vector<int> planeDir;
     std::vector<std::vector<std::vector<double>>> feedbackForce;
     std::vector<std::vector<std::vector<double>>> feedbackForceT;
@@ -162,8 +166,9 @@ public:
     void GaussIntegralOptimalConditionTerm2(Function &func, double (&value)[4][3], const int ic, const int t);
     void GaussIntegralOptimalConditionTerm3(Function &func, double (&value)[4][3], const int ic, const int t);
     void GaussIntegralOptimalConditionInitial(Function &func, std::vector<std::vector<double>> &value, const int ic);
-    double armijoCriteria(const double fk);
-    void updataControlVariables(DirectProblem &main, const double alpha);
+    double armijoCriteriaX(const double fk);
+    double armijoCriteriaX0(const double fk);
+    void updataControlVariables(DirectProblem &main, const double alphaX, const double alphaX0);
 
     void setValue(Function &func, const int ic);
 

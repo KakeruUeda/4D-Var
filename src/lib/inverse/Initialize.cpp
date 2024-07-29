@@ -44,6 +44,9 @@ void InverseProblem::initialize(Config &conf)
     adjoint.nu = adjoint.mu / adjoint.rho;
     adjoint.Re = 1e0 / adjoint.nu; 
 
+    isConverged_X = false;
+    isConverged_X0 = false;
+
     VecTool::resize(adjoint.grid.node.w, adjoint.grid.node.nNodesGlobal, dim);
     VecTool::resize(adjoint.grid.node.wPrev, adjoint.grid.node.nNodesGlobal, dim);
     VecTool::resize(adjoint.grid.node.q, adjoint.grid.node.nNodesGlobal);

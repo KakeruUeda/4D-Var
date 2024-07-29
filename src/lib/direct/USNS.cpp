@@ -444,7 +444,6 @@ void DirectProblem::compVorticity(const int t)
                 omega[n][0] = dw_dy - dv_dz;
                 omega[n][1] = du_dz - dw_dx;
                 omega[n][2] = dv_dx - du_dy;
-
             }
         }
     }

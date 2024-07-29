@@ -10,8 +10,7 @@
  * @brief Solve adjoint equation.
  */
 void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
-                           std::vector<std::vector<std::vector<double>>> &feedbackForceT,
-                           const int outputItr, const int loop)
+                           std::vector<std::vector<std::vector<double>>> &feedbackForceT)
 {
     PetscPrintf(MPI_COMM_WORLD, "\nADJOINT SOLVER\n");
     PetscScalar *arraySolnTmp;
@@ -138,6 +137,9 @@ void Adjoint::updateSolutionsVTI()
     }   
 }
 
+/**********************************
+ * @brief Update solutions for VTI.
+ */
 void Adjoint::updateSolutionsVTI(const int t)
 {    
     for(int in=0; in<grid.node.nNodesGlobal; in++){
@@ -180,6 +182,9 @@ void Adjoint::updateSolutions()
     }
 }
 
+/**********************************
+ * @brief Save solutions over time.
+ */
 void Adjoint::updateTimeSolutions(const int t)
 {
     for(int in=0; in<grid.node.nNodesGlobal; in++){
@@ -191,6 +196,9 @@ void Adjoint::updateTimeSolutions(const int t)
     }
 }
 
+/***********************************
+ * @brief Output solutions for VTU.
+ */
 void Adjoint::outputSolutionsVTU(const std::string &dir,const int t)
 {
     if(mpi.myId > 0) return;
@@ -204,6 +212,9 @@ void Adjoint::outputSolutionsVTU(const std::string &dir,const int t)
     VTK::exportVectorPointDataVTU(vtuFile, "l", grid.node, grid.cell, grid.node.l);
 }
 
+/***********************************
+ * @brief Output solutions for VTU.
+ */
 void Adjoint::outputSolutionsVTU(const std::string &dir, const int t, const int loop)
 {
     if(mpi.myId > 0) return;
@@ -217,6 +228,9 @@ void Adjoint::outputSolutionsVTU(const std::string &dir, const int t, const int 
     VTK::exportVectorPointDataVTU(vtuFile, "l", grid.node, grid.cell, grid.node.l);
 }
 
+/***********************************
+ * @brief Output solutions for VTI.
+ */
 void Adjoint::outputSolutionsVTI(const std::string &dir, const int t)
 {
     if(mpi.myId > 0) return;
@@ -230,6 +244,9 @@ void Adjoint::outputSolutionsVTI(const std::string &dir, const int t)
     VTK::exportVectorPointDataVTI(vtiFile, "l", grid.node.lvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 
+/***********************************
+ * @brief Output solutions for VTI.
+ */
 void Adjoint::outputSolutionsVTI(const std::string &dir, const int t, const int loop)
 {
     if(mpi.myId > 0) return;

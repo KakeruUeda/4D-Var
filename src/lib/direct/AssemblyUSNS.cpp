@@ -11,9 +11,6 @@
  */
 void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, Function &func, const int ic, const int t)
 {
-    Gauss g2(2);
-    double dxdr[3][3];
-
     for(int p=0; p<grid.cell.nNodesInCell; p++){
        for(int d=0; d<dim; d++){
             func.xCurrent[p][d] = 0e0;
@@ -24,29 +21,19 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, Funct
     double he = fabs(func.xCurrent[1][0] - func.xCurrent[0][0]);
     double f = resistance * alpha * (1e0 - grid.cell(ic).phi) 
                                 / (alpha + grid.cell(ic).phi);
-
+                                
+    Gauss g2(2);
     for(int i1=0; i1<2; i1++){
         for(int i2=0; i2<2; i2++){
             for(int i3=0; i3<2; i3++){
-                ShapeFunction3D::C3D8_N(func.N, g2.point[i1], g2.point[i2], g2.point[i3]);
-                ShapeFunction3D::C3D8_dNdr(func.dNdr, g2.point[i1], g2.point[i2], g2.point[i3]);
-
-                MathFEM::comp_dxdr(dxdr, func.dNdr, func.xCurrent, grid.cell.nNodesInCell);
-                MathFEM::comp_dNdx(func.dNdx, func.dNdr, dxdr, grid.cell.nNodesInCell);
-                
-                func.detJ = MathCommon::compDeterminant_3x3(dxdr);
-                func.weight = g2.weight[i1] * g2.weight[i2] * g2.weight[i3];
-
-                setVelocityValue(func, ic, t);
-                tau = MathFEM::comp_tau(advgp, he, Re, dt);
-
+                setValuesInGaussIntegral(func, g2, he, i1, i2, i3, ic, t);
                 for(int ii=0; ii<grid.cell.nNodesInCell; ii++){  
                     updateRowIndex(ii, ic);
                     for(int jj=0; jj<grid.cell.nNodesInCell; jj++){  
                         updateColumnIndex(jj, ic);
-                        mainGaussIntegralLHS(Klocal, func, f, ii, jj);
+                        usnsGaussIntegralLHS(Klocal, func, f, ii, jj);
                     }
-                    mainGaussIntegralRHS(Flocal, func, f, ii);    
+                    usnsGaussIntegralRHS(Flocal, func, f, ii);    
                 }
             }
         }
@@ -54,10 +41,31 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, Funct
 
 }
 
+/**************************************
+ * @brief Set Values in gauss integral.
+ */
+void DirectProblem::setValuesInGaussIntegral(Function &func, Gauss &g2, const double he,
+                                            const int i1, const int i2, const int i3, 
+                                            const int ic, const int t)
+{
+    double dxdr[3][3];
+    ShapeFunction3D::C3D8_N(func.N, g2.point[i1], g2.point[i2], g2.point[i3]);
+    ShapeFunction3D::C3D8_dNdr(func.dNdr, g2.point[i1], g2.point[i2], g2.point[i3]);
+
+    MathFEM::comp_dxdr(dxdr, func.dNdr, func.xCurrent, grid.cell.nNodesInCell);
+    MathFEM::comp_dNdx(func.dNdx, func.dNdr, dxdr, grid.cell.nNodesInCell);
+                
+    func.detJ = MathCommon::compDeterminant_3x3(dxdr);
+    func.weight = g2.weight[i1] * g2.weight[i2] * g2.weight[i3];
+
+    setVelocityValue(func, ic, t);
+    tau = MathFEM::comp_tau(advgp, he, Re, dt);
+}
+
 /**********************************************************************
  * @brief Compute element sfiffness LHS matrix on gauss integral point. 
  */
-void DirectProblem::mainGaussIntegralLHS(MatrixXd &Klocal, Function &func, const double f, const int ii, const int jj)
+void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, Function &func, const double f, const int ii, const int jj)
 {
     int n1, n2, n3;
     func.vol = func.detJ * func.weight;
@@ -153,7 +161,7 @@ void DirectProblem::mainGaussIntegralLHS(MatrixXd &Klocal, Function &func, const
 /**********************************************************************
  * @brief Compute element sfiffness RHS vector on gauss integral point. 
  */
-void DirectProblem::mainGaussIntegralRHS(VectorXd &Flocal, Function &func, const double f, const int ii)
+void DirectProblem::usnsGaussIntegralRHS(VectorXd &Flocal, Function &func, const double f, const int ii)
 {
     int n1, n2, n3;
     func.vol = func.detJ * func.weight;

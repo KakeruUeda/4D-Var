@@ -78,7 +78,7 @@ public:
     void compInitialCondition(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
                               std::vector<std::map<int, double>> &pDirichletTmp);
     void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, Function &func, const int ic, const int t);
-    
+
     void updateSolutionsVTI();
     void updateSolutionsVTI(const int t);
     void outputSolutionsVTI(const std::string &dir, const int t);
@@ -87,8 +87,10 @@ public:
     void outputSolutionsVTU(const std::string &dir, const int t, const int loop);
 
 private:
-    void mainGaussIntegralLHS(MatrixXd &Klocal, Function &func, const double f, const int ii, const int jj);
-    void mainGaussIntegralRHS(VectorXd &Flocal, Function &func, const double f, const int ii);
+    void setValuesInGaussIntegral(Function &func, Gauss &g2, const double he,
+                                  const int i1, const int i2, const int i3, const int ic, const int t);
+    void usnsGaussIntegralLHS(MatrixXd &Klocal, Function &func, const double f, const int ii, const int jj);
+    void usnsGaussIntegralRHS(VectorXd &Flocal, Function &func, const double f, const int ii);
     void setVelocityValue(Function &func, const int ic, const int t);
     void updateSolutions();
     void updateTimeSolutions(const int t);

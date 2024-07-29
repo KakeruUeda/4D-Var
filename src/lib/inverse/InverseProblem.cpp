@@ -68,22 +68,27 @@ void InverseProblem::runSimulation()
         compFeedbackForce();
         compTimeInterpolatedFeedbackForce();
 
-        outputFowardSolutions(loop);
-        outputControlVariables(loop);
-        outputVelocityData(loop);
-        outputFeedbackForce(loop);
-
+        if(loop % outputItr == 0){
+            outputFowardSolutions(loop);
+            outputControlVariables(loop);
+            outputVelocityData(loop);
+            outputFeedbackForce(loop);
+        }
         MPI_Barrier(MPI_COMM_WORLD);
         
-        adjoint.solveAdjoint(main, outputDir, feedbackForceT, outputItr, loop);
+        adjoint.solveAdjoint(main, outputDir, feedbackForceT);
         compOptimalCondition();
 
-        outputAdjointSolutions(loop);
+        if(loop % outputItr == 0){
+            outputAdjointSolutions(loop);
+        }
         MPI_Barrier(MPI_COMM_WORLD);
 
-        double alpha = armijoCriteria(costFunction.total);
-        PetscPrintf(MPI_COMM_WORLD, "\nalpha = %f\n", alpha);
-        updataControlVariables(main, alpha);
+        double alphaX = armijoCriteriaX(costFunction.total);
+        double alphaX0 = armijoCriteriaX0(costFunction.total);
+
+        PetscPrintf(MPI_COMM_WORLD, "\n(alphaX, alphaX0) = (%f, %f)\n", alphaX, alphaX0);
+        updataControlVariables(main, alphaX, alphaX0);
     }
     cf.close();
 
@@ -142,7 +147,7 @@ void InverseProblem::guessInitialCondition()
 /*****************************************************
  * @brief Update control variables for next iteration.
  */
-void InverseProblem::updataControlVariables(DirectProblem &main, const double alpha)
+void InverseProblem::updataControlVariables(DirectProblem &main, const double alphaX, const double alphaX0)
 {   
     int n = adjoint.grid.dirichlet.controlBoundaryMap.size();
     for(int t=0; t<main.timeMax; t++){
@@ -150,17 +155,20 @@ void InverseProblem::updataControlVariables(DirectProblem &main, const double al
             int in = adjoint.grid.dirichlet.controlBoundaryMap[ib];
             std::vector<double> vecTmp(dim, 0e0);
             for(int d=0; d<dim; d++){
-                X[t][ib][d] += alpha * (-grad[t][ib][d]);
+                X[t][ib][d] += alphaX * (-grad[t][ib][d]);
             }
         }
     }
     for(int in=0; in<main.grid.node.nNodesGlobal; in++){
         for(int d=0; d<main.dim; d++){
-            X0[in][d] += alpha * (-gradInitVel[in][d]);
+            X0[in][d] += alphaX0 * (-gradInitVel[in][d]);
         }
     }
 }
 
+/***************************************
+ * @brief Output velocity and pressure.
+ */
 void InverseProblem::outputFowardSolutions(const int loop)
 {
     if(mpi.myId != 0) return;
@@ -182,6 +190,9 @@ void InverseProblem::outputFowardSolutions(const int loop)
     }
 }
 
+/************************
+ * @brief Output w, q, l.
+ */
 void InverseProblem::outputAdjointSolutions(const int loop)
 {
     if(mpi.myId != 0) return;
@@ -204,7 +215,7 @@ void InverseProblem::outputAdjointSolutions(const int loop)
 }
 
 /*******************************************
- * @brief Export control variables X and X0.
+ * @brief Output control variables X and X0.
  */
 void InverseProblem::outputControlVariables(const int loop)
 {
@@ -216,7 +227,7 @@ void InverseProblem::outputControlVariables(const int loop)
 }
 
 /***********************************************
- * @brief Export velocity data (vCFD, vMRI, ve).
+ * @brief Output velocity data (vCFD, vMRI, ve).
  */
 void InverseProblem::outputVelocityData(const int loop)
 {
@@ -230,7 +241,7 @@ void InverseProblem::outputVelocityData(const int loop)
 }
 
 /*************************************************
- * @brief Export time interpolated feedback force.
+ * @brief Output time interpolated feedback force.
  */
 void InverseProblem::outputFeedbackForce(const int loop)
 {
@@ -244,7 +255,7 @@ void InverseProblem::outputFeedbackForce(const int loop)
 }
 
 /****************************************
- * @brief Export velocity to binary file.
+ * @brief Output velocity to binary file.
  */
 void InverseProblem::outputVelocityBIN(const int loop)
 {
@@ -258,7 +269,7 @@ void InverseProblem::outputVelocityBIN(const int loop)
 }
 
 /************************************
- * @brief Export optimized variables.
+ * @brief Output optimized variables.
  */
 void InverseProblem::outputOptimizedVariables()
 {
@@ -1020,26 +1031,34 @@ void InverseProblem::GaussIntegralOptimalConditionTerm3(Function &func, double (
     }
 }
 
-double InverseProblem::armijoCriteria(const double fk)
+/**********************************
+ * @brief Decide step length for X.
+ */
+double InverseProblem::armijoCriteriaX(const double fk)
 {
+    if(isConverged_X) return 0e0;
+    
     int n = adjoint.grid.dirichlet.controlBoundaryMap.size();
     const double c1 = 1e-2;
     double alpha = 1e0;
 
     std::vector<std::map<int, std::vector<double>>> vDirichletTmp;
     std::vector<std::map<int, std::vector<double>>> vDirichletNewTmp;
-    vDirichletTmp.resize(adjoint.timeMax);
-    vDirichletNewTmp.resize(adjoint.timeMax); 
-    
-    std::vector<std::map<int, double>> pDirichletNewTmp;
-    pDirichletNewTmp = adjoint.grid.dirichlet.pDirichletNew;
+    vDirichletTmp.resize(main.timeMax);
+    vDirichletNewTmp.resize(main.timeMax); 
 
-    std::vector<std::vector<double>> v0Tmp;
-    VecTool::resize(v0Tmp, main.grid.node.nNodesGlobal, main.dim);
+    int iterationCount = 0;
+    const int maxIteration = 5;
  
-    while(10){
-        // Inlet Boundary
-        for(int t=0; t<adjoint.timeMax; t++){
+    while(true){
+        iterationCount++;
+        if(iterationCount > maxIteration){
+            PetscPrintf(MPI_COMM_WORLD, "Armijo X reached max iteration.\n");
+            isConverged_X = true;
+            break;
+        }
+
+        for(int t=0; t<main.timeMax; t++){
             for(int ib=0; ib<n; ib++){
                 int in = adjoint.grid.dirichlet.controlBoundaryMap[ib];
                 std::vector<double> vecTmp(dim, 0e0);
@@ -1050,10 +1069,10 @@ double InverseProblem::armijoCriteria(const double fk)
                 vDirichletTmp[t][in] = vecTmp;
             }
         }
-        for(int t=0; t<adjoint.timeMax; t++){
+        for(int t=0; t<main.timeMax; t++){
             for(auto &pair : vDirichletTmp[t]){
                 std::vector<double> vecTmp;
-                int in = adjoint.grid.node.mapNew[pair.first];
+                int in = main.grid.node.mapNew[pair.first];
                 for(auto &value : pair.second){
                     vecTmp.push_back(value);
                 }
@@ -1061,13 +1080,8 @@ double InverseProblem::armijoCriteria(const double fk)
             }
         }
 
-        // Initial Condition 
-        for(int in=0; in<main.grid.node.nNodesGlobal; in++){
-            for(int d=0; d<main.dim; d++){
-                v0Tmp[in][d] = X0[in][d] + alpha * (-gradInitVel[in][d]);
-            }
-        }
-        main.solveUSNS(vDirichletNewTmp, pDirichletNewTmp, v0Tmp);
+        main.solveUSNS(vDirichletNewTmp, 
+                       main.grid.dirichlet.pDirichletNew, main.grid.node.v0);
         compCostFunction();
 
         double lk = costFunction.total;
@@ -1088,11 +1102,67 @@ double InverseProblem::armijoCriteria(const double fk)
         if(lk <= l_tmp){
             main.grid.dirichlet.vDirichlet = vDirichletTmp;
             main.grid.dirichlet.vDirichletNew = vDirichletNewTmp;
+            break;
+        }else{
+            alpha = alpha * 5e-1;
+            PetscPrintf(MPI_COMM_WORLD, "Almijo %e %e %e %e\n", fk, lk, l_tmp, alpha);
+        }
+    }
+
+    return alpha;
+}
+
+/***********************************
+ * @brief Decide step length for X0.
+ */
+double InverseProblem::armijoCriteriaX0(const double fk)
+{
+    if(isConverged_X0) return 0e0;
+
+    const double c1 = 1e-2;
+    double alpha = 5e-1;
+    
+    std::vector<std::vector<double>> v0Tmp;
+    VecTool::resize(v0Tmp, main.grid.node.nNodesGlobal, main.dim);
+    
+    int iterationCount = 0;
+    const int maxIteration = 5;
+    
+    while(true){
+        iterationCount++;
+        if(iterationCount > maxIteration){
+            PetscPrintf(MPI_COMM_WORLD, "Armijo X0 reached max iteration.\n");
+            isConverged_X0 = true;
+            break;
+        }
+        
+        for(int in=0; in<main.grid.node.nNodesGlobal; in++){
+            for(int d=0; d<main.dim; d++){
+                v0Tmp[in][d] = X0[in][d] + alpha * (-gradInitVel[in][d]);
+            }
+        }
+        main.solveUSNS(main.grid.dirichlet.vDirichletNew, 
+                       main.grid.dirichlet.pDirichletNew, v0Tmp);
+        compCostFunction();
+
+        double lk = costFunction.total;
+
+        double tmp = 0e0;
+        for(int in=0; in<main.grid.nNodesGlobal; in++){
+            for(int d=0; d<dim; d++){
+                tmp += -(gradInitVel[in][d] * gradInitVel[in][d]);
+            }
+        }
+
+        double l_tmp = fk + c1 * tmp * alpha;
+
+        // printf("Almijo %e %e %e\n",fk,lk,l_tmp);
+        if(lk <= l_tmp){
             main.grid.node.v0 = v0Tmp;
             break;
         }else{
             alpha = alpha * 5e-1;
-            printf("Almijo %e %e %e %e\n", fk, lk, l_tmp, alpha);
+            PetscPrintf(MPI_COMM_WORLD, "Almijo %e %e %e %e\n", fk, lk, l_tmp, alpha);
         }
     }
 
