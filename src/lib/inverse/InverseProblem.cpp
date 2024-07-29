@@ -87,6 +87,8 @@ void InverseProblem::runSimulation()
         double alphaX = armijoCriteriaX(costFunction.total);
         double alphaX0 = armijoCriteriaX0(costFunction.total);
 
+        if(isConverged_X && isConverged_X0) break;
+
         PetscPrintf(MPI_COMM_WORLD, "\n(alphaX, alphaX0) = (%f, %f)\n", alphaX, alphaX0);
         updataControlVariables(main, alphaX, alphaX0);
     }
@@ -293,7 +295,7 @@ void InverseProblem::outputOptimizedVariables()
 
     std::string binFile;
     for(int t=0; t<main.timeMax; t++){
-        binFile = main.outputDir + "/main/velocity_opt_" + to_string(t) + ".bin";
+        binFile = main.outputDir + "/optimized/velocity_" + to_string(t) + ".bin";
         BIN::exportVectorDataBIN(binFile, main.grid.node.vt[t]);
     }
 }
@@ -420,14 +422,15 @@ void InverseProblem::GaussIntegralRegTerm2(Function &func, double &value, const 
     std::vector<double> u(dim, 0e0);
 
     for(int p=0; p<nc; p++){
-        int index = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
+        int n = adjoint.grid.dirichlet.controlNodeInCell[ic][p];
         for(int d=0; d<dim; d++){
-            u[d] += func.N[p] * main.snap.v[t][index][d];
+            u[d] += func.N[p] * main.snap.v[t][n][d];
         }
     }
 
-    for(int d=0; d<dim; d++)
+    for(int d=0; d<dim; d++){
         value += u[d] * u[d] * func.vol;
+    }
 }
 
 /************************************************
@@ -859,6 +862,7 @@ void InverseProblem::GaussIntegralOptimalConditionInitial(Function &func, std::v
         value[p][2] -= func.N[p] * adjoint.wk[2] / main.dt * func.vol;
     }
 
+    // Diffusion term
     for(int p=0; p<main.grid.cell.nNodesInCell; p++){
         for(int d=0; d<3; d++){
             if(d == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
@@ -1097,8 +1101,7 @@ double InverseProblem::armijoCriteriaX(const double fk)
             //}
         }
         double l_tmp = fk + c1 * tmp * alpha;
-
-        // printf("Almijo %e %e %e\n",fk,lk,l_tmp);
+        
         if(lk <= l_tmp){
             main.grid.dirichlet.vDirichlet = vDirichletTmp;
             main.grid.dirichlet.vDirichletNew = vDirichletNewTmp;
@@ -1120,7 +1123,7 @@ double InverseProblem::armijoCriteriaX0(const double fk)
     if(isConverged_X0) return 0e0;
 
     const double c1 = 1e-2;
-    double alpha = 5e-1;
+    double alpha = 5e0;
     
     std::vector<std::vector<double>> v0Tmp;
     VecTool::resize(v0Tmp, main.grid.node.nNodesGlobal, main.dim);
@@ -1156,7 +1159,6 @@ double InverseProblem::armijoCriteriaX0(const double fk)
 
         double l_tmp = fk + c1 * tmp * alpha;
 
-        // printf("Almijo %e %e %e\n",fk,lk,l_tmp);
         if(lk <= l_tmp){
             main.grid.node.v0 = v0Tmp;
             break;

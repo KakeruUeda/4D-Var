@@ -27,7 +27,7 @@ int main(int argc, char *argv[])
     mkdir(conf.outputDir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     dir = conf.outputDir + "/input_bin";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-    dir = conf.outputDir + "/input_vtk";
+    dir = conf.outputDir + "/vtk";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 
     Cell cell; Node node;
@@ -36,10 +36,12 @@ int main(int argc, char *argv[])
     
     std::vector<std::vector<std::vector<double>>> vOrig;
     std::vector<std::vector<std::vector<double>>> vRef;
+    std::vector<std::vector<double>> vRefInit;
 
     int ntInSnapshot = snap.snapInterval*(snap.nSnapShot-1)+1;
     
     VecTool::resize(vRef, ntInSnapshot, conf.nNodesOptGlobal, conf.dim);
+    VecTool::resize(vRefInit, conf.nNodesOptGlobal, conf.dim);
     VecTool::resize(snap.v, snap.nSnapShot, conf.nNodesGlobal, conf.dim);
     
     cell.resize(conf.nCellsGlobal);
@@ -100,6 +102,12 @@ int main(int argc, char *argv[])
         }
     }
 
+    for(int step=0; step<conf.stepMax; step++){
+        if(step == (conf.snapTimeBeginItr-1)){
+            createReferenceDA(conf, vOrig[step], vRefInit);
+        }
+    }
+
     createData(conf, cell, node, voxel, snap);
 
     // output vtk
@@ -115,12 +123,16 @@ int main(int argc, char *argv[])
         std::string vtiFile = conf.outputDir + "/vtk/data" + to_string(step) + ".vti";
         VTK::exportVelocityDataVTI(vtiFile, voxel, step);
     }
+    std::string vtiFile = conf.outputDir + "/vtk/velocityReference_initial.vti";
+    VTK::exportVectorPointDataVTI(vtiFile, "velRefInit", vRefInit, conf.nxOpt, conf.nyOpt, conf.nzOpt, conf.dxOpt, conf.dyOpt, conf.dzOpt);
 
     // output bin
     for(int step=0; step<ntInSnapshot; step++){
-        std::string binFile = conf.outputDir + "/bin/velocityReference_" + to_string(step) + ".bin";
+        std::string binFile = conf.outputDir + "/input_bin/velocityReference_" + to_string(step) + ".bin";
         BIN::exportVectorDataBIN(binFile, vRef[step]);
     }
+    std::string binFile = conf.outputDir + "/input_bin/velocityReference_initial.bin";
+    BIN::exportVectorDataBIN(binFile, vRefInit);
 
     std::vector<std::vector<std::vector<double>>> dataTmp;
     VecTool::resize(dataTmp, snap.nSnapShot, voxel.nCellsGlobal, conf.dim);
@@ -132,7 +144,7 @@ int main(int argc, char *argv[])
         }
     }
     for(int step=0; step<snap.nSnapShot; step++){
-        std::string binFile = conf.outputDir + "/bin/data_" + to_string(step) + ".bin";
+        std::string binFile = conf.outputDir + "/input_bin/data_" + to_string(step) + ".bin";
         BIN::exportVectorDataBIN(binFile, dataTmp[step]);
     }
 

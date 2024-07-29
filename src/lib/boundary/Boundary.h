@@ -53,8 +53,8 @@ class DirichletBoundary
         void assignConstantDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
                                         std::vector<std::map<int, double>> &pDirichletNew, Node &node, 
                                         int &dim, const int t);
-        void assignPulsatileBCs(const int &t, const double &dt, 
-                                const double &T, const int &nDofsGlobal);
+        void assignPulsatileBCs(const int t, const double dt, const double T, 
+                                const int pulseBeginItr, const int nDofsGlobal);
         void applyDirichletBCs(Cell &cell, PetscSolver &petsc);
         void applyDirichletBCsAdjoint(Cell &cell, PetscSolver &petsc);
     

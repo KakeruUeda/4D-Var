@@ -33,8 +33,8 @@ void DirectProblem::solveUSNS(Application &app)
                                           grid.dirichlet.pDirichletNew, 
                                           grid.node, dim, t);
          if(pulsatileFlow == ON){
-            if(t > pulseBeginItr){
-                 grid.dirichlet.assignPulsatileBCs(t, dt, T, grid.nDofsGlobal);
+            if(t >= pulseBeginItr){
+                 grid.dirichlet.assignPulsatileBCs(t, dt, T, pulseBeginItr, grid.nDofsGlobal);
             }
          }
         grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
@@ -143,10 +143,6 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
         petsc.setValueZero();
         grid.dirichlet.assignDirichletBCs(vDirichletTmp, pDirichletTmp, 
                                           grid.node, dim, t);
-        if(pulsatileFlow == ON)
-            if(t > pulseBeginItr)
-                grid.dirichlet.assignPulsatileBCs(t, dt, T, grid.nDofsGlobal);
-
         grid.dirichlet.applyDirichletBCs(grid.cell, petsc); 
         
         for(int ic=0; ic<grid.cell.nCellsGlobal; ic++){

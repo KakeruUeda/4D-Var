@@ -31,8 +31,8 @@ Inverse
     bCF1 = 0e0
     bCF2 = 0e0
     gCF = 0e0
-    loopMAX = 200
-    outputItr = 1
+    loopMAX = 300
+    outputItr = 5
 }
 
 Data
