@@ -85,7 +85,6 @@ void Config::readConfigFile()
             readTimeParameter();
             readPysicalParameter();
             readDarcyParameter();
-            readPostprocessParameter();
             break;
         
         case Application::VOXELDATA:

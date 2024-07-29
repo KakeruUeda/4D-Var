@@ -191,55 +191,55 @@ void Adjoint::updateTimeSolutions(const int t)
     }
 }
 
-void Adjoint::outputSolutionsVTU(const int t)
+void Adjoint::outputSolutionsVTU(const std::string &dir,const int t)
 {
     if(mpi.myId > 0) return;
 
     std::string vtuFile;
-    vtuFile = outputDir + "/w_" + "_" + to_string(t) + ".vtu";
+    vtuFile = outputDir + "/" + dir + "/w_" + to_string(t) + ".vtu";
     VTK::exportVectorPointDataVTU(vtuFile, "w", grid.node, grid.cell, grid.node.w);
-    vtuFile = outputDir + "/q_" + "_" + to_string(t) + ".vtu";
+    vtuFile = outputDir + "/" + dir + "/q_" + to_string(t) + ".vtu";
     VTK::exportScalarPointDataVTU(vtuFile, "q", grid.node, grid.cell, grid.node.q);
-    vtuFile = outputDir + "/l_" + to_string(t) + ".vtu";
+    vtuFile = outputDir + "/" + dir + "/l_" + to_string(t) + ".vtu";
     VTK::exportVectorPointDataVTU(vtuFile, "l", grid.node, grid.cell, grid.node.l);
 }
 
-void Adjoint::outputSolutionsVTU(const int t, const int loop)
+void Adjoint::outputSolutionsVTU(const std::string &dir, const int t, const int loop)
 {
     if(mpi.myId > 0) return;
 
     std::string vtuFile;
-    vtuFile = outputDir + "/adjoint/w_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+    vtuFile = outputDir + "/" + dir + "/w_" + to_string(loop) + "_" + to_string(t) + ".vtu";
     VTK::exportVectorPointDataVTU(vtuFile, "w", grid.node, grid.cell, grid.node.w);
-    vtuFile = outputDir + "/adjoint/q_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+    vtuFile = outputDir + "/" + dir + "/q_" + to_string(loop) + "_" + to_string(t) + ".vtu";
     VTK::exportScalarPointDataVTU(vtuFile, "q", grid.node, grid.cell, grid.node.q);
-    vtuFile = outputDir + "/adjoint/l_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+    vtuFile = outputDir + "/" + dir + "/l_" + to_string(loop) + "_" + to_string(t) + ".vtu";
     VTK::exportVectorPointDataVTU(vtuFile, "l", grid.node, grid.cell, grid.node.l);
 }
 
-void Adjoint::outputSolutionsVTI(const int t)
+void Adjoint::outputSolutionsVTI(const std::string &dir, const int t)
 {
     if(mpi.myId > 0) return;
 
     std::string vtiFile;
-    vtiFile = outputDir +  "/w_" + to_string(t) + ".vti";
+    vtiFile = outputDir + "/" + dir + "/w_" + to_string(t) + ".vti";
     VTK::exportVectorPointDataVTI(vtiFile, "w", grid.node.wvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
-    vtiFile = outputDir +  "/q_" + to_string(t) + ".vti";
+    vtiFile = outputDir + "/" + dir + "/q_" + to_string(t) + ".vti";
     VTK::exportScalarPointDataVTI(vtiFile, "q", grid.node.qvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
-    vtiFile = outputDir +  "/l_" + to_string(t) + ".vti";
+    vtiFile = outputDir + "/" + dir + "/l_" + to_string(t) + ".vti";
     VTK::exportVectorPointDataVTI(vtiFile, "l", grid.node.lvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 
-void Adjoint::outputSolutionsVTI(const int t, const int loop)
+void Adjoint::outputSolutionsVTI(const std::string &dir, const int t, const int loop)
 {
     if(mpi.myId > 0) return;
 
     std::string vtiFile;
-    vtiFile = outputDir +  "/adjoint/w_" + to_string(loop) + "_" + to_string(t) + ".vti";
+    vtiFile = outputDir + "/" + dir + "/w_" + to_string(loop) + "_" + to_string(t) + ".vti";
     VTK::exportVectorPointDataVTI(vtiFile, "w", grid.node.wvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
-    vtiFile = outputDir +  "/adjoint/q_" + to_string(loop) + "_" + to_string(t) + ".vti";
+    vtiFile = outputDir + "/" + dir + "/q_" + to_string(loop) + "_" + to_string(t) + ".vti";
     VTK::exportScalarPointDataVTI(vtiFile, "q", grid.node.qvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
-    vtiFile = outputDir +  "/adjoint/l_" + to_string(loop) + "_" + to_string(t) + ".vti";
+    vtiFile = outputDir + "/" + dir + "/l_" + to_string(loop) + "_" + to_string(t) + ".vti";
     VTK::exportVectorPointDataVTI(vtiFile, "l", grid.node.lvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 

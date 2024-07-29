@@ -100,10 +100,10 @@ public:
                                  const double f, const int ii);
     void updateSolutionsVTI();
     void updateSolutionsVTI(const int t);
-    void outputSolutionsVTU(const int t);
-    void outputSolutionsVTI(const int t);
-    void outputSolutionsVTU(const int t, const int loop);
-    void outputSolutionsVTI(const int t, const int loop);
+    void outputSolutionsVTU(const std::string &dir, const int t);
+    void outputSolutionsVTI(const std::string &dir, const int t);
+    void outputSolutionsVTU(const std::string &dir, const int t, const int loop);
+    void outputSolutionsVTI(const std::string &dir, const int t, const int loop);
 
 private:
     void setVariablesZero(const int dim);
@@ -176,6 +176,7 @@ private:
     void outputControlVariables(const int loop);
     void outputVelocityData(const int loop);
     void outputVelocityBIN(const int loop);
+    void outputOptimizedVariables();
 };
 
 #endif

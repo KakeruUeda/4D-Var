@@ -337,76 +337,6 @@ void Config::readControlBoundaryParameter()
         controlBoundary = ControlBoundary::back;
 }
 
-/*****************************
- * @brief Read text parameter.
- */
-void Config::readPostprocessParameter()
-{
-    std::string str, base_label, label;
-
-    int tmpInt[dim];
-    double tmpDouble[dim];
-
-    base_label = "/Postprocess";
-
-    std::string ON_OFF;
-    label = base_label + "/isSnapShot";
-    if(!tp.getInspectedValue(label, ON_OFF))
-        throw std::runtime_error(label + " is not set");
- 
-    if(ON_OFF == "ON")
-        isSnapShot = ON;
-    else if(ON_OFF == "OFF")
-        isSnapShot = OFF;
-    else 
-        throw std::runtime_error("ON or OFF is not set");
-
-    label = base_label + "/nSnapShot";
-    if(!tp.getInspectedValue(label, nSnapShot))
-        throw std::runtime_error(label + " is not set");
-
-    label = base_label + "/snapInterval";
-    if(!tp.getInspectedValue(label, snapInterval))
-        throw std::runtime_error(label + " is not set");
-
-    label = base_label + "/snapTimeBeginItr";
-    if(!tp.getInspectedValue(label, snapTimeBeginItr))
-        throw std::runtime_error(label + " is not set");
-
-    label = base_label + "/nNodesInDataCell";
-    if(!tp.getInspectedValue(label, nNodesInCellData))
-        throw std::runtime_error(label + " is not set");
-
-    label = base_label + "/origin";
-    if (!tp.getInspectedVector(label, tmpDouble, dim))
-        throw std::runtime_error(label + " is not set");
-
-    xOrigin = tmpDouble[0];
-    yOrigin = tmpDouble[1];
-    zOrigin = tmpDouble[2];
-
-    label = base_label + "/nxData";
-    if (!tp.getInspectedVector(label, tmpInt, dim))
-        throw std::runtime_error(label + " is not set");
-
-    nxData = tmpInt[0];
-    nyData = tmpInt[1];
-    nzData = tmpInt[2];
-
-    label = base_label + "/lxData";
-    if(!tp.getInspectedVector(label, tmpDouble, dim))
-        throw std::runtime_error(label + " is not set");
-
-    lxData = tmpDouble[0];
-    lyData = tmpDouble[1];
-    lzData = tmpDouble[2];
-
-    dxData = lxData / (double)nxData;
-    dyData = lyData / (double)nyData;
-    dzData = lzData / (double)nzData;
-
-    nCellsDataGlobal = nxData * nxData * nzData;
-}
 
 /*****************************
  * @brief Read text parameter.
@@ -589,40 +519,9 @@ void Config::readDataParameter()
     }
     ifsControlNodeInCell.close();
     
-    int num = 0;
-    std::string dataFile;
-    velocityData.resize(nSnapShot);
-
-    while(1){
-        label = base_label + "/data" + std::to_string(num);
-        
-        if(num >= nSnapShot) break;
-        if(!tp.getInspectedValue(label, dataFile))
-            throw std::runtime_error(label + " is not set");
-        
-        std::ifstream ifsData(dataFile);
-        if(!ifsData.is_open()){
-            throw std::runtime_error("Failed to open file: " + dataFile);
-        }
-        std::vector<std::vector<double>> velocityDataTmp;
-        while(getline(ifsData, str)){
-            int index;
-            std::istringstream iss(str);
-            std::vector<double> dataTmp;
-
-            for(int d=0; d<dim+dim; d++){
-                getline(iss, str, ' ');
-                if(d < dim) continue;
-                dataTmp.push_back(stod(str));
-            }
-            velocityDataTmp.push_back(dataTmp);
-        } 
-        ifsData.close();
-        velocityData[num] = velocityDataTmp;
-        num++;
-    }
-
-    nData = num;
+    label = base_label + "/inputDir";
+    if(!tp.getInspectedValue(label, inputDir))
+        throw std::runtime_error(label + " is not set");
 }
 
 /*****************************

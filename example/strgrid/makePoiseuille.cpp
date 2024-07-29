@@ -20,9 +20,9 @@ int main()
 
     std::string controlFace = "left";
 
-    double center[2] = {1e0, 1e0};
+    double center[2] = {1.0, 1.25};
 
-    double R = 0.5;
+    double R = 0.25;
     double pi = 3.14159265358979323846;
 
     std::vector<int> node;
@@ -37,7 +37,7 @@ int main()
                         double rz = center[0] - k * dz;
                         double ry = center[1] - j * dy;
                         double r = sqrt(rz*rz + ry*ry);
-                        double vel = 2e0 * (1 - ((r * r) / (R * R)))/(pi * R * R);
+                        double value = 2e0 * (1 - ((r * r) / (R * R)))/(pi * R * R);
                         if(r >= R){
                             node.push_back(n);
                             u.push_back(0e0); 
@@ -46,7 +46,7 @@ int main()
                         }
                         if(r < R){
                             node.push_back(n);
-                            u.push_back(vel);    
+                            u.push_back(value);    
                             v.push_back(0e0); 
                             w.push_back(0e0); 
                         }

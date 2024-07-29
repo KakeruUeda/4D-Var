@@ -32,7 +32,7 @@ PysicalParameter
 TimeParameter
 {
     dt = 0.02
-    timeMax = 1000
+    timeMax = 300
     pulsatileFlow = "ON"
     pulseBeginItr = 300
     T = 1.0
@@ -44,14 +44,3 @@ DarcyParameter
     resistance = 1e2
 }
 
-Postprocess
-{
-    isSnapShot = "ON"
-    nSnapShot = 11
-    snapInterval = 5
-    snapTimeBeginItr = 400
-    nNodesInDataCell = 8
-    origin = (2.0, 0.0, 0.0)
-    nxData = (4, 4, 4)
-    lxData = (2.0, 2.0, 2.0)
-}

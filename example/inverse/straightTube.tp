@@ -47,17 +47,7 @@ Data
     controlBoundary = "input/straightTube/data8x8x8/controlBoundary.dat"
     controlCellMap = "input/straightTube/data8x8x8/controlCellMap.dat"
     controlNodeInCell = "input/straightTube/data8x8x8/controlNodeInCell.dat"
-    data0 = "input/straightTube/data8x8x8/data0.dat"
-    data1 = "input/straightTube/data8x8x8/data1.dat"
-    data2 = "input/straightTube/data8x8x8/data2.dat"
-    data3 = "input/straightTube/data8x8x8/data3.dat"
-    data4 = "input/straightTube/data8x8x8/data4.dat"
-    data5 = "input/straightTube/data8x8x8/data5.dat"
-    data6 = "input/straightTube/data8x8x8/data6.dat"
-    data7 = "input/straightTube/data8x8x8/data7.dat"
-    data8 = "input/straightTube/data8x8x8/data8.dat"
-    data9 = "input/straightTube/data8x8x8/data9.dat"
-    data10 = "input/straightTube/data8x8x8/data10.dat"
+    inputDir = "input/straightTube/data8x8x8/bin"
 }
 
 PysicalParameter

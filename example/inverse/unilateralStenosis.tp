@@ -1,0 +1,77 @@
+Base
+{
+    dim = 3
+    outputDir = "unilateralStenosis"
+    numOfOMP = 1
+}
+
+Grid
+{
+    type = "Structured"
+    nx = (64, 64, 64) 
+    lx = (2.0, 2.0, 2.0)
+    extractFluid = "ON"
+    nNodesInCell = 8
+    node = "input/unilateralStenosis/16x16x16/dat/node.dat"
+    cell = "input/unilateralStenosis/16x16x16/dat/cell.dat"
+    image = "input/unilateralStenosis/16x16x16/dat/image.dat"
+}
+
+Boundary
+{
+    velocityDirichlet = "input/unilateralStenosis/16x16x16/dat/velocityDirichletPoiseuille.dat"
+    pressureDirichlet = "input/unilateralStenosis/16x16x16/dat/pressureDirichlet.dat"
+}
+
+Inverse
+{
+    controlBoundary = "left"
+    voxelVelocity = "average"
+    aCF = 5e1
+    bCF1 = 0e0
+    bCF2 = 0e0
+    gCF = 0e0
+    loopMAX = 400
+    outputItr = 1
+}
+
+Data
+{
+    nSnapShot = 11
+    snapInterval = 5
+    snapTimeBeginItr = 0
+    nNodesInDataCell = 8
+    nxData = (16, 16, 16)
+    lxData = (2.0, 2.0, 2.0)
+    nControlNodesInCell = 4
+    controlBoundary = "input/unilateralStenosis/16x16x16/dat/controlBoundary.dat"
+    controlCellMap = "input/unilateralStenosis/16x16x16/dat/controlCellMap.dat"
+    controlNodeInCell = "input/unilateralStenosis/16x16x16/dat/controlNodeInCell.dat"
+    inputDir = "input/unilateralStenosis/16x16x16/bin"
+}
+
+PysicalParameter
+{
+    rho = 100
+    mu = 1   
+}
+
+NRParameter
+{
+    NRtolerance = 1e-5
+}
+
+TimeParameter
+{
+    dt = 0.02
+    timeMax = 51
+    pulsatileFlow = "OFF"
+    pulseBeginItr = 100
+    T = 0.5
+}
+
+DarcyParameter
+{
+    alpha = 1e-3
+    resistance = 1e2
+}

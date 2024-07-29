@@ -39,7 +39,8 @@ int main(int argc, char *argv[])
 
     conf.reset();
     direct.runSimulation();
-
+    
+    PetscPrintf(MPI_COMM_WORLD, "\nTerminated.\n");
     PetscFinalize(); 
 
     return EXIT_SUCCESS;

@@ -101,7 +101,6 @@ class Config
         int nCellsGlobal, nNodesGlobal, nNodesInCell;
 
         // SnapShot parameter
-        int isSnapShot;
         int nSnapShot;
         int snapInterval;
         int snapTimeBeginItr;
@@ -178,11 +177,9 @@ class Config
         void tryReadConfigFile();
         void readConfigFile();
 
-        void readGridTypeParameter();  
         void readGridParameter(); 
         void readBoundaryParameter();
         void readControlBoundaryParameter();
-        void readImageData();
         void readStructuredGridParameter();
         void readStructuredBoundaryParameter();
         void readBasicParameter();           
@@ -190,8 +187,6 @@ class Config
         void readNRParameter();
         void readDarcyParameter();    
         void readTimeParameter();         
-        void readImageParameter();
-        void readPostprocessParameter();
         void readInverseParameter();
         void readDataParameter();
         void readPostInverseBasicParameter();

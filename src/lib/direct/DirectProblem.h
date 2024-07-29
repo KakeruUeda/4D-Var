@@ -81,10 +81,10 @@ public:
     
     void updateSolutionsVTI();
     void updateSolutionsVTI(const int t);
-    void outputSolutionsVTI(const int t);
-    void outputSolutionsVTU(const int t);
-    void outputSolutionsVTI(const int t, const int loop);
-    void outputSolutionsVTU(const int t, const int loop);
+    void outputSolutionsVTI(const std::string &dir, const int t);
+    void outputSolutionsVTU(const std::string &dir, const int t);
+    void outputSolutionsVTI(const std::string &dir, const int t, const int loop);
+    void outputSolutionsVTU(const std::string &dir, const int t, const int loop);
 
 private:
     void mainGaussIntegralLHS(MatrixXd &Klocal, Function &func, const double f, const int ii, const int jj);

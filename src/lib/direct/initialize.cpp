@@ -16,9 +16,7 @@ void DirectProblem::initialize(Config &conf)
     
     VecTool::resize(grid.node.v, grid.node.nNodesGlobal, dim);
     VecTool::resize(grid.node.vPrev, grid.node.nNodesGlobal, dim);
-    VecTool::resize(grid.node.vt, timeMax, grid.node.nNodesGlobal, dim);
     VecTool::resize(grid.node.p, grid.node.nNodesGlobal);
-    VecTool::resize(grid.node.pt, timeMax, grid.node.nNodesGlobal);
     VecTool::resize(snap.v, snap.nSnapShot, grid.nNodesGlobal, dim);
 
     grid.dirichlet.initialize(conf);

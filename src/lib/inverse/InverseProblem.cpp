@@ -34,6 +34,8 @@ planeDir(conf.planeDir)
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     dir = outputDir + "/random";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+    dir = outputDir + "/optimized";
+    mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 
     main.outputDir = outputDir;
     adjoint.outputDir = outputDir;
@@ -45,7 +47,7 @@ planeDir(conf.planeDir)
 void InverseProblem::runSimulation()
 { 
     main.outputDomain();
-    guessInitialCondition();
+    //guessInitialCondition();
     std::ofstream cf(outputDir + "/dat/costFunction.dat");
 
     for(int loop=0; loop<loopMax; loop++){
@@ -61,17 +63,16 @@ void InverseProblem::runSimulation()
             cf << std::endl;
         }
         bool isConverged = checkConvergence(cf, loop);
-        if(isConverged) return;
+        if(isConverged) break;
 
         compFeedbackForce();
         compTimeInterpolatedFeedbackForce();
 
         outputFowardSolutions(loop);
         outputControlVariables(loop);
-        if(loop % outputItr == 0){
-            outputVelocityData(loop);
-            outputFeedbackForce(loop);
-        }
+        outputVelocityData(loop);
+        outputFeedbackForce(loop);
+
         MPI_Barrier(MPI_COMM_WORLD);
         
         adjoint.solveAdjoint(main, outputDir, feedbackForceT, outputItr, loop);
@@ -85,6 +86,8 @@ void InverseProblem::runSimulation()
         updataControlVariables(main, alpha);
     }
     cf.close();
+
+    outputOptimizedVariables();
 }
 
 /******************************************
@@ -166,10 +169,10 @@ void InverseProblem::outputFowardSolutions(const int loop)
         switch(main.grid.gridType){
             case GridType::STRUCTURED:
                 main.updateSolutionsVTI(t);
-                main.outputSolutionsVTI(t, loop);
+                main.outputSolutionsVTI("main", t, loop);
                 break;
             case GridType::UNSTRUCTURED:
-                main.outputSolutionsVTU(t, loop);
+                main.outputSolutionsVTU("main", t, loop);
             break;
             default:
                 PetscPrintf(MPI_COMM_WORLD, "\nUndifined gridType\n"); 
@@ -187,10 +190,10 @@ void InverseProblem::outputAdjointSolutions(const int loop)
         switch(adjoint.grid.gridType){
             case GridType::STRUCTURED:
                 adjoint.updateSolutionsVTI(t);
-                adjoint.outputSolutionsVTI(t, loop);
+                adjoint.outputSolutionsVTI("adjoint", t, loop);
                 break;
             case GridType::UNSTRUCTURED:
-                adjoint.outputSolutionsVTU(t, loop);
+                adjoint.outputSolutionsVTU("adjoint", t, loop);
             break;
             default:
                 PetscPrintf(MPI_COMM_WORLD, "\nUndifined gridType\n"); 
@@ -250,6 +253,36 @@ void InverseProblem::outputVelocityBIN(const int loop)
     std::string binFile;
     for(int t=0; t<main.timeMax; t++){
         binFile = main.outputDir + "/main/velocity_" + to_string(loop) + "_" + to_string(t) + ".bin";
+        BIN::exportVectorDataBIN(binFile, main.grid.node.vt[t]);
+    }
+}
+
+/************************************
+ * @brief Export optimized variables.
+ */
+void InverseProblem::outputOptimizedVariables()
+{
+    if(mpi.myId > 0) return;
+
+    for(int t=0; t<main.timeMax; t++){
+        switch(main.grid.gridType){
+            case GridType::STRUCTURED:
+                main.updateSolutionsVTI(t);
+                main.outputSolutionsVTI("optimized", t);
+                break;
+            case GridType::UNSTRUCTURED:
+                main.outputSolutionsVTU("optimized", t);
+            break;
+            default:
+                PetscPrintf(MPI_COMM_WORLD, "\nUndifined gridType\n"); 
+                exit(1);
+            break;
+        }
+    }
+
+    std::string binFile;
+    for(int t=0; t<main.timeMax; t++){
+        binFile = main.outputDir + "/main/velocity_opt_" + to_string(t) + ".bin";
         BIN::exportVectorDataBIN(binFile, main.grid.node.vt[t]);
     }
 }

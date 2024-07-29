@@ -23,12 +23,25 @@ int main(int argc, char *argv[])
     auto conf = std::make_unique<Config>(input, appName);
     if(conf->isReadingError) return EXIT_FAILURE;
 
+    conf->velocityData.resize(conf->nSnapShot);
+   
+    // Read data from bin
+    for(int step=0; step<conf->nSnapShot; step++){
+        std::string velFile = conf->inputDir + "/data_" + to_string(step) + ".bin";
+        try{
+            BIN::importVectorDataBIN(velFile, conf->velocityData[step]);
+        }catch(const std::runtime_error& e) {
+            return EXIT_FAILURE;
+        }   
+    }
+
     if(conf->gridType == GridType::STRUCTURED){
         conf->setSolidBoundary();
         if(conf->extractFluid == ON){
             conf->setFluidDomain();
         }
     } 
+
     InverseProblem inverse(*conf);
     inverse.initialize(*conf);
 

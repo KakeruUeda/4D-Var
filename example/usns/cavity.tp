@@ -42,15 +42,3 @@ DarcyParameter
     resistance = 1e2
 }
 
-Postprocess
-{
-    isSnapShot = "OFF"
-    nSnapShot = 10
-    snapInterval = 5
-    snapTimeBeginItr = 250
-    nNodesInDataCell = 8
-    origin = (1.0, 0.0, 0.0)
-    nxData = (12, 12, 12)
-    lxData = (1.0, 1.0, 1.0)
-}
-

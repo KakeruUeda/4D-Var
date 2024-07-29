@@ -73,12 +73,11 @@ class SnapShot
 {
 public:
     SnapShot() {}
-    SnapShot(Config &conf) : isSnapShot(conf.isSnapShot),
-                             nSnapShot(conf.nSnapShot),
-                             snapInterval(conf.snapInterval),
-                             snapTimeBeginItr(conf.snapTimeBeginItr) {}
+    SnapShot(Config &conf) : 
+    nSnapShot(conf.nSnapShot),
+    snapInterval(conf.snapInterval),
+    snapTimeBeginItr(conf.snapTimeBeginItr) {}
 
-    int isSnapShot;
     int nSnapShot;
     int snapInterval;
     int snapTimeBeginItr;

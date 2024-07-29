@@ -22,12 +22,14 @@ data(conf.nCellsDataGlobal)
         data[ic].dz = dz;
         data[ic].nNodesInCell = nNodesInCell;
     }
-    if(conf.app == Application::USNS){
+    if(conf.app == Application::VOXELDATA){
         xOrigin = conf.xOrigin; 
         yOrigin = conf.yOrigin; 
         zOrigin = conf.zOrigin;
         for(int ic=0; ic<conf.nCellsDataGlobal; ic++){
             VecTool::resize(data[ic].vCFD, conf.nSnapShot, conf.dim);
+            VecTool::resize(data[ic].vMRI, conf.nSnapShot, conf.dim);
+            VecTool::resize(data[ic].ve, conf.nSnapShot, conf.dim);
             VecTool::resize(data[ic].center, conf.dim);
         }
     }else if(conf.app == Application::FDVAR){
@@ -44,9 +46,7 @@ data(conf.nCellsDataGlobal)
 
 void DataGrid::initialize(Config &conf, Node &node, Cell &cell, const int &dim)
 {   
-    //range = 5e-1 * dx;
     range = 5e-1 * sqrt(dx*dx + dy*dy + dz*dz);
-    //range = 2 * dx + dx;
 
     for(int t=0; t<conf.nSnapShot; t++){
         for(int k=0; k<nz; k++){

@@ -59,13 +59,6 @@ void DirectProblem::runSimulation()
 {
     outputDomain();
     solveUSNS(app);
-
-    std::string binFile;
-    for(int t=0; t<timeMax; t++){
-        updateSolutionsVTI(t);
-        binFile = outputDir + "/input/velocity_" + to_string(t) + ".bin";
-        BIN::exportVectorDataBIN(binFile, grid.node.vvti);
-    }
 }
 
 /****************************************************************
