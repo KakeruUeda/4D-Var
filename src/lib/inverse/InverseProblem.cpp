@@ -47,7 +47,7 @@ planeDir(conf.planeDir)
 void InverseProblem::runSimulation()
 { 
     main.outputDomain();
-    //guessInitialCondition();
+    guessInitialCondition();
     std::ofstream cf(outputDir + "/dat/costFunction.dat");
 
     for(int loop=0; loop<loopMax; loop++){
