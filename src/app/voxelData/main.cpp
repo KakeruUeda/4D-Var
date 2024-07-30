@@ -191,9 +191,9 @@ void createReferenceDA(Config &conf, std::vector<std::vector<double>> &vOrig,
                 py = conf.yOrigin + j * conf.dyOpt;
                 pz = conf.zOrigin + k * conf.dzOpt;
     
-                ix = px / conf.dx;
-                iy = py / conf.dy;
-                iz = pz / conf.dz;
+                ix = (px / conf.dx) + EPS;
+                iy = (py / conf.dy) + EPS;
+                iz = (pz / conf.dz) + EPS;
 
                 if(ix >= conf.nx){
                     ix = ix - 1;
@@ -205,9 +205,9 @@ void createReferenceDA(Config &conf, std::vector<std::vector<double>> &vOrig,
                     iz = iz - 1;
                 }
 
-                s = ix * conf.dx + 5e-1 * conf.dx - px;
-                t = iy * conf.dy + 5e-1 * conf.dy - py;
-                u = iz * conf.dz + 5e-1 * conf.dz - pz;
+                s = px - (ix * conf.dx + 5e-1 * conf.dx);
+                t = py - (iy * conf.dy + 5e-1 * conf.dy);
+                u = pz - (iz * conf.dz + 5e-1 * conf.dz);
                 
                 s = s / (conf.dx / 2e0);
                 t = t / (conf.dy / 2e0);
@@ -215,7 +215,6 @@ void createReferenceDA(Config &conf, std::vector<std::vector<double>> &vOrig,
                 
                 if(s<-1-EPS || s>1+EPS){
                     std::cout << "s interpolation error." << std::endl;
-                    std::cout << px << " " << ix << " " << s << std::endl;
                 }else if(t<-1-EPS || t>1+EPS){
                     std::cout << "t interpolation error." << std::endl;
                 }else if(u<-1-EPS || u>1+EPS){

@@ -149,6 +149,8 @@ public:
     std::vector<std::vector<std::vector<double>>> grad;
     std::vector<std::vector<std::vector<double>>> X;
     std::vector<std::vector<double>> X0;
+    std::vector<std::vector<std::vector<double>>> Xvti;
+    std::vector<std::vector<double>> X0vti;
 
     void initialize(Config &conf);
     void runSimulation();
@@ -169,7 +171,6 @@ public:
     double armijoCriteriaX(const double fk);
     double armijoCriteriaX0(const double fk);
     void updataControlVariables(DirectProblem &main, const double alphaX, const double alphaX0);
-
     void setValue(Function &func, const int ic);
 
 private:
@@ -182,6 +183,8 @@ private:
     void outputVelocityData(const int loop);
     void outputVelocityBIN(const int loop);
     void outputOptimizedVariables();
+
+    void updateControlVariablesVTI();
 };
 
 #endif

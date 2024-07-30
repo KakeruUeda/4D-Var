@@ -57,7 +57,6 @@ public:
 
     // for vti visualization
     int nNodesStructuredGlobal;
-    std::vector<std::vector<double>> v0vti;
     std::vector<std::vector<double>> vvti;
     std::vector<double> pvti;
     std::vector<std::vector<double>> wvti;

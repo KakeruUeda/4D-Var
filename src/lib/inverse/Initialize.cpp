@@ -106,5 +106,9 @@ void InverseProblem::initialize(Config &conf)
     VecTool::resize(adjoint.advgp, dim);
     VecTool::resize(adjoint.dvgpdx, dim, dim);
 
+    if(main.grid.gridType == GridType::STRUCTURED){
+        VecTool::resize(X0vti, main.grid.node.nNodesStructuredGlobal, conf.dim);
+    }
+
     data.initialize(conf, main.grid.node, main.grid.cell, dim);
 }

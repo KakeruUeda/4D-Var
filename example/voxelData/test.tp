@@ -28,6 +28,6 @@ VoxelCreation
     origin = (1.0, 0.0, 0.0)
     nxData = (16, 16, 16)
     lxData = (2.0, 2.0, 2.0)
-    nxOpt = (32, 32, 32)
+    nxOpt = (64, 64, 64)
     lxOpt = (2.0, 2.0, 2.0)
 }

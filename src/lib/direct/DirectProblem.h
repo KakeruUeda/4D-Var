@@ -27,6 +27,7 @@
 #include "MathFEM.h"
 #include "Tool.h"
 #include "Function.h"
+#include "VTK.h"
 
 extern MyMPI mpi;
 

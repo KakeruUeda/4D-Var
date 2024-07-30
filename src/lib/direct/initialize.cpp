@@ -34,4 +34,5 @@ void DirectProblem::initialize(Config &conf)
     VecTool::resize(vgp, dim);
     VecTool::resize(advgp, dim);
     VecTool::resize(dvgpdx, dim, dim);
+
 }

@@ -70,6 +70,7 @@ void InverseProblem::runSimulation()
 
         if(loop % outputItr == 0){
             outputFowardSolutions(loop);
+            outputVelocityBIN(loop);
             outputControlVariables(loop);
             outputVelocityData(loop);
             outputFeedbackForce(loop);
@@ -190,6 +191,7 @@ void InverseProblem::outputFowardSolutions(const int loop)
             break;
         }
     }
+    
 }
 
 /************************
@@ -223,9 +225,23 @@ void InverseProblem::outputControlVariables(const int loop)
 {
     if(mpi.myId != 0) return;
 
-    std::string vtuFile;
-    vtuFile = main.outputDir + "/random/X0_" + to_string(loop) + ".vtu";
-    VTK::exportVectorPointDataVTU(vtuFile, "X0", main.grid.node, main.grid.cell, X0);
+    std::string vtiFile;
+    updateControlVariablesVTI();
+    vtiFile = main.outputDir + "/main/X0_" + to_string(loop) + ".vti";
+    VTK::exportVectorPointDataVTI(vtiFile, "X0", X0vti, main.grid.nx, main.grid.ny, 
+                                  main.grid.nz, main.grid.dx, main.grid.dy, main.grid.dz);
+}
+
+/******************************************
+ * @brief Update control variables for VTI.
+ */
+void InverseProblem::updateControlVariablesVTI()
+{    
+    for(int in=0; in<main.grid.node.nNodesGlobal; in++){
+        for(int d=0; d<dim; d++){
+            X0vti[main.grid.node.sortNode[in]][d] = X0[in][d];
+        }
+    }   
 }
 
 /***********************************************
@@ -265,8 +281,9 @@ void InverseProblem::outputVelocityBIN(const int loop)
 
     std::string binFile;
     for(int t=0; t<main.timeMax; t++){
+        main.updateSolutionsVTI(t);
         binFile = main.outputDir + "/main/velocity_" + to_string(loop) + "_" + to_string(t) + ".bin";
-        BIN::exportVectorDataBIN(binFile, main.grid.node.vt[t]);
+        BIN::exportVectorDataBIN(binFile, main.grid.node.vvti);
     }
 }
 
@@ -295,8 +312,9 @@ void InverseProblem::outputOptimizedVariables()
 
     std::string binFile;
     for(int t=0; t<main.timeMax; t++){
+        main.updateSolutionsVTI(t);
         binFile = main.outputDir + "/optimized/velocity_" + to_string(t) + ".bin";
-        BIN::exportVectorDataBIN(binFile, main.grid.node.vt[t]);
+        BIN::exportVectorDataBIN(binFile, main.grid.node.vvti);
     }
 }
 
@@ -1052,7 +1070,7 @@ double InverseProblem::armijoCriteriaX(const double fk)
     vDirichletNewTmp.resize(main.timeMax); 
 
     int iterationCount = 0;
-    const int maxIteration = 5;
+    const int maxIteration = 10;
  
     while(true){
         iterationCount++;
@@ -1101,7 +1119,7 @@ double InverseProblem::armijoCriteriaX(const double fk)
             //}
         }
         double l_tmp = fk + c1 * tmp * alpha;
-        
+
         if(lk <= l_tmp){
             main.grid.dirichlet.vDirichlet = vDirichletTmp;
             main.grid.dirichlet.vDirichletNew = vDirichletNewTmp;
@@ -1123,13 +1141,13 @@ double InverseProblem::armijoCriteriaX0(const double fk)
     if(isConverged_X0) return 0e0;
 
     const double c1 = 1e-2;
-    double alpha = 5e0;
+    double alpha = 1e0;
     
     std::vector<std::vector<double>> v0Tmp;
     VecTool::resize(v0Tmp, main.grid.node.nNodesGlobal, main.dim);
     
     int iterationCount = 0;
-    const int maxIteration = 5;
+    const int maxIteration = 10;
     
     while(true){
         iterationCount++;
@@ -1144,6 +1162,7 @@ double InverseProblem::armijoCriteriaX0(const double fk)
                 v0Tmp[in][d] = X0[in][d] + alpha * (-gradInitVel[in][d]);
             }
         }
+
         main.solveUSNS(main.grid.dirichlet.vDirichletNew, 
                        main.grid.dirichlet.pDirichletNew, v0Tmp);
         compCostFunction();

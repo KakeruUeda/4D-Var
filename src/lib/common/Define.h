@@ -16,6 +16,6 @@
 #define ON      1
 #define OFF     0
 
-#define EPS     1e-12
+#define EPS     1e-10
 
 #endif
