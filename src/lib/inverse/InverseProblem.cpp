@@ -32,7 +32,7 @@ planeDir(conf.planeDir)
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     dir = outputDir + "/adjoint";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-    dir = outputDir + "/random";
+    dir = outputDir + "/other";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     dir = outputDir + "/optimized";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
@@ -267,7 +267,7 @@ void InverseProblem::outputFeedbackForce(const int loop)
     
     std::string vtuFile;
     for(int t=0; t<main.timeMax; t++){
-       vtuFile = main.outputDir + "/random/feedbackForce" + to_string(loop) + "_" + to_string(t) + ".vtu";
+       vtuFile = main.outputDir + "/other/feedbackForce" + to_string(loop) + "_" + to_string(t) + ".vtu";
        VTK::exportVectorPointDataVTU(vtuFile, "feedbackForce", main.grid.node, main.grid.cell, feedbackForceT[t]);
     }
 }
@@ -1141,7 +1141,7 @@ double InverseProblem::armijoCriteriaX0(const double fk)
     if(isConverged_X0) return 0e0;
 
     const double c1 = 1e-2;
-    double alpha = 1e0;
+    double alpha = 1e1;
     
     std::vector<std::vector<double>> v0Tmp;
     VecTool::resize(v0Tmp, main.grid.node.nNodesGlobal, main.dim);
