@@ -112,6 +112,7 @@ void Adjoint::setVariablesZero(const int dim)
             grid.node.l[in][d] = 0e0;
         }
         grid.node.q[in] = 0e0;
+        grid.node.qPrev[in] = 0e0;
     }
 
     for(int t=0; t<timeMax; t++){
@@ -163,6 +164,7 @@ void Adjoint::updateSolutions()
 
         for(int d=0; d<dim; d++)
             grid.node.wPrev[in][d] = grid.node.w[in][d];
+        grid.node.qPrev[in] = grid.node.q[in];
 
         for(int d=0; d<dim; d++)
             grid.node.w[in][d] = petsc.solution[n1+d];

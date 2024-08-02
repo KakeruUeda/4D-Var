@@ -50,6 +50,7 @@ public:
     std::vector<std::vector<double>> w;
     std::vector<std::vector<double>> wPrev;
     std::vector<double> q;
+    std::vector<double> qPrev;
     std::vector<std::vector<double>> l;
     std::vector<std::vector<std::vector<double>>> lt;
     std::vector<std::vector<std::vector<double>>> wt;

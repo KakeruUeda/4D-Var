@@ -79,10 +79,12 @@ public:
     std::vector<std::vector<double>> dvgpdx;
 
     std::vector<double> vk, vk1, vk2;
-    std::vector<double> advk1, advk2;
+    std::vector<double> advk1, advk2, advk3;
+    std::vector<double> dpkdx, dpk1dx, dpk2dx;
     std::vector<double> wk, wk1, wk2;
     std::vector<std::vector<double>> dvkdx, dvk1dx, dvk2dx;
     std::vector<std::vector<double>> dwkdx, dwk1dx, dwk2dx;
+    std::vector<double> dqkdx, dqk1dx, dqk2dx;
 
     std::vector<int> planeDir;
 

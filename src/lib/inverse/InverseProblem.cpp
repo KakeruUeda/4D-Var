@@ -1110,13 +1110,13 @@ double InverseProblem::armijoCriteriaX(const double fk)
 
         double tmp = 0e0;
         for(int t=0; t<adjoint.timeMax; t++){
-            //if(t % main.snap.snapInterval == 0){
+            if(t % main.snap.snapInterval == 0){
                 for(int ib=0; ib<n; ib++){
                     for(int d=0; d<dim; d++){
                         tmp += -(grad[t][ib][d] * grad[t][ib][d]);
                     }
                 }
-            //}
+            }
         }
         double l_tmp = fk + c1 * tmp * alpha;
 
@@ -1141,7 +1141,7 @@ double InverseProblem::armijoCriteriaX0(const double fk)
     if(isConverged_X0) return 0e0;
 
     const double c1 = 1e-2;
-    double alpha = 1e1;
+    double alpha = 1e0;
     
     std::vector<std::vector<double>> v0Tmp;
     VecTool::resize(v0Tmp, main.grid.node.nNodesGlobal, main.dim);

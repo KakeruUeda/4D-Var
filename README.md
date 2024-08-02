@@ -18,7 +18,3 @@ https://github.com/avr-aics-riken/TextParser <br>
 ## Applications
 ・**UnsteadyNavierStokesSolver**: Solves Unsteady Navier-Stokes equation. <br>
 ・**4DVar (Four-Dimensional Variational Data Assimilation)**: Solves inverse problem. <br> 
-## Examples
-&nbsp;&nbsp;&nbsp; Foward Solver (8 MPI Processes) <br>
-<img src="images/vessel_group.png" alt="Image description" width="600"> <br>
-<img src="images/mpi_performance.png" alt="Image description" width="270"> <br>
