@@ -27,10 +27,9 @@ Inverse
 {
     controlBoundary = "left"
     voxelVelocity = "average"
-    aCF = 5e1
-    bCF1 = 0e0
-    bCF2 = 0e0
-    gCF = 0e0
+    aCF = 1e1
+    bCF = 1e-5
+    gCF = 1e-5
     loopMAX = 300
     outputItr = 5
 }

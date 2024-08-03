@@ -28,8 +28,7 @@ Inverse
     controlBoundary = "left"
     voxelVelocity = "average"
     aCF = 5e1
-    bCF1 = 0e0
-    bCF2 = 0e0
+    bCF = 0e0
     gCF = 0e0
     loopMAX = 200
 }

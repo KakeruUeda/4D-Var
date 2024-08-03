@@ -57,7 +57,6 @@ void Adjoint::setValuesInGaussIntegral(DirectProblem &main, Function &func, Gaus
     func.weight = g2.weight[i1] * g2.weight[i2] * g2.weight[i3];
 
     setValue(main, func, ic, t);
-    //tau = MathFEM::comp_tau(wk1, he, main.Re, main.dt);
     tau = MathFEM::comp_tau(advk2, he, main.Re, main.dt);
 }
 
@@ -122,17 +121,6 @@ void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, Fun
     Klocal(IU, JU) += tau * func.N[ii] * advk1[0] * func.dNdx[ii][0] / main.dt * func.vol;
     Klocal(IV, JV) += tau * func.N[ii] * advk1[1] * func.dNdx[ii][1] / main.dt * func.vol;
     Klocal(IW, JW) += tau * func.N[ii] * advk1[2] * func.dNdx[ii][2] / main.dt * func.vol;
-
-    /*
-    // SUPG advection term
-    for(int d1=0; d1<3; d1++){
-        for(int d2=0; d2<3; d2++){
-            Klocal(IU, JU) += 5e-1 * tau * advk2[d2] * func.dNdx[ii][d2] * advk2[d1] * func.dNdx[jj][d1] * func.vol;
-            Klocal(IV, JV) += 5e-1 * tau * advk2[d2] * func.dNdx[ii][d2] * advk2[d1] * func.dNdx[jj][d1] * func.vol;
-            Klocal(IW, JW) += 5e-1 * tau * advk2[d2] * func.dNdx[ii][d2] * advk2[d1] * func.dNdx[jj][d1] * func.vol;
-        }
-    }
-    */
 
     // SUPG advection term
     for(int d1=0; d1<main.dim; d1++){
@@ -260,17 +248,6 @@ void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal,
         Flocal(IW) += tau * 0.5 * func.N[ii] * dwk2dx[d][2] * (vk2[d] - vk1[d]) / main.dt * func.vol;
     }
     Flocal(IW) += tau * func.N[ii] * advk2[2] * dwk1dx[2][2] / main.dt * func.vol;
-
-    /*
-    // SUPG advection term
-    for(int d=0; d<3; d++){
-        for(int nn=0; nn<3; nn++){
-            Flocal(IU) -= 5e-1 * tau * vk1[nn] * func.dNdx[ii][nn] * advk2[d] * dvkdx[0][d] * func.vol;
-            Flocal(IV) -= 5e-1 * tau * vk1[nn] * func.dNdx[ii][nn] * advk2[d] * dvkdx[1][d] * func.vol;
-            Flocal(IW) -= 5e-1 * tau * vk1[nn] * func.dNdx[ii][nn] * advk2[d] * dvkdx[2][d] * func.vol;
-        }
-    }
-    */
 
     // SUPG advection term
     std::vector<double> frontAdv2, frontAdv3;

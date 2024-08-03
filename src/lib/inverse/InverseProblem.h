@@ -40,11 +40,14 @@ public:
 
 struct CostFunction
 {
-    double term1, term2, term3, total;
+    double term1, term2, term3, term4, term5; // Reg for X
+    double term6, term7; // Reg for X0
+    double total;
     std::vector<double> history;
     void sum()
     {
-        total = term1 + term2 + term3;
+        total = term1 + term2 + term3 + term4 
+              + term5 + term6 + term7;
     }
 };
 
@@ -137,7 +140,7 @@ public:
 
     VoxelVelocity vvox;
 
-    double aCF, bCF1, bCF2, gCF;
+    double aCF, bCF, gCF;
     int loopMax;
     int outputItr;
 
@@ -156,20 +159,27 @@ public:
 
     void initialize(Config &conf);
     void runSimulation();
-
     void guessInitialCondition();
     void compCostFunction();
     void GaussIntegralRegTerm2(Function &func, double &value, const int ic, const int t);
     void GaussIntegralRegTerm3(Function &func, double &value, const int ic, const int t);
+    void GaussIntegralRegTerm4(Function &func, double &value, const int ic, const int t);
+    void GaussIntegralRegTerm5(Function &func, double &value, const int ic, const int t);
+    void GaussIntegralRegTerm6(Function &func, double &value, const int ic);
+    void GaussIntegralRegTerm7(Function &func, double &value, const int ic);
     void compFeedbackForce();
     void compInterpolatedFeeback(double (&feedback)[3], double (&point)[3]);
     void compTimeInterpolatedFeedbackForce();
     void feedbackGaussIntegral(Function &func, double (&feedback)[3], const int ic, const int t);
     void compOptimalCondition();
-    void GaussIntegralOptimalConditionTerm1(Function &func, double (&value)[4][3], const int ic, const int t);
-    void GaussIntegralOptimalConditionTerm2(Function &func, double (&value)[4][3], const int ic, const int t);
-    void GaussIntegralOptimalConditionTerm3(Function &func, double (&value)[4][3], const int ic, const int t);
-    void GaussIntegralOptimalConditionInitial(Function &func, std::vector<std::vector<double>> &value, const int ic);
+    void GaussIntegralOptimalConditionXTerm1(Function &func, std::vector<std::vector<double>> &value, const int ic, const int t);
+    void GaussIntegralOptimalConditionXTerm2(Function &func, std::vector<std::vector<double>> &value, const int ic, const int t);
+    void GaussIntegralOptimalConditionXTerm3(Function &func, std::vector<std::vector<double>> &value, const int ic, const int t);
+    void GaussIntegralOptimalConditionXTerm4(Function &func, std::vector<std::vector<double>> &value, const int ic, const int t);
+    void GaussIntegralOptimalConditionXTerm5(Function &func, std::vector<std::vector<double>> &value, const int ic, const int t);
+    void GaussIntegralOptimalConditionX0Term1(Function &func, std::vector<std::vector<double>> &value, const int ic);
+    void GaussIntegralOptimalConditionX0Term2(Function &func, std::vector<std::vector<double>> &value, const int ic);
+    void GaussIntegralOptimalConditionX0Term3(Function &func, std::vector<std::vector<double>> &value, const int ic);
     double armijoCriteriaX(const double fk);
     double armijoCriteriaX0(const double fk);
     void updataControlVariables(DirectProblem &main, const double alphaX, const double alphaX0);

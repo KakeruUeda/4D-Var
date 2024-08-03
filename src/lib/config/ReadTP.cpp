@@ -390,12 +390,8 @@ void Config::readInverseParameter()
     if(!tp.getInspectedValue(label, aCF))
         throw std::runtime_error(label + " is not set");
 
-    label = base_label + "/bCF1";
-    if(!tp.getInspectedValue(label, bCF1))
-        throw std::runtime_error(label + " is not set");
-
-    label = base_label + "/bCF2";
-    if(!tp.getInspectedValue(label, bCF2))
+    label = base_label + "/bCF";
+    if(!tp.getInspectedValue(label, bCF))
         throw std::runtime_error(label + " is not set");
 
     label = base_label + "/gCF";

@@ -78,7 +78,7 @@ class Config
         double NRtolerance;
 
         // CostFunction parameter
-        double aCF, bCF1, bCF2, gCF;
+        double aCF, bCF, gCF;
         int loopMax;
 
         // Time parameter
