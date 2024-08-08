@@ -43,7 +43,6 @@ void DirectProblem::outputDomain()
 {
     if(mpi.myId > 0) return;
     std::string vtuFile;
-
     std::string vtiFile;
 
     vtuFile = outputDir + "/domain/meshPartition.vtu";

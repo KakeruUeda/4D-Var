@@ -1,36 +1,39 @@
 Base
 {
     dim = 3
-    outputDir = "test"
+    outputDir = "stenosis_data44x16x16"
     numOfOMP = 1
 }
 
 Grid
 {
     type = "Structured"
-    nx = (64, 64, 64) 
-    lx = (2.0, 2.0, 2.0)
+    nx = (88, 32, 32) 
+    lx = (5.5, 2.0, 2.0)
     extractFluid = "ON"
     nNodesInCell = 8
-    node = "input/stenosis/data8x8x8/node.dat"
-    cell = "input/stenosis/data8x8x8/cell.dat"
-    image = "input/stenosis/data8x8x8/image.dat"
+    node = "input/stenosis/44x16x16/input_dat/node.dat"
+    cell = "input/stenosis/44x16x16/input_dat/cell.dat"
+    image = "input/stenosis/44x16x16/input_dat/image.dat"
 }
 
 Boundary
 {
-    velocityDirichlet = "input/stenosis/data8x8x8/velocityDirichletPoiseuille_upstream.dat"
-    pressureDirichlet = "input/stenosis/data8x8x8/pressureDirichlet.dat"
+    velocityDirichlet = "input/stenosis/44x16x16/input_dat/velocityDirichletPoiseuille.dat"
+    pressureDirichlet = "input/stenosis/44x16x16/input_dat/pressureDirichlet.dat"
 }
 
 Inverse
 {
     controlBoundary = "left"
     voxelVelocity = "average"
-    aCF = 5e1
+    aCF = 1e1
     bCF = 0e0
     gCF = 0e0
-    loopMAX = 200
+    alphaX =  1e0
+    alphaX0 = 1e0
+    loopMAX = 400
+    outputItr = 5
 }
 
 Data
@@ -39,28 +42,18 @@ Data
     snapInterval = 5
     snapTimeBeginItr = 0
     nNodesInDataCell = 8
-    nxData = (8, 8, 8)
-    lxData = (2.0, 2.0, 2.0)
+    nxData = (44, 16, 16)
+    lxData = (5.5, 2.0, 2.0)
     nControlNodesInCell = 4
-    controlBoundary = "input/stenosis/data8x8x8/controlBoundary.dat"
-    controlCellMap = "input/stenosis/data8x8x8/controlCellMap.dat"
-    controlNodeInCell = "input/stenosis/data8x8x8/controlNodeInCell.dat"
-    data0 = "input/stenosis/data8x8x8/data0.dat"
-    data1 = "input/stenosis/data8x8x8/data1.dat"
-    data2 = "input/stenosis/data8x8x8/data2.dat"
-    data3 = "input/stenosis/data8x8x8/data3.dat"
-    data4 = "input/stenosis/data8x8x8/data4.dat"
-    data5 = "input/stenosis/data8x8x8/data5.dat"
-    data6 = "input/stenosis/data8x8x8/data6.dat"
-    data7 = "input/stenosis/data8x8x8/data7.dat"
-    data8 = "input/stenosis/data8x8x8/data8.dat"
-    data9 = "input/stenosis/data8x8x8/data9.dat"
-    data10 = "input/stenosis/data8x8x8/data10.dat"
+    controlBoundary = "input/stenosis/44x16x16/input_dat/controlBoundary.dat"
+    controlCellMap = "input/stenosis/44x16x16/input_dat/controlCellMap.dat"
+    controlNodeInCell = "input/stenosis/44x16x16/input_dat/controlNodeInCell.dat"
+    inputDir = "input/stenosis/44x16x16/input_bin"
 }
 
 PysicalParameter
-{   
-    rho = 50
+{
+    rho = 100
     mu = 1   
 }
 
@@ -75,7 +68,7 @@ TimeParameter
     timeMax = 51
     pulsatileFlow = "OFF"
     pulseBeginItr = 100
-    T = 1.0
+    T = 0.5
 }
 
 DarcyParameter

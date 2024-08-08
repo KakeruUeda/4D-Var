@@ -79,6 +79,7 @@ void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, Fun
     Klocal(IV, JV) += func.N[ii] * func.N[jj] / main.dt * func.vol;
     Klocal(IW, JW) += func.N[ii] * func.N[jj] / main.dt * func.vol;
 
+    /*
      // Diffusion term
     for(int mm=0; mm<3; mm++){
         if(mm == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
@@ -94,6 +95,14 @@ void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, Fun
     Klocal(IV, JW) += 5e-1 * func.dNdx[ii][2] * func.dNdx[jj][1] / main.Re * func.vol;
     Klocal(IW, JU) += 5e-1 * func.dNdx[ii][0] * func.dNdx[jj][2] / main.Re * func.vol;
     Klocal(IW, JV) += 5e-1 * func.dNdx[ii][1] * func.dNdx[jj][2] / main.Re * func.vol;
+    */
+
+    // Diffusion term
+    for(int d=0; d<3; d++){
+        Klocal(IU, JU) += 5e-1 * func.dNdx[ii][d] * func.dNdx[jj][d] / main.Re * func.vol;
+        Klocal(IV, JV) += 5e-1 * func.dNdx[ii][d] * func.dNdx[jj][d] / main.Re * func.vol;
+        Klocal(IW, JW) += 5e-1 * func.dNdx[ii][d] * func.dNdx[jj][d] / main.Re * func.vol;
+    }
 
     // Advection term
     for(int d=0; d<main.dim; d++){
@@ -165,7 +174,8 @@ void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal,
     Flocal(IU) += func.N[ii] * wk1[0] / main.dt * func.vol;
     Flocal(IV) += func.N[ii] * wk1[1] / main.dt * func.vol;
     Flocal(IW) += func.N[ii] * wk1[2] / main.dt * func.vol;
-                
+
+    /*
     // Diffusion term
     for(int d=0; d<3; d++){
         if(d == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
@@ -181,7 +191,15 @@ void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal,
     Flocal(IV) -= 5e-1 * func.dNdx[ii][2] * dwk1dx[2][1] / main.Re * func.vol;
     Flocal(IW) -= 5e-1 * func.dNdx[ii][0] * dwk1dx[0][2] / main.Re * func.vol;
     Flocal(IW) -= 5e-1 * func.dNdx[ii][1] * dwk1dx[1][2] / main.Re * func.vol;
-                
+    */
+  
+    // Diffusion term
+    for(int d=0; d<3; d++){
+        Flocal(IU) -= 5e-1 * func.dNdx[ii][d] * dwk1dx[0][d] / main.Re * func.vol;
+        Flocal(IV) -= 5e-1 * func.dNdx[ii][d] * dwk1dx[1][d] / main.Re * func.vol;
+        Flocal(IW) -= 5e-1 * func.dNdx[ii][d] * dwk1dx[2][d] / main.Re * func.vol;
+    }   
+
     // Advection term
     Flocal(IU) -= 0.5 * 1.5 * func.N[ii] * dvk1dx[0][0] * wk1[0] * func.vol;
     Flocal(IU) -= 0.5 * 1.5 * func.N[ii] * dvkdx[0][0] * wk1[0] * func.vol;

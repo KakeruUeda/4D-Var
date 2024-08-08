@@ -75,12 +75,13 @@ void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, Function &func, const
        func.K[ii][jj] += func.dNdx[ii][d] * func.dNdx[jj][d];
     }
 
-    // MASS TERM
+    // Mass term
     Klocal(IU, JU) += func.N[ii] * func.N[jj] / dt * func.vol;
     Klocal(IV, JV) += func.N[ii] * func.N[jj] / dt * func.vol;
     Klocal(IW, JW) += func.N[ii] * func.N[jj] / dt * func.vol;
-    
-     // DIFFUSION TERM
+
+    /*
+     // Diffusion term
     for(int d=0; d<3; d++){
         if(d == 0){n1 = 2; n2 = 1; n3 = 1;}
         if(d == 1){n1 = 1; n2 = 2; n3 = 1;}
@@ -95,37 +96,45 @@ void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, Function &func, const
     Klocal(IV, JW) += 5e-1 * func.dNdx[ii][2] * func.dNdx[jj][1] / Re * func.vol;
     Klocal(IW, JU) += 5e-1 * func.dNdx[ii][0] * func.dNdx[jj][2] / Re * func.vol;
     Klocal(IW, JV) += 5e-1 * func.dNdx[ii][1] * func.dNdx[jj][2] / Re * func.vol;
-
-    // ADVECTION TERM
+    */
+    
+     // Diffusion term
+    for(int d=0; d<3; d++){
+        Klocal(IU, JU) += 5e-1 * func.dNdx[ii][d] * func.dNdx[jj][d] / Re * func.vol;
+        Klocal(IV, JV) += 5e-1 * func.dNdx[ii][d] * func.dNdx[jj][d] / Re * func.vol;
+        Klocal(IW, JW) += 5e-1 * func.dNdx[ii][d] * func.dNdx[jj][d] / Re * func.vol;
+    }
+    
+    // Advection term
     for(int d=0; d<3; d++){
         Klocal(IU, JU) += 5e-1 * func.N[ii] * advgp[d] * func.dNdx[jj][d] * func.vol;
         Klocal(IV, JV) += 5e-1 * func.N[ii] * advgp[d] * func.dNdx[jj][d] * func.vol;
         Klocal(IW, JW) += 5e-1 * func.N[ii] * advgp[d] * func.dNdx[jj][d] * func.vol;
     }
 
-    // PRESSURE TERM
+    // Pressure term
     Klocal(IU, JP) -= func.N[jj] * func.dNdx[ii][0] * func.vol;
     Klocal(IV, JP) -= func.N[jj] * func.dNdx[ii][1] * func.vol;
     Klocal(IW, JP) -= func.N[jj] * func.dNdx[ii][2] * func.vol;
 
-    // CONTINUITY TERM
+    // Continuity term
     Klocal(IP, JU) += func.N[ii] * func.dNdx[jj][0] * func.vol;
     Klocal(IP, JV) += func.N[ii] * func.dNdx[jj][1] * func.vol;
     Klocal(IP, JW) += func.N[ii] * func.dNdx[jj][2] * func.vol;
 
-    // DARCY TERM
+    // Darcy term
     Klocal(IU, JU) += 5e-1 * f * func.N[ii] * func.N[jj] * func.vol;
     Klocal(IV, JV) += 5e-1 * f * func.N[ii] * func.N[jj] * func.vol;
     Klocal(IW, JW) += 5e-1 * f * func.N[ii] * func.N[jj] * func.vol;
 
-    // SUPG　MASS TERM 
+    // SUPG　mass term
     for(int d=0; d<3; d++){
         Klocal(IU, JU) += tau * func.dNdx[ii][d] * advgp[d] * func.N[jj] / dt * func.vol;
         Klocal(IV, JV) += tau * func.dNdx[ii][d] * advgp[d] * func.N[jj] / dt * func.vol;
         Klocal(IW, JW) += tau * func.dNdx[ii][d] * advgp[d] * func.N[jj] / dt * func.vol;
     }
 
-    // SUPG ADVECTION TERM
+    // SUPG advection term
     for(int d1=0; d1<3; d1++){
         for(int d2=0; d2<3; d2++){
             Klocal(IU, JU) += 5e-1 * tau * advgp[d2] * func.dNdx[ii][d2] * advgp[d1] * func.dNdx[jj][d1] * func.vol;
@@ -134,26 +143,26 @@ void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, Function &func, const
         }
     }
 
-    // SUPG PRESSURE TERM
+    // SUPG pressure term
     for(int d=0; d<3; d++){
         Klocal(IU, JP) += tau * func.dNdx[ii][d] * advgp[d] * func.dNdx[jj][0] * func.vol;
         Klocal(IV, JP) += tau * func.dNdx[ii][d] * advgp[d] * func.dNdx[jj][1] * func.vol;
         Klocal(IW, JP) += tau * func.dNdx[ii][d] * advgp[d] * func.dNdx[jj][2] * func.vol;
     }
 
-    // PSPG MASS TERM 
+    // PSPG mass term
     Klocal(IP, JU) += tau * func.dNdx[ii][0] * func.N[jj] / dt * func.vol;
     Klocal(IP, JV) += tau * func.dNdx[ii][1] * func.N[jj] / dt * func.vol;
     Klocal(IP, JW) += tau * func.dNdx[ii][2] * func.N[jj] / dt * func.vol;
 
-    // PSPG ADVECTION TERM
+    // PSPG asvection term
     for(int d=0; d<3; d++){
         Klocal(IP, JU) += 5e-1 * tau * func.dNdx[ii][0] * advgp[d] * func.dNdx[jj][d] * func.vol;
         Klocal(IP, JV) += 5e-1 * tau * func.dNdx[ii][1] * advgp[d] * func.dNdx[jj][d] * func.vol;
         Klocal(IP, JW) += 5e-1 * tau * func.dNdx[ii][2] * advgp[d] * func.dNdx[jj][d] * func.vol;
     }
 
-    // PSPG PRESSURE TERM
+    // PSPG pressure term
     Klocal(IP, JP) += tau * func.K[ii][jj] * func.vol;
 
 }
@@ -166,12 +175,13 @@ void DirectProblem::usnsGaussIntegralRHS(VectorXd &Flocal, Function &func, const
     int n1, n2, n3;
     func.vol = func.detJ * func.weight;
 
-    // MASS TERM
+    // Mass term
     Flocal(IU) += func.N[ii] * vgp[0] / dt * func.vol;
     Flocal(IV) += func.N[ii] * vgp[1] / dt * func.vol;
     Flocal(IW) += func.N[ii] * vgp[2] / dt * func.vol;
 
-    // DIFFUSION TERM
+    /*
+    // Diffusion term
     for(int d=0; d<3; d++){
         if(d == 0){n1 = 2; n2 = 1; n3 = 1;}
         if(d == 1){n1 = 1; n2 = 2; n3 = 1;}
@@ -186,27 +196,35 @@ void DirectProblem::usnsGaussIntegralRHS(VectorXd &Flocal, Function &func, const
     Flocal(IV) -= 5e-1 * func.dNdx[ii][2] * dvgpdx[2][1] / Re * func.vol;
     Flocal(IW) -= 5e-1 * func.dNdx[ii][0] * dvgpdx[0][2] / Re * func.vol;
     Flocal(IW) -= 5e-1 * func.dNdx[ii][1] * dvgpdx[1][2] / Re * func.vol;
+    */
 
-    // ADVECTION TERM
+    // Diffusion term
+    for(int d=0; d<3; d++){
+        Flocal(IU) -= 5e-1 * func.dNdx[ii][d] * dvgpdx[0][d] / Re * func.vol;
+        Flocal(IV) -= 5e-1 * func.dNdx[ii][d] * dvgpdx[1][d] / Re * func.vol;
+        Flocal(IW) -= 5e-1 * func.dNdx[ii][d] * dvgpdx[2][d] / Re * func.vol;
+    }
+
+    // Advection term
     for(int d=0;d<3;d++){
         Flocal(IU) -= 5e-1 * func.N[ii] * advgp[d] * dvgpdx[0][d] * func.vol;
         Flocal(IV) -= 5e-1 * func.N[ii] * advgp[d] * dvgpdx[1][d] * func.vol;
         Flocal(IW) -= 5e-1 * func.N[ii] * advgp[d] * dvgpdx[2][d] * func.vol;
     }
 
-    // DARCY TERM
+    // Darcy term
     Flocal(IU) -= 5e-1 * f * func.N[ii] * vgp[0] * func.vol;
     Flocal(IV) -= 5e-1 * f * func.N[ii] * vgp[1] * func.vol;
     Flocal(IW) -= 5e-1 * f * func.N[ii] * vgp[2] * func.vol;
 
-    // SUPG MASS TERM
+    // SUPG mass term
     for(int d=0; d<3; d++){
         Flocal(IU) += tau * func.dNdx[ii][d] * advgp[d] * vgp[0] / dt * func.vol;
         Flocal(IV) += tau * func.dNdx[ii][d] * advgp[d] * vgp[1] / dt * func.vol;
         Flocal(IW) += tau * func.dNdx[ii][d] * advgp[d] * vgp[2] / dt * func.vol;
     }
     
-    // SUPG ADVECTION TERM
+    // SUPG advection term
     for(int d=0; d<3; d++){
         for(int nn=0; nn<3; nn++){
             Flocal(IU) -= 5e-1 * tau * vgp[nn] * func.dNdx[ii][nn] * advgp[d] * dvgpdx[0][d] * func.vol;
@@ -215,12 +233,12 @@ void DirectProblem::usnsGaussIntegralRHS(VectorXd &Flocal, Function &func, const
         }
     }
     
-    // PSPG MASS TERM 
+    // PSPG mass term
     Flocal(IP) += tau * func.dNdx[ii][0] * vgp[0] / dt * func.vol;
     Flocal(IP) += tau * func.dNdx[ii][1] * vgp[1] / dt * func.vol;
     Flocal(IP) += tau * func.dNdx[ii][2] * vgp[2] / dt * func.vol;
 
-    // PSPG ADVECTION TERM
+    // PSPG advection term
     for(int d=0; d<3; d++){
         Flocal(IP) -= 5e-1 * tau * func.dNdx[ii][0] * advgp[d] * dvgpdx[0][d] * func.vol;
         Flocal(IP) -= 5e-1 * tau * func.dNdx[ii][1] * advgp[d] * dvgpdx[1][d] * func.vol;

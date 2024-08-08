@@ -326,3 +326,22 @@ void Config::setFluidDomain()
         }
     }
 }
+
+/*
+    controlBoundaryMap.clear();
+    for(int in=0; in<sortNode.size(); in++){
+        if(controlBoundaryMapTmp.size() == 0) break;
+        if(isBoundaryEdge[in]) continue;
+        int key = sortNode[in];
+        if(std::find(controlBoundaryMapTmp.begin(), controlBoundaryMapTmp.end(), key) != controlBoundaryMapTmp.end()){
+            controlBoundaryMap.push_back(convertNodeOldToNew[key]);
+        }
+    }
+
+    for(int in=0; in<sortNode.size(); in++){
+        if(isBoundaryEdge[in]){
+            std::vector<double> vecTmp(dim, 0e0);
+            vDirichletWall[in] = vecTmp;
+        }
+    }
+    */

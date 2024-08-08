@@ -6,13 +6,13 @@
 
 int main()
 {
-    int nx = 64;
-    int ny = 64;
-    int nz = 64;
+    int nx = 88;
+    int ny = 32;
+    int nz = 32;
 
-    double lx = 2e0;
-    double ly = 2e0;
-    double lz = 2e0;
+    double lx = 5.5;
+    double ly = 2.0;
+    double lz = 2.0;
 
     double dx = lx / (double)nx;
     double dy = ly / (double)ny;
@@ -20,9 +20,9 @@ int main()
 
     std::string controlFace = "left";
 
-    double center[2] = {1.0, 1.25};
+    double center[2] = {1.0, 1.0};
 
-    double R = 0.25;
+    double R = 0.5;
     double pi = 3.14159265358979323846;
 
     std::vector<int> node;

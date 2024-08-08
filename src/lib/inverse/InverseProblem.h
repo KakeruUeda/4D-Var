@@ -144,6 +144,8 @@ public:
     int loopMax;
     int outputItr;
 
+    double alphaX0, alphaX;
+
     bool isConverged_X, isConverged_X0;
 
     std::vector<int> planeDir;
@@ -180,8 +182,12 @@ public:
     void GaussIntegralOptimalConditionX0Term1(Function &func, std::vector<std::vector<double>> &value, const int ic);
     void GaussIntegralOptimalConditionX0Term2(Function &func, std::vector<std::vector<double>> &value, const int ic);
     void GaussIntegralOptimalConditionX0Term3(Function &func, std::vector<std::vector<double>> &value, const int ic);
-    double armijoCriteriaX(const double fk);
-    double armijoCriteriaX0(const double fk);
+    double armijoCriteria(const double fk);
+    double armijoCriteriaX_tmp(const double fk);
+    double armijoCriteriaX0_tmp(const double fk);
+    void armijoCriteriaX(const double fk);
+    void armijoCriteriaX0(const double fk);
+    void updataControlVariables(DirectProblem &main);
     void updataControlVariables(DirectProblem &main, const double alphaX, const double alphaX0);
     void setValue(Function &func, const int ic);
 

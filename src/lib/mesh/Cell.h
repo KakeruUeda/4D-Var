@@ -15,50 +15,50 @@
 
 struct CellInfo
 {
-    public:
-        VTKCellType cellType;
-        int subId;
-        double phi;
+public:
+    VTKCellType cellType;
+    int subId;
+    double phi;
 
-        std::vector<int> node, nodeNew;
-        std::vector<int> dofsMap, dofsBCsMap;
-        std::vector<int> dofStart;
-        std::vector<int> dofStartPlane;
-        std::vector<std::vector<double>> x;
+    std::vector<int> node, nodeNew;
+    std::vector<int> dofsMap, dofsBCsMap;
+    std::vector<int> dofStart;
+    std::vector<int> dofStartPlane;
+    std::vector<std::vector<double>> x;
 
-        /// add ///
-        std::vector<int> dofsMapWall, dofsBCsMapWall;
+    /// add ///
+    std::vector<int> dofsMapWall, dofsBCsMapWall;
 
-        inline void setArrayZero(int n);
+    inline void setArrayZero(int n);
 };
 
 class Cell
 {
-    public:
-        Cell(){}
-        Cell(Config &conf) :
-        nNodesInCell(conf.nNodesInCell),
-        nCellsGlobal(conf.nCellsGlobal), data(conf.nCellsGlobal){}
-        virtual ~Cell(){}
+public:
+    Cell(){}
+    Cell(Config &conf) :
+    nNodesInCell(conf.nNodesInCell),
+    nCellsGlobal(conf.nCellsGlobal), data(conf.nCellsGlobal){}
+    virtual ~Cell(){}
         
-        inline CellInfo& operator()(int n)
-        { return data[n]; }
+    inline CellInfo& operator()(int n)
+    { return data[n]; }
 
-        inline int size()
-        { return data.size(); }
+    inline int size()
+    { return data.size(); }
 
-        inline void resize(int n)
-        { data.resize(n); }
+    inline void resize(int n)
+    { data.resize(n); }
 
-        int nCellsGlobal;
-        int nNodesInCell;
-        int nCellsStructuredGlobal;
+    int nCellsGlobal;
+    int nNodesInCell;
+    int nCellsStructuredGlobal;
 
-        void initialize(Config &conf);
-        void initializeAdjoint(Config &conf);
+    void initialize(Config &conf);
+    void initializeAdjoint(Config &conf);
 
-    private:
-	    std::vector<CellInfo> data;
+private:
+	std::vector<CellInfo> data;
 };
 
 

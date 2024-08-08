@@ -8,10 +8,12 @@
 
 #include <cstdio>
 
-class Gauss{
+class Gauss
+{
 public:
 	Gauss(){}
-	Gauss(const int num){
+	Gauss(const int num)
+    {
 		switch(num){
 		    case 2:
 	  		    point[0] = -0.577350296189626; point[1] =  0.577350296189626;
@@ -30,11 +32,13 @@ public:
 
 
 //caution! Below is the position of natural coordinates (L0,L1,L2,L3)
-class GaussTetra{
+class GaussTetra
+{
 public:
 	GaussTetra(){}
-	GaussTetra(const int num){
-    double a;
+	GaussTetra(const int num)
+    {
+        double a;
 		switch(num){
 			case 1:
 	  		    point[0][0] = 2.5e-1; point[0][1] = 2.5e-1; point[0][2] = 2.5e-1; point[0][3] = 2.5e-1;
@@ -63,10 +67,12 @@ public:
   double point[5][4],weight[5];
 };
 
-class GaussTriangle{
+class GaussTriangle
+{
 public:
     GaussTriangle(){}
-    GaussTriangle(const int num){
+    GaussTriangle(const int num)
+    {
         switch(num){
             case 1:
                 point[0][0] = 1e0/3e0; point[0][1] = 1e0/3e0; point[0][2] = 1e0/3e0;

@@ -31,8 +31,6 @@ int main(int argc, char *argv[])
             conf->setFluidDomain();
         }
     } 
-    std::vector<int> sortNode;
-    sortNode = conf->sortNode;
     
     DirectProblem direct(*conf);
     direct.initialize(*conf);

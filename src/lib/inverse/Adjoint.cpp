@@ -175,6 +175,7 @@ void Adjoint::updateSolutions()
                 grid.node.l[in][d] = petsc.solution[n1+dim+1+d];
         }
     }
+
     for(int in=0; in<grid.node.nNodesGlobal; in++){
         if(grid.dirichlet.isBoundaryEdge[in]){
             for(int d=0; d<dim; d++){
@@ -182,6 +183,7 @@ void Adjoint::updateSolutions()
             }
         }   
     }
+
 }
 
 /**********************************

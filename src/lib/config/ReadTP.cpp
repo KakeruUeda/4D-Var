@@ -398,6 +398,14 @@ void Config::readInverseParameter()
     if(!tp.getInspectedValue(label, gCF))
         throw std::runtime_error(label + " is not set");
 
+    label = base_label + "/alphaX0";
+    if(!tp.getInspectedValue(label, alphaX0))
+        throw std::runtime_error(label + " is not set");
+
+    label = base_label + "/alphaX";
+    if(!tp.getInspectedValue(label, alphaX))
+        throw std::runtime_error(label + " is not set");
+
     label = base_label + "/outputItr";
     if(!tp.getInspectedValue(label, outputItr))
         throw std::runtime_error(label + " is not set");

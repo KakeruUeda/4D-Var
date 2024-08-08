@@ -196,7 +196,7 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
 
     int size;
     for(int ic=0; ic<cell.nCellsGlobal; ic++){
-        //if(cell(ic).subId == mpi.myId){
+        if(cell(ic).subId == mpi.myId){
             size = 0;
             for(int p=0; p<cell.nNodesInCell; p++){
                 size += node.nDofsOnNodeNew[cell(ic).nodeNew[p]];
@@ -212,7 +212,7 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
                 }
                 i += node.nDofsOnNodeNew[cell(ic).nodeNew[p]];
             }
-        //}
+        }
     }
 
     /// add ///

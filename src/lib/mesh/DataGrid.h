@@ -47,46 +47,45 @@ struct VoxelInfo
 
 class DataGrid
 {
-    public:
-        DataGrid(){}  
-        DataGrid(Config &conf);
+public:
+    DataGrid(){}  
+    DataGrid(Config &conf);
         
-        int dim;
-        int nx, ny, nz;
-        double dx, dy, dz; 
-        double lx, ly, lz;
-        double xOrigin, yOrigin, zOrigin;
-        double range;
+    int dim;
+    int nx, ny, nz;
+    double dx, dy, dz; 
+    double lx, ly, lz;
+    double xOrigin, yOrigin, zOrigin;
+    double range;
 
-        int nData;
+    int nData;
 
-        int nCellsGlobal;
-        int nNodesGlobal;
-        int nNodesInCell;
+    int nCellsGlobal;
+    int nNodesGlobal;
+    int nNodesInCell;
 
-        int nSnapShot;
-        int snapInterval;
+    int nSnapShot;
+    int snapInterval;
 
-        std::vector<std::vector<std::vector<std::vector<double>>>> vEX;
+    std::vector<std::vector<std::vector<std::vector<double>>>> vEX;
         
-        inline VoxelInfo& operator()(int x)
-        { return data[x]; }
-        inline VoxelInfo& operator()(int y, int x)
-        { return data[y * nx + x]; }
-        inline VoxelInfo& operator()(int z, int y, int x)
-        { return data[z * nx * ny + y * nx + x]; }
+    inline VoxelInfo& operator()(int x)
+    { return data[x]; }
+    inline VoxelInfo& operator()(int y, int x)
+    { return data[y * nx + x]; }
+    inline VoxelInfo& operator()(int z, int y, int x)
+    { return data[z * nx * ny + y * nx + x]; }
 
-        inline int size()
-        { return data.size(); }
-        inline void resize(int n)
-        { data.resize(n); }
+    inline int size()
+    { return data.size(); }
+    inline void resize(int n)
+    { data.resize(n); }
         
-        void initialize(Config &conf, Node &node, Cell &cell, const int &dim);
-        void compEdgeValue(const int t);
+    void initialize(Config &conf, Node &node, Cell &cell, const int &dim);
+    void compEdgeValue(const int t);
     
-    private:
-        std::vector<VoxelInfo> data;
+private:
+    std::vector<VoxelInfo> data;
 };
-
 
 #endif

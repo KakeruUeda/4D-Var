@@ -42,14 +42,14 @@ void Node::initialize(Config &conf)
     }
 
     /// add ///
-    for (int in = 0; in < nNodesGlobal; in++){
+    for(int in = 0; in < nNodesGlobal; in++){
         isDirichletWall[in].resize(nDofsOnNode[in], false);
     }
     tmp = 0;
-    for (int in = 0; in < nNodesGlobal; in++){
+    for(int in = 0; in < nNodesGlobal; in++){
         dofsMapWall[in].resize(nDofsOnNode[in]);
         dofsBCsMapWall[in].resize(nDofsOnNode[in]);
-        for (int id = 0; id < nDofsOnNode[in]; id++){
+        for(int id=0; id<nDofsOnNode[in]; id++){
             dofsMapWall[in][id] = tmp;
             dofsBCsMapWall[in][id] = tmp;
             tmp++;
@@ -110,14 +110,14 @@ void Node::initializeNew()
     }
 
     /// add ///
-    for(int in = 0; in < nNodesGlobal; in++)
+    for(int in=0; in<nNodesGlobal; in++)
         isDirichletWallNew[in].resize(nDofsOnNodeNew[in], false);
 
     tmp = 0;
-    for(int in = 0; in < nNodesGlobal; in++){
+    for(int in=0; in<nNodesGlobal; in++){
         dofsMapWallNew[in].resize(nDofsOnNodeNew[in]);
         dofsBCsMapWallNew[in].resize(nDofsOnNodeNew[in]);
-        for(int id = 0; id < nDofsOnNodeNew[in]; id++){
+        for(int id=0; id<nDofsOnNodeNew[in]; id++){
             dofsMapWallNew[in][id] = tmp;
             dofsBCsMapWallNew[in][id] = tmp;
             tmp++;
@@ -158,10 +158,10 @@ void Node::initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap)
 
     int tmp = 0;
 
-    for(int in = 0; in < nNodesGlobal; in++){
+    for(int in=0; in<nNodesGlobal; in++){
         dofsMap[in].resize(nDofsOnNode[in]);
         dofsBCsMap[in].resize(nDofsOnNode[in]);
-        for(int id = 0; id < nDofsOnNode[in]; id++){
+        for(int id=0; id<nDofsOnNode[in]; id++){
             dofsMap[in][id] = tmp;
             dofsBCsMap[in][id] = tmp;
             tmp++;
@@ -173,10 +173,10 @@ void Node::initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap)
         isDirichletWall[in].resize(nDofsOnNode[in], false);
     }
     tmp = 0;
-    for(int in = 0; in < nNodesGlobal; in++){
+    for(int in=0; in<nNodesGlobal; in++){
         dofsMapWall[in].resize(nDofsOnNode[in]);
         dofsBCsMapWall[in].resize(nDofsOnNode[in]);
-        for(int id = 0; id < nDofsOnNode[in]; id++){
+        for(int id=0; id<nDofsOnNode[in]; id++){
             dofsMapWall[in][id] = tmp;
             dofsBCsMapWall[in][id] = tmp;
             tmp++;

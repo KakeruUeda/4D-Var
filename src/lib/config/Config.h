@@ -56,145 +56,147 @@ enum class CrossSection
 
 class Config
 {
-    public:
-        Config(std::string inputFile, std::string appName);
-        ~Config(){};
+public:
+    Config(std::string inputFile, std::string appName);
+    ~Config(){};
 
-        TextParser tp;
-        Application app;
-        GridType gridType;
-        ControlBoundary controlBoundary;
-        VoxelVelocity vvox;
-        CrossSection crossSection;
+    TextParser tp;
+    Application app;
+    GridType gridType;
+    ControlBoundary controlBoundary;
+    VoxelVelocity vvox;
+    CrossSection crossSection;
 
-        // Basic parameter
-        int dim, nOMP;
-        int outputItr;
-        std::string outputDir;
+    // Basic parameter
+    int dim, nOMP;
+    int outputItr;
+    std::string outputDir;
 
-        // Physical parameter
-        double rho, mu, Re;
+    // Physical parameter
+    double rho, mu, Re;
 
-        double NRtolerance;
+    double NRtolerance;
 
-        // CostFunction parameter
-        double aCF, bCF, gCF;
-        int loopMax;
+    // CostFunction parameter
+    double aCF, bCF, gCF;
+    int loopMax;
 
-        // Time parameter
-        double dt;
-        int timeMax;
-        int pulsatileFlow;
-        int pulseBeginItr;
-        double T;
+    double alphaX0, alphaX;
 
-        // Darcy Parameter
-        double alpha, resistance;
-    
-        // Grid parameter
-        int extractFluid;
-        int nx, ny, nz;
-        double lx, ly, lz;
-        double dx, dy, dz;
-        int nxNodes, nyNodes, nzNodes;
-        int nxCells, nyCells, nzCells;
-        int nCellsGlobal, nNodesGlobal, nNodesInCell;
+    // Time parameter
+    double dt;
+    int timeMax;
+    int pulsatileFlow;
+    int pulseBeginItr;
+    double T;
 
-        // SnapShot parameter
-        int nSnapShot;
-        int snapInterval;
-        int snapTimeBeginItr;
+    // Darcy Parameter
+    double alpha, resistance;
 
-        // DataGrid parameter
-        int nData;
-        double xOrigin, yOrigin, zOrigin;
-        int nxData, nyData, nzData;
-        double lxData, lyData, lzData;
-        double dxData, dyData, dzData;
-        int nNodesInCellData;
-        int nCellsDataGlobal;
+    // Grid parameter
+    int extractFluid;
+    int nx, ny, nz;
+    double lx, ly, lz;
+    double dx, dy, dz;
+    int nxNodes, nyNodes, nzNodes;
+    int nxCells, nyCells, nzCells;
+    int nCellsGlobal, nNodesGlobal, nNodesInCell;
 
-        // Voxel creation
-        int nxOpt, nyOpt, nzOpt;
-        double lxOpt, lyOpt, lzOpt;
-        double dxOpt, dyOpt, dzOpt;
-        int nCellsOptGlobal;
-        int nNodesOptGlobal;
-        int stepMax;
-        std::string inputDir;
+    // SnapShot parameter
+    int nSnapShot;
+    int snapInterval;
+    int snapTimeBeginItr;
 
-        // Boundary parameter for stgrid
-        std::vector<std::string> bdStr;
-        std::vector<std::string> bdType;
-        std::vector<std::vector<double>> bdValue; 
+    // DataGrid parameter
+    int nData;
+    double xOrigin, yOrigin, zOrigin;
+    int nxData, nyData, nzData;
+    double lxData, lyData, lzData;
+    double dxData, dyData, dzData;
+    int nNodesInCellData;
+    int nCellsDataGlobal;
 
-        // For image data
-        std::vector<double> phi;
+    // Voxel creation
+    int nxOpt, nyOpt, nzOpt;
+    double lxOpt, lyOpt, lzOpt;
+    double dxOpt, dyOpt, dzOpt;
+    int nCellsOptGlobal;
+    int nNodesOptGlobal;
+    int stepMax;
+    std::string inputDir;
 
-        // For Dirichlet boundary data
-        std::vector<int> vDirichletNode;
-        std::vector<int> pDirichletNode;
-        std::vector<std::vector<double>> vDirichletValue;
-        std::vector<double> pDirichletValue;
-        std::map<int, std::vector<double>> vDirichlet;
-        std::map<int, std::vector<double>> vDirichletWall;
-        std::map<int, double> pDirichlet;
+    // Boundary parameter for stgrid
+    std::vector<std::string> bdStr;
+    std::vector<std::string> bdType;
+    std::vector<std::vector<double>> bdValue; 
 
-        std::vector<int> controlBoundaryMap;
-        std::vector<int> planeDir;
+    // For image data
+    std::vector<double> phi;
 
-        std::vector<bool> isBoundaryEdge;
+    // For Dirichlet boundary data
+    std::vector<int> vDirichletNode;
+    std::vector<int> pDirichletNode;
+    std::vector<std::vector<double>> vDirichletValue;
+    std::vector<double> pDirichletValue;
+    std::map<int, std::vector<double>> vDirichlet;
+    std::map<int, std::vector<double>> vDirichletWall;
+    std::map<int, double> pDirichlet;
 
-        // For cell and node data
-        std::vector<std::vector<double>> node;
-        std::vector<std::vector<int>> cell;
+    std::vector<int> controlBoundaryMap;
+    std::vector<int> planeDir;
 
-        std::vector<int> sortCell;
-        std::vector<int> sortNode;
+    std::vector<bool> isBoundaryEdge;
 
-        // Error parameter
-        bool isReadingError = false;
+    // For cell and node data
+    std::vector<std::vector<double>> node;
+    std::vector<std::vector<int>> cell;
 
-        // data parameter
-        int nControlNodesInCell;
-        std::vector<std::vector<std::vector<double>>> velocityData;
-        std::vector<std::vector<int>> controlNodeInCell;
-        std::vector<int> controlCellMap;
+    std::vector<int> sortCell;
+    std::vector<int> sortNode;
 
-        // post inverse parameter
-        int nRef;
-        int crossPoint;
-        int flowRateVelDir;
-        std::vector<std::vector<std::vector<double>>> velRef;
-        std::vector<std::vector<std::vector<double>>> velOpt;
+    // Error parameter
+    bool isReadingError = false;
 
-        void setSolidBoundary();
-        void setFluidDomain();
+    // data parameter
+    int nControlNodesInCell;
+    std::vector<std::vector<std::vector<double>>> velocityData;
+    std::vector<std::vector<int>> controlNodeInCell;
+    std::vector<int> controlCellMap;
 
-    private:
-        void setApplication(std::string appName);
-        void tryOpenConfigFile(std::string inputFile);
-        void tryReadConfigFile();
-        void readConfigFile();
+    // post inverse parameter
+    int nRef;
+    int crossPoint;
+    int flowRateVelDir;
+    std::vector<std::vector<std::vector<double>>> velRef;
+    std::vector<std::vector<std::vector<double>>> velOpt;
 
-        void readGridParameter(); 
-        void readBoundaryParameter();
-        void readControlBoundaryParameter();
-        void readStructuredGridParameter();
-        void readStructuredBoundaryParameter();
-        void readBasicParameter();           
-        void readPysicalParameter();
-        void readNRParameter();
-        void readDarcyParameter();    
-        void readTimeParameter();         
-        void readInverseParameter();
-        void readDataParameter();
-        void readPostInverseBasicParameter();
-        void readPostInverseVelocityParameter();
-        void readPostInverseFlowRateParameter();
-        void readVoxelCreationParameter();
-        void readBoundaryTypeAndValue(std::string labelType, 
-                                      std::string labelValue, int &tmp);
+    void setSolidBoundary();
+    void setFluidDomain();
+
+private:
+    void setApplication(std::string appName);
+    void tryOpenConfigFile(std::string inputFile);
+    void tryReadConfigFile();
+    void readConfigFile();
+
+    void readGridParameter(); 
+    void readBoundaryParameter();
+    void readControlBoundaryParameter();
+    void readStructuredGridParameter();
+    void readStructuredBoundaryParameter();
+    void readBasicParameter();           
+    void readPysicalParameter();
+    void readNRParameter();
+    void readDarcyParameter();    
+    void readTimeParameter();         
+    void readInverseParameter();
+    void readDataParameter();
+    void readPostInverseBasicParameter();
+    void readPostInverseVelocityParameter();
+    void readPostInverseFlowRateParameter();
+    void readVoxelCreationParameter();
+    void readBoundaryTypeAndValue(std::string labelType, 
+                                  std::string labelValue, int &tmp);
 };
 
 #endif

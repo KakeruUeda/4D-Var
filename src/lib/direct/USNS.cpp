@@ -213,7 +213,7 @@ void DirectProblem::compInitialCondition(std::vector<std::map<int, std::vector<d
     }
 
     int snapCount = 0;
-    for(int t=0; t<timeMax; t++){
+    for(int t=0; t<timeMax*3; t++){
         petsc.setValueZero();
         grid.dirichlet.assignConstantDirichletBCs(vDirichletTmp, pDirichletTmp, grid.node, dim, t);
         grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
@@ -245,7 +245,7 @@ void DirectProblem::compInitialCondition(std::vector<std::map<int, std::vector<d
         VecRestoreArray(vecSEQ, &arraySolnTmp);
         updateSolutions();
 
-        if(t == timeMax-1){
+        if(t == timeMax*3-1){
            for(int in=0; in<grid.node.nNodesGlobal; in++){
                 for(int d=0; d<dim; d++){
                     grid.node.v0[in][d] = grid.node.v[in][d];

@@ -7,7 +7,6 @@ target_sources(direct
         DirectProblem.cpp
         Initialize.cpp
         AssemblyUSNS.cpp
-        Postprocess.cpp
         USNS.cpp
 )
 

@@ -1,7 +1,7 @@
 Base
 {
     dim = 3
-    outputDir = "unilateralStenosis"
+    outputDir = "test"
     numOfOMP = 1
 }
 

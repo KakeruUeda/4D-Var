@@ -5,6 +5,7 @@ add_library(common STATIC)
 target_sources(common PRIVATE
     MathCommon.cpp
     MathFEM.cpp
+    Spline.cpp
 )
 
 target_compile_options(common PUBLIC ${compile_options_tmp})
