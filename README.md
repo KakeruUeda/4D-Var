@@ -14,7 +14,7 @@ https://github.com/avr-aics-riken/TextParser <br>
 ## Usage
     * sh build.sh
     * cd /<example_dir>
-    * mpirun -n <process> ./<solver_dir>/<solver_name> <tp_name>.tp petsc_options.dat
+    * mpirun -n <num_process> ./<solver_dir>/<solver_name> <tp_name>.tp petsc_options.dat
 ## Applications
 ・**UnsteadyNavierStokesSolver**: Solves Unsteady Navier-Stokes equation. <br>
 ・**4DVar (Four-Dimensional Variational Data Assimilation)**: Solves inverse problem. <br> 

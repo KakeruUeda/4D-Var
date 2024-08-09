@@ -1,5 +1,5 @@
 /**
- * @file ShapeFunction.h
+ * @file Spline.h
  * @ref https://qiita.com/khidaka/items/84610cd890ecb8443d96
  * @author K.Ueda
  * @date July, 2024
@@ -15,7 +15,6 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 using namespace Eigen;
-
 
 class Spline
 {
