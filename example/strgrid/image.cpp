@@ -9,7 +9,7 @@ int main()
     int nz = 32;
 
     double lx = 1e0;
-    double ly = 1e0; 
+    double ly = 1e0;
     double lz = 1e0;
 
     int numOfCells = nx * ny * nz;
@@ -30,9 +30,12 @@ int main()
     }
     */
 
-    for(int k=0; k<nz; k++){
-        for(int j=0; j<ny; j++){
-            for(int i=0; i<nx; i++){
+    for (int k = 0; k < nz; k++)
+    {
+        for (int j = 0; j < ny; j++)
+        {
+            for (int i = 0; i < nx; i++)
+            {
                 phi[tmp] = 1.0;
                 tmp++;
             }
@@ -41,18 +44,18 @@ int main()
 
     tmp = 0;
 
-    std::ofstream image("image" + std::to_string(nx) + "x" 
-                                + std::to_string(ny) + "x" 
-                                + std::to_string(nz) + ".dat");
-    
-    for(int k=0; k<nz; k++){
-        for(int j=0; j<ny; j++){
-            for(int i=0; i<nx; i++){
+    std::ofstream image("image" + std::to_string(nx) + "x" + std::to_string(ny) + "x" + std::to_string(nz) + ".dat");
+
+    for (int k = 0; k < nz; k++)
+    {
+        for (int j = 0; j < ny; j++)
+        {
+            for (int i = 0; i < nx; i++)
+            {
                 image << phi[tmp] << std::endl;
                 tmp++;
             }
         }
     }
     image.close();
-
 }

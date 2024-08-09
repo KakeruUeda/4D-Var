@@ -35,20 +35,25 @@ public:
 class Cell
 {
 public:
-    Cell(){}
-    Cell(Config &conf) :
-    nNodesInCell(conf.nNodesInCell),
-    nCellsGlobal(conf.nCellsGlobal), data(conf.nCellsGlobal){}
-    virtual ~Cell(){}
-        
-    inline CellInfo& operator()(int n)
-    { return data[n]; }
+    Cell() {}
+    Cell(Config &conf) : nNodesInCell(conf.nNodesInCell),
+                         nCellsGlobal(conf.nCellsGlobal), data(conf.nCellsGlobal) {}
+    virtual ~Cell() {}
+
+    inline CellInfo &operator()(int n)
+    {
+        return data[n];
+    }
 
     inline int size()
-    { return data.size(); }
+    {
+        return data.size();
+    }
 
     inline void resize(int n)
-    { data.resize(n); }
+    {
+        data.resize(n);
+    }
 
     int nCellsGlobal;
     int nNodesInCell;
@@ -58,9 +63,7 @@ public:
     void initializeAdjoint(Config &conf);
 
 private:
-	std::vector<CellInfo> data;
+    std::vector<CellInfo> data;
 };
-
-
 
 #endif
