@@ -72,9 +72,9 @@ void Node::initialize(Config &conf)
 
   if (conf.gridType == GridType::STRUCTURED)
   {
-    nNodesStructuredGlobal = (conf.nx + 1) * (conf.ny + 1) * (conf.nz + 1);
-    VecTool::resize(vvti, nNodesStructuredGlobal, conf.dim);
-    VecTool::resize(pvti, nNodesStructuredGlobal);
+    nNodesStrGlobal = (conf.nx + 1) * (conf.ny + 1) * (conf.nz + 1);
+    VecTool::resize(vvti, nNodesStrGlobal, conf.dim);
+    VecTool::resize(pvti, nNodesStrGlobal);
   }
 }
 
@@ -213,9 +213,9 @@ void Node::initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap)
 
   if (conf.gridType == GridType::STRUCTURED)
   {
-    nNodesStructuredGlobal = (conf.nx + 1) * (conf.ny + 1) * (conf.nz + 1);
-    VecTool::resize(wvti, nNodesStructuredGlobal, conf.dim);
-    VecTool::resize(lvti, nNodesStructuredGlobal, conf.dim);
-    VecTool::resize(qvti, nNodesStructuredGlobal);
+    nNodesStrGlobal = (conf.nx + 1) * (conf.ny + 1) * (conf.nz + 1);
+    VecTool::resize(wvti, nNodesStrGlobal, conf.dim);
+    VecTool::resize(lvti, nNodesStrGlobal, conf.dim);
+    VecTool::resize(qvti, nNodesStrGlobal);
   }
 }

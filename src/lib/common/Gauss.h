@@ -22,6 +22,7 @@ public:
       weight[0] = 1e0;
       weight[1] = 1e0;
       break;
+
     case 3:
       point[0] = -0.774596669241483;
       point[1] = 0e0;
@@ -30,6 +31,7 @@ public:
       weight[1] = 0.888888888888888;
       weight[2] = 0.555555555555555;
       break;
+
     default:
       printf("undefined order is set in the gauss integral\n");
     }
@@ -48,12 +50,14 @@ public:
     switch (num)
     {
     case 1:
+
       point[0][0] = 2.5e-1;
       point[0][1] = 2.5e-1;
       point[0][2] = 2.5e-1;
       point[0][3] = 2.5e-1;
       weight[0] = 1e0;
       break;
+
     case 2:
       a = 0.13819660;
       point[0][0] = 1e0 - 2e0 * a;
@@ -77,6 +81,7 @@ public:
       weight[2] = 2.5e-1;
       weight[3] = 2.5e-1;
       break;
+
     case 3:
       point[0][0] = 2.5e-1;
       point[0][1] = 2.5e-1;
@@ -104,6 +109,7 @@ public:
       weight[3] = 9e0 / 20e0;
       weight[4] = 9e0 / 20e0;
       break;
+
     default:
       printf("undefined order is set in the gauss integral\n");
     }
@@ -125,6 +131,7 @@ public:
       point[0][2] = 1e0 / 3e0;
       weight[0] = 1e0;
       break;
+
     case 2:
       point[0][0] = 0e0;
       point[0][1] = 5e-1;
@@ -139,6 +146,7 @@ public:
       weight[1] = 1e0 / 3e0;
       weight[2] = 1e0 / 3e0;
       break;
+
     case 3:
       point[0][0] = 1e0 / 3e0;
       point[0][1] = 1e0 / 3e0;
@@ -157,6 +165,7 @@ public:
       weight[2] = 25e0 / 48e0;
       weight[3] = 25e0 / 48e0;
       break;
+      
     default:
       printf("undefined order is set in the gauss integral\n");
     }

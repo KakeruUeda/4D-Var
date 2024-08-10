@@ -1,8 +1,3 @@
-/**
- * @file DirectProblem.h
- * @author K.Ueda
- * @date Jun, 2024
- */
 
 #ifndef DIRECTPROBLEM_H
 #define DIRECTPROBLEM_H
@@ -24,14 +19,15 @@
 #include "Config.h"
 #include "Gauss.h"
 #include "ShapeFunction.h"
+#include "MathCommon.h"
 #include "Tool.h"
-#include "Function.h"
-#include "VTK.h"
 #include "MathTool.h"
+#include "VTK.h"
+#include "FEM.h"
 
 extern MyMPI mpi;
 
-class DirectProblem
+class DirectProblem : public virtual FEM
 {
 public:
   DirectProblem(Config &conf);
@@ -45,6 +41,7 @@ public:
   int dim, nOMP;
   std::string outputDir;
 
+  /*
   int IU, IV, IW, IP;
   int ILU, ILV, ILW;
   int JU, JV, JW, JP;
@@ -66,6 +63,8 @@ public:
   double alpha, resistance;
 
   double tau;
+  */
+
   std::vector<double> vgp;
   std::vector<double> advgp;
   std::vector<std::vector<double>> dvgpdx;
@@ -78,7 +77,7 @@ public:
                  std::vector<std::map<int, double>> &pDirichletTmp, std::vector<std::vector<double>> &v0Tmp);
   void compInitialCondition(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
                             std::vector<std::map<int, double>> &pDirichletTmp);
-  void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, MathTools3D &math, const int ic, const int t);
+  void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, MathTools3D &tools, const int ic, const int t);
 
   void updateSolutionsVTI();
   void updateSolutionsVTI(const int t);
@@ -88,16 +87,14 @@ public:
   void outputSolutionsVTU(const std::string &dir, const int t, const int loop);
 
 private:
-  void setValuesInGaussIntegral(MathTools3D &math, Gauss &g2, const double he,
+  void setValuesInGaussIntegral(MathTools3D &tools, Gauss &g2, const double he,
                                 const int i1, const int i2, const int i3, const int ic, const int t);
-  void usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &math, const double f, const int ii, const int jj);
-  void usnsGaussIntegralRHS(VectorXd &Flocal, MathTools3D &math, const double f, const int ii);
-  void setVelocityValue(MathTools3D &math, const int ic, const int t);
+  void usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, const double f, const int ii, const int jj);
+  void usnsGaussIntegralRHS(VectorXd &Flocal, MathTools3D &tools, const double f, const int ii);
+  void setVelocityValue(MathTools3D &tools, const int ic, const int t);
   void updateSolutions();
   void updateTimeSolutions(const int t);
   void setVariablesZero();
-  void updateRowIndex(const int ii, const int ic);
-  void updateColumnIndex(const int ii, const int ic);
   void compVorticity(const int t);
 };
 

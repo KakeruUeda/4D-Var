@@ -31,16 +31,34 @@ void Grid::setStructuredGrid(const int nxCells, const int nyCells, const int nzC
 														 Cell &cell, Node &node)
 {
 	for (int k = 0; k < nzCells; k++)
+	{
 		for (int j = 0; j < nyCells; j++)
+		{
 			for (int i = 0; i < nxCells; i++)
+			{
 				for (int p = 0; p < nNodesInCell; p++)
-					cell(k * nxCells * nyCells + j * nxCells + i).node[p] = structuredGridNodeSet(nxNodes, nyNodes, nzNodes, i, j, k, p);
+				{
+					cell(k * nxCells * nyCells + j * nxCells + i).node[p] 
+					= structuredGridNodeSet(nxNodes, nyNodes, nzNodes, i, j, k, p);
+				}
+			}
+		}
+	}
 
 	for (int k = 0; k < nzNodes; k++)
+	{
 		for (int j = 0; j < nyNodes; j++)
+		{
 			for (int i = 0; i < nxNodes; i++)
+			{
 				for (int d = 0; d < dim; d++)
-					node.x[k * nxNodes * nyNodes + j * nxNodes + i][d] = structuredGridCoordinateSet(dx, dy, dz, i, j, k, d);
+				{
+					node.x[k * nxNodes * nyNodes + j * nxNodes + i][d] 
+					= structuredGridCoordinateSet(dx, dy, dz, i, j, k, d);
+				}
+			}
+		}
+	}
 }
 
 int Grid::structuredGridNodeSet(const int nxNodes, const int nyNodes, const int nzNodes,
@@ -129,74 +147,6 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
 		divideWholeGrid();
 		distributeToLocal(timeMax);
 	}
-
-	/*
-	// debug
-	if(mpi.myId == 0){
-			std::ofstream outIsDirichlet(outputDir + "/dat/isDirichlet.dat");
-			for(int in=0; in<node.nNodesGlobal; in++){
-					for(int id=0; id<node.nDofsOnNode[in]; id++){
-							outIsDirichlet << node.isDirichlet[in][id] << " ";
-					}
-					outIsDirichlet << std::endl;
-			}
-			outIsDirichlet.close();
-	}
-
-	//debug
-	if(mpi.myId == 0){
-			std::ofstream outDofsBCsMap(outputDir + "/dat/dofsBCsMap.dat");
-			for(int in=0; in<node.nNodesGlobal; in++){
-					for(int id=0; id<node.nDofsOnNode[in]; id++){
-							outDofsBCsMap << node.dofsBCsMap[in][id] << " ";
-					}
-					outDofsBCsMap << std::endl;
-			}
-			outDofsBCsMap.close();
-	}
-
-	// debug
-	if(mpi.myId == 0){
-			std::ofstream outIsDirichletNew(outputDir + "/dat/isDirichletNew.dat");
-			for(int in=0; in<node.nNodesGlobal; in++){
-					for(int id=0; id<node.nDofsOnNodeNew[in]; id++){
-							outIsDirichletNew << node.isDirichletNew[in][id] << " ";
-					}
-					outIsDirichletNew << std::endl;
-			}
-			outIsDirichletNew.close();
-	}
-
-	//debug
-	if(mpi.myId == 0){
-			std::ofstream outDofsBCsMapNew(outputDir + "/dat/dofsBCsMapNew.dat");
-			for(int in=0; in<node.nNodesGlobal; in++){
-					for(int id=0; id<node.nDofsOnNodeNew[in]; id++){
-							outDofsBCsMapNew << node.dofsBCsMapNew[in][id] << " ";
-					}
-					outDofsBCsMapNew << std::endl;
-			}
-			outDofsBCsMapNew.close();
-	}
-
-	// debug
-	if(mpi.myId == 0){
-			int i;
-			std::ofstream outCellDofsMap(outputDir + "/dat/cellDofsBCsMap.dat");
-			for(int ic=0; ic<cell.nCellsGlobal; ic++){
-					i = 0;
-					for(int p=0; p<cell.nNodesInCell; p++){
-							for(int q=0; q<node.nDofsOnNodeNew[cell(ic).nodeNew[p]]; q++){
-									outCellDofsMap << cell(ic).dofsBCsMap[i+q] << " ";
-							}
-							outCellDofsMap << "  ";
-							i += node.nDofsOnNodeNew[cell(ic).nodeNew[p]];
-					}
-					outCellDofsMap << std::endl;
-			}
-			outCellDofsMap.close();
-	}
-	*/
 
 	for (int in = 0; in < node.nNodesGlobal; in++)
 	{
@@ -351,9 +301,11 @@ void Grid::divideWholeGrid()
 		int kk = 0;
 		int nparts = mpi.nId;
 
-		int *eptr, *eind;
-		eptr = new int[nCellsGlobal + 1];
-		eind = new int[nCellsGlobal * cell.nNodesInCell];
+		std::unique_ptr<int[]> eptr;
+		std::unique_ptr<int[]> eind;
+
+		eptr = std::make_unique<int[]>(nCellsGlobal + 1);
+		eind = std::make_unique<int[]>(nCellsGlobal * cell.nNodesInCell);
 
 		for (int in = 0; in < nCellsGlobal + 1; in++)
 			eptr[in] = 0;
@@ -369,7 +321,6 @@ void Grid::divideWholeGrid()
 				eind[kk + p] = cell(ic).node[p];
 			kk += cell.nNodesInCell;
 		}
-
 		// 8-noded hexa element
 		int ncommon_nodes = 4;
 
@@ -388,7 +339,7 @@ void Grid::divideWholeGrid()
 		options[METIS_OPTION_NUMBERING] = 0;
 
 		// METIS partition routine
-		int ret = METIS_PartMeshDual(&nCellsGlobal, &nNodesGlobal, eptr, eind, NULL,
+		int ret = METIS_PartMeshDual(&nCellsGlobal, &nNodesGlobal, eptr.get(), eind.get(), NULL,
 																 NULL, &ncommon_nodes, &nparts, NULL, options,
 																 &objval, &cellId[0], &nodeId[0]);
 
@@ -396,16 +347,11 @@ void Grid::divideWholeGrid()
 			std::cout << "METIS partition routine success " << std::endl;
 		else
 			std::cout << "METIS partition routine failed " << std::endl;
-
-		if (eptr)
-			delete[] eptr;
-		if (eind)
-			delete[] eind;
 	}
+	
 	MPI_Barrier(MPI_COMM_WORLD);
-
-	MPI_Bcast(&cellId[0], nCellsGlobal, MPI_INT, 0, MPI_COMM_WORLD);
-	MPI_Bcast(&nodeId[0], nNodesGlobal, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(cellId.data(), nCellsGlobal, MPI_INT, 0, MPI_COMM_WORLD);
+	MPI_Bcast(nodeId.data(), nNodesGlobal, MPI_INT, 0, MPI_COMM_WORLD);
 
 	for (int ic = 0; ic < nCellsGlobal; ic++)
 		cell(ic).subId = cellId[ic];

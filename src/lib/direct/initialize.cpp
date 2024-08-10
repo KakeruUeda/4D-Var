@@ -19,9 +19,19 @@ void DirectProblem::initialize(Config &conf)
 	VecTool::resize(grid.node.p, grid.node.nNodesGlobal);
 	VecTool::resize(snap.v, snap.nSnapShot, grid.nNodesGlobal, dim);
 
+	v.resize(grid.nNodesGlobal, dim);
+	vPrev.resize(grid.nNodesGlobal, dim);
+	p.resize(grid.nNodesGlobal);
+
 	grid.dirichlet.initialize(conf);
 	grid.cell.initialize(conf);
 	grid.node.initialize(conf);
+
+	if (conf.gridType == GridType::STRUCTURED)
+	{
+		vvti.resize(grid.node.nNodesStrGlobal, dim);
+		pvti.resize(grid.node.nNodesStrGlobal);
+	}
 
 	grid.prepareMatrix(petsc, outputDir, timeMax);
 

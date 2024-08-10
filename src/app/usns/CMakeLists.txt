@@ -16,7 +16,7 @@ target_compile_options(${main_target} PUBLIC ${compile_options_tmp})
 target_link_libraries( ${main_target} 
     PRIVATE
         TP petsc metis omp direct config 
-        mesh solver boundary io common
+        mesh solver boundary io common fem
 )
 
 target_include_directories(${main_target} 

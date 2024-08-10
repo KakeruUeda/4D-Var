@@ -20,8 +20,8 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, MathT
     }
   }
 
-  double he = fabs(tools.xCurrent(1, 0) - tools.xCurrent(0, 0));
-  double f = resistance * alpha * (1e0 - grid.cell(ic).phi) / (alpha + grid.cell(ic).phi);
+  double he = comp_he(tools.xCurrent);
+  double f = comp_f(grid.cell(ic).phi);
 
   Gauss g2(2);
   for (int i1 = 0; i1 < 2; i1++)
@@ -33,10 +33,10 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, MathT
         setValuesInGaussIntegral(tools, g2, he, i1, i2, i3, ic, t);
         for (int ii = 0; ii < grid.cell.nNodesInCell; ii++)
         {
-          updateRowIndex(ii, ic);
+          updateRowIndex(grid, ii, ic);
           for (int jj = 0; jj < grid.cell.nNodesInCell; jj++)
           {
-            updateColumnIndex(jj, ic);
+            updateColumnIndex(grid, jj, ic);
             usnsGaussIntegralLHS(Klocal, tools, f, ii, jj);
           }
           usnsGaussIntegralRHS(Flocal, tools, f, ii);
@@ -53,18 +53,17 @@ void DirectProblem::setValuesInGaussIntegral(MathTools3D &tools, Gauss &g2, cons
                                              const int i1, const int i2, const int i3,
                                              const int ic, const int t)
 {
-  double dxdr[3][3];
   ShapeFunction3D::C3D8_N(tools.N, g2.point[i1], g2.point[i2], g2.point[i3]);
   ShapeFunction3D::C3D8_dNdr(tools.dNdr, g2.point[i1], g2.point[i2], g2.point[i3]);
 
-  MathTools3D::comp_dxdr(dxdr, tools.dNdr, tools.xCurrent, grid.cell.nNodesInCell);
-  MathTools3D::comp_dNdx(tools.dNdx, tools.dNdr, dxdr, grid.cell.nNodesInCell);
+  MathTools3D::comp_dxdr(tools.dxdr, tools.dNdr, tools.xCurrent, grid.cell.nNodesInCell);
+  MathTools3D::comp_dNdx(tools.dNdx, tools.dNdr, tools.dxdr, grid.cell.nNodesInCell);
 
-  tools.detJ = MathCommon::compDeterminant_3x3(dxdr);
+  tools.detJ = MathTools3D::compDeterminant(tools.dxdr);
   tools.weight = g2.weight[i1] * g2.weight[i2] * g2.weight[i3];
 
   setVelocityValue(tools, ic, t);
-  tau = MathCommon::comp_tau(advgp, he, Re, dt);
+  tau = comp_tau(advgp, he);
 }
 
 /**********************************************************************
@@ -115,9 +114,9 @@ void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, c
   // Advection term
   for (int d = 0; d < 3; d++)
   {
-    Klocal(IU, JU) += 5e-1 * tools.N(jj) * advgp[d] * tools.dNdx(jj, d) * tools.vol;
-    Klocal(IV, JV) += 5e-1 * tools.N(jj) * advgp[d] * tools.dNdx(jj, d) * tools.vol;
-    Klocal(IW, JW) += 5e-1 * tools.N(jj) * advgp[d] * tools.dNdx(jj, d) * tools.vol;
+    Klocal(IU, JU) += 5e-1 * tools.N(ii) * advgp[d] * tools.dNdx(jj, d) * tools.vol;
+    Klocal(IV, JV) += 5e-1 * tools.N(ii) * advgp[d] * tools.dNdx(jj, d) * tools.vol;
+    Klocal(IW, JW) += 5e-1 * tools.N(ii) * advgp[d] * tools.dNdx(jj, d) * tools.vol;
   }
 
   // Pressure term
@@ -138,9 +137,9 @@ void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, c
   // SUPG　mass term
   for (int d = 0; d < 3; d++)
   {
-    Klocal(IU, JU) += tau * tools.dNdx(ii, d) * advgp[d] * tools.N(ii) / dt * tools.vol;
-    Klocal(IV, JV) += tau * tools.dNdx(ii, d) * advgp[d] * tools.N(ii) / dt * tools.vol;
-    Klocal(IW, JW) += tau * tools.dNdx(ii, d) * advgp[d] * tools.N(ii) / dt * tools.vol;
+    Klocal(IU, JU) += tau * tools.dNdx(ii, d) * advgp[d] * tools.N(jj) / dt * tools.vol;
+    Klocal(IV, JV) += tau * tools.dNdx(ii, d) * advgp[d] * tools.N(jj) / dt * tools.vol;
+    Klocal(IW, JW) += tau * tools.dNdx(ii, d) * advgp[d] * tools.N(jj) / dt * tools.vol;
   }
 
   // SUPG advection term
@@ -158,8 +157,8 @@ void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, c
   for (int d = 0; d < 3; d++)
   {
     Klocal(IU, JP) += tau * tools.dNdx(ii, d) * advgp[d] * tools.dNdx(jj, 0) * tools.vol;
-    Klocal(IV, JP) += tau * tools.dNdx(ii, d) * advgp[d] * tools.dNdx(ii, 1) * tools.vol;
-    Klocal(IW, JP) += tau * tools.dNdx(ii, d) * advgp[d] * tools.dNdx(ii, 2) * tools.vol;
+    Klocal(IV, JP) += tau * tools.dNdx(ii, d) * advgp[d] * tools.dNdx(jj, 1) * tools.vol;
+    Klocal(IW, JP) += tau * tools.dNdx(ii, d) * advgp[d] * tools.dNdx(jj, 2) * tools.vol;
   }
 
   // PSPG mass term

@@ -1,31 +1,31 @@
 Base
 {
     dim = 3
-    outputDir = "cavityRe1000"
+    outputDir = "cavity"
     numOfOMP = 1
 }
 
 Grid
 {
     type = "Structured"
-    nx = (64, 64, 64) 
+    nx = (32, 32, 32) 
     lx = (1.0, 1.0, 1.0)
     extractFluid = "ON"
     nNodesInCell = 8
-    node = "input/square/64x64x64/node.dat"
-    cell = "input/square/64x64x64/cell.dat"
-    image = "input/square/64x64x64/image.dat"
+    node = "input/cavity/node.dat"
+    cell = "input/cavity/cell.dat"
+    image = "input/cavity/image.dat"
 }
 
 Boundary
 {
-    velocityDirichlet = "input/square/64x64x64/velocityDirichlet.dat"
-    pressureDirichlet = "input/square/64x64x64/pressureDirichlet.dat"
+    velocityDirichlet = "input/cavity/velocityDirichlet.dat"
+    pressureDirichlet = "input/cavity/pressureDirichlet.dat"
 }
 
 PysicalParameter
 {   
-    rho = 1000
+    rho = 200
     mu = 1   
 }
 

@@ -57,7 +57,7 @@ public:
   std::vector<std::vector<double>> qt;
 
   // for vti visualization
-  int nNodesStructuredGlobal;
+  int nNodesStrGlobal;
   std::vector<std::vector<double>> vvti;
   std::vector<double> pvti;
   std::vector<std::vector<double>> wvti;

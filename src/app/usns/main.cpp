@@ -4,6 +4,7 @@
  * @date Jun, 2024
  */
 
+#include <csignal>
 #include <unistd.h>
 #include "DirectProblem.h"
 #include "MyMPI.h"
@@ -19,7 +20,6 @@ int main(int argc, char *argv[])
 
   std::string input = argv[1];
   std::string appName = "USNS";
-
   auto conf = std::make_unique<Config>(input, appName);
 
   if (conf->isReadingError)

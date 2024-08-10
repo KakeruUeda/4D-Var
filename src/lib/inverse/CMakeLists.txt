@@ -19,6 +19,7 @@ target_include_directories(inverse
         ${PROJECT_SOURCE_DIR}/src/lib/boundary
         ${PROJECT_SOURCE_DIR}/src/lib/fileIO
         ${PROJECT_SOURCE_DIR}/src/lib/solver
+        ${PROJECT_SOURCE_DIR}/src/lib/fem
 )
 
 target_compile_options(inverse PUBLIC ${compile_options_tmp})

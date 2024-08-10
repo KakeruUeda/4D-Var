@@ -5,6 +5,42 @@
 
 #include "MathTool.h"
 
+MathTools2D::MathTools2D(const int nNodesInCell)
+{
+  N.resize(nNodesInCell);
+  xCurrent.resize(nNodesInCell, 2);
+  dNdr.resize(nNodesInCell, 2);
+  dNdx.resize(nNodesInCell, 2);
+  K.resize(nNodesInCell, nNodesInCell);
+}
+
+MathTools3D::MathTools3D(const int nNodesInCell)
+{
+  N.resize(nNodesInCell);
+  xCurrent.resize(nNodesInCell, 3);
+  dNdr.resize(nNodesInCell, 3);
+  dNdx.resize(nNodesInCell, 3);
+  K.resize(nNodesInCell, nNodesInCell);
+}
+
+void MathTools2D::setZero()
+{
+  N.zeroFill();
+  xCurrent.zeroFill();
+  dNdr.zeroFill();
+  dNdx.zeroFill();
+  K.zeroFill();
+}
+
+void MathTools3D::setZero()
+{
+  N.zeroFill();
+  xCurrent.zeroFill();
+  dNdr.zeroFill();
+  dNdx.zeroFill();
+  K.zeroFill();
+}
+
 void MathTools2D::compInverseMatrix(double (&inv_a)[2][2], const double (&a)[2][2])
 {
   double det;
@@ -117,18 +153,6 @@ void MathTools3D::comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const 
 }
 
 double MathTools2D::comp_tau(std::vector<double> &vel, const double &he, const double &Re, const double &dt)
-{
-  double tau = 0e0;
-  double velMag = sqrt(vel[0] * vel[0] + vel[1] * vel[1] + vel[2] * vel[2]);
-
-  double term1 = (2e0 / dt) * (2e0 / dt);
-  double term2 = (2e0 * velMag / he) * (2e0 * velMag / he);
-  double term3 = (4e0 / (Re * he * he)) * (4e0 / (Re * he * he));
-
-  return tau = pow(term1 + term2 + term3, -5e-1);
-}
-
-double MathTools3D::comp_tau(std::vector<double> &vel, const double &he, const double &Re, const double &dt)
 {
   double tau = 0e0;
   double velMag = sqrt(vel[0] * vel[0] + vel[1] * vel[1] + vel[2] * vel[2]);
