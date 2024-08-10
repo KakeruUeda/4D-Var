@@ -44,7 +44,7 @@ void Cell::initialize(Config &conf)
 
   if (conf.gridType == GridType::STRUCTURED)
   {
-    nCellsStructuredGlobal = conf.nx * conf.ny * conf.nz;
+    nCellsStrGlobal = conf.nx * conf.ny * conf.nz;
   }
 }
 
@@ -81,6 +81,6 @@ void Cell::initializeAdjoint(Config &conf)
 
   if (conf.gridType == GridType::STRUCTURED)
   {
-    nCellsStructuredGlobal = conf.nx * conf.ny * conf.nz;
+    nCellsStrGlobal = conf.nx * conf.ny * conf.nz;
   }
 }

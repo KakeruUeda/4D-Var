@@ -21,9 +21,7 @@ Config::Config(std::string inputFile, std::string appName)
  */
 void Config::setApplication(std::string appName)
 {
-  if (appName == "STRGRID")
-    app = Application::STRGRID;
-  else if (appName == "SNS")
+  if (appName == "SNS")
     app = Application::SNS;
   else if (appName == "USNS")
     app = Application::USNS;
@@ -35,6 +33,8 @@ void Config::setApplication(std::string appName)
     app = Application::FLOWRATE;
   else if (appName == "MAE")
     app = Application::MAE;
+  else if (appName == "GRIDCREATION")
+    app = Application::GRIDCREATION;
   else if (mpi.myId == 0)
     std::cout << "Unknown appName" << std::endl;
 }
@@ -84,11 +84,19 @@ void Config::readConfigFile()
 {
   switch (app)
   {
-  case Application::STRGRID:
+  case Application::GRIDCREATION:
     readBasicParameter();
-    readControlBoundaryParameter();
-    readStructuredGridParameter();
-    readStructuredBoundaryParameter();
+    readGridType();
+    if (gridType == GridType::STRUCTURED)
+    {
+      readStrGridParameter();
+      readStrBoundaryParameter();
+    }
+    else if (gridType == GridType::UNSTRUCTURED)
+    {
+      readGridParameter();
+      readBoundaryParameter();
+    }
     break;
 
   case Application::USNS:
@@ -394,3 +402,4 @@ void Config::setFluidDomain()
         }
     }
     */
+

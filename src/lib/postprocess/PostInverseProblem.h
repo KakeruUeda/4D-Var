@@ -12,7 +12,7 @@
 #include "Config.h"
 #include "Grid.h"
 #include "MyMPI.h"
-#include "VTK.h"
+#include "FileIO.h"
 
 class PostInverseProblem
 {

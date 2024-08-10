@@ -1,8 +1,12 @@
+/*===========================================
+  Do not execute with multiple MPI processes.
+=============================================*/
 /**
  * @file main.cpp
  * @author K.Ueda
  * @date July, 2024
  */
+
 
 #include <unistd.h>
 #include "DirectProblem.h"

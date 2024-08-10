@@ -1,0 +1,18 @@
+Base
+{
+    dim = 3
+    outputDir = "test"
+    numOfOMP = 1
+}
+
+Grid
+{
+    type = "Structured"
+    nx = (32, 32, 32) 
+    lx = (1.0, 1.0, 1.0)
+    extractFluid = "ON"
+    nNodesInCell = 8
+    node = "../usns/input/cavity/node.dat"
+    cell = "../usns/input/cavity/cell.dat"
+    image = "../usns/input/cavity/image.dat"
+}

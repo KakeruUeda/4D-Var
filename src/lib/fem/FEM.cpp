@@ -32,6 +32,9 @@ double FEM::comp_f(const double phi)
   return coeff * value;
 }
 
+/*****************************************
+ * @brief Compute stabilization parameter.
+ */
 double FEM::comp_tau(std::vector<double> &vel, const double he)
 {
   double tau = 0e0;

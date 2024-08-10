@@ -1,7 +1,6 @@
-add_subdirectory(strgrid)
 add_subdirectory(usns)
 add_subdirectory(4dvar)
 add_subdirectory(MAE)
 add_subdirectory(flowRate)
 add_subdirectory(voxelData)
-add_subdirectory(domainPartition)
+add_subdirectory(gridCreation)

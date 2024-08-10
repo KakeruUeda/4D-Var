@@ -57,7 +57,7 @@ public:
 
     int nCellsGlobal;
     int nNodesInCell;
-    int nCellsStructuredGlobal;
+    int nCellsStrGlobal;
 
     void initialize(Config &conf);
     void initializeAdjoint(Config &conf);

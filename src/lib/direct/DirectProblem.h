@@ -22,7 +22,7 @@
 #include "MathCommon.h"
 #include "Tool.h"
 #include "MathTool.h"
-#include "VTK.h"
+#include "FileIO.h"
 #include "FEM.h"
 
 extern MyMPI mpi;

@@ -116,6 +116,113 @@ void Config::readDarcyParameter()
 /*****************************
  * @brief Read text parameter.
  */
+void Config::readGridType()
+{
+  std::string str, base_label, label;
+  std::string nodeFile;
+
+  base_label = "/Grid";
+
+  label = base_label + "/type";
+
+  if (!tp.getInspectedValue(label, str))
+    throw std::runtime_error(label + " is not set");
+
+  if (str != "Structured" && str != "Unstructured")
+    throw std::runtime_error("Unknown GridType");
+
+  if (str == "Structured")
+    gridType = GridType::STRUCTURED;
+  else if (str == "Unstructured")
+    gridType = GridType::UNSTRUCTURED;
+}
+
+/*****************************
+ * @brief Read text parameter.
+ */
+void Config::readStrGridParameter()
+{
+  std::string str, base_label, label;
+  std::string imageFile;
+  int tmpInt[dim];
+  double tmpDouble[dim];
+
+  base_label = "/Grid";
+  label = base_label + "/nx";
+  if (!tp.getInspectedVector(label, tmpInt, dim))
+    throw std::runtime_error(label + " is not set");
+
+  nx = tmpInt[0];
+  ny = tmpInt[1];
+  nz = tmpInt[2];
+
+  label = base_label + "/lx";
+  if (!tp.getInspectedVector(label, tmpDouble, dim))
+    throw std::runtime_error(label + " is not set");
+
+  lx = tmpDouble[0];
+  ly = tmpDouble[1];
+  lz = tmpDouble[2];
+
+  dx = lx / (double)nx;
+  dy = ly / (double)ny;
+  dz = lz / (double)nz;
+
+  nCellsGlobal = nx * ny * nz;
+  nNodesGlobal = (nx+1) * (ny+1) * (nz+1);
+
+  label = base_label + "/nNodesInCell";
+  if (!tp.getInspectedValue(label, nNodesInCell))
+    throw std::runtime_error(label + " is not set");
+
+  if (nNodesInCell == 4 && dim != 2)
+    throw std::runtime_error("nNodesInCell is not consistent with dim");
+
+  if (nNodesInCell == 8 && dim != 3)
+    throw std::runtime_error("nNodesInCell is not consistent with dim");
+
+  std::string ON_OFF;
+
+  label = base_label + "/extractFluid";
+  if (!tp.getInspectedValue(label, ON_OFF))
+    throw std::runtime_error(label + " is not set");
+
+  if (ON_OFF == "ON")
+    extractFluid = ON;
+  else if (ON_OFF == "OFF")
+    extractFluid = OFF;
+  else
+    throw std::runtime_error("ON or OFF is not set");
+
+  label = base_label + "/image";
+
+  if (!tp.getInspectedValue(label, imageFile))
+    throw std::runtime_error(label + " is not set");
+
+  std::ifstream ifsImage(imageFile);
+  if (!ifsImage.is_open())
+  {
+    throw std::runtime_error("Failed to open file: " + imageFile);
+  }
+  while (getline(ifsImage, str))
+  {
+    std::istringstream iss(str);
+    for (int d = 0; d < 4; d++)
+    {
+      getline(iss, str, ' ');
+      if (d == 3)
+        phi.push_back(stod(str));
+    }
+  }
+  ifsImage.close();
+
+  // define grid
+  setStrGrid();
+}
+
+/*****************************
+ * @brief Read text parameter.
+ */
 void Config::readGridParameter()
 {
   std::string str, base_label, label;
@@ -261,6 +368,89 @@ void Config::readGridParameter()
     }
   }
   ifsImage.close();
+}
+
+/*****************************
+ * @brief Read text parameter.
+ */
+void Config::readStrBoundaryParameter()
+{
+  std::string str, base_label;
+  std::string face;
+  std::string labelType, labelValue;
+  std::string bdTypeTmp;
+  int tmp = 0;
+
+  base_label = "/Boundary";
+
+  face = "bottom";
+  labelType = base_label + "/bottom/type";
+  labelValue = base_label + "/bottom/value";
+  readStrBoundaryValue(face, labelType, labelValue);
+
+  face = "top";
+  labelType = base_label + "/top/type";
+  labelValue = base_label + "/top/value";
+  readStrBoundaryValue(face, labelType, labelValue);
+
+  face = "left";
+  labelType = base_label + "/left/type";
+  labelValue = base_label + "/left/value";
+  readStrBoundaryValue(face, labelType, labelValue);
+
+  face = "right";
+  labelType = base_label + "/right/type";
+  labelValue = base_label + "/right/value";
+  readStrBoundaryValue(face, labelType, labelValue);
+
+  face = "front";
+  labelType = base_label + "/front/type";
+  labelValue = base_label + "/front/value";
+  readStrBoundaryValue(face, labelType, labelValue);
+
+  face = "back";
+  labelType = base_label + "/back/type";
+  labelValue = base_label + "/back/value";
+  readStrBoundaryValue(face, labelType, labelValue);
+
+}
+
+/*****************************
+ * @brief Read text parameter.
+ */
+void Config::readStrBoundaryValue(std::string face, std::string labelType, std::string labelValue)
+{
+  std::string bdTypeTmp;
+  if (!tp.getInspectedValue(labelType, bdTypeTmp))
+    throw std::runtime_error(labelType + " is not set");
+
+  bdType.push_back(bdTypeTmp);
+
+  if (bdTypeTmp == "v")
+  {
+    double value[dim];
+    if (!tp.getInspectedVector(labelValue, value, dim))
+      throw std::runtime_error(labelValue + " is not set");
+
+    setBoundaryVelocityValue(face, value);
+  }
+  else if (bdTypeTmp == "p")
+  {
+    double value;
+    if (!tp.getInspectedValue(labelValue, value))
+      throw std::runtime_error(labelValue + " is not set");
+
+    setBoundaryPressureValue(face, value);
+  }
+  else if (bdTypeTmp == "free")
+  {
+  }
+  else
+  {
+    throw std::runtime_error("label " + bdTypeTmp + " undefined");
+  }
+
+  return;
 }
 
 /*****************************
@@ -570,195 +760,6 @@ void Config::readDataParameter()
     throw std::runtime_error(label + " is not set");
 }
 
-/*****************************
- * @brief Read text parameter.
- */
-void Config::readStructuredGridParameter()
-{
-  std::string str, base_label, label;
-  std::string imageFile;
-  int tmpInt[dim];
-  double tmpDouble[dim];
-
-  base_label = "/StructuredGrid";
-  label = base_label + "/nx";
-  if (!tp.getInspectedVector(label, tmpInt, dim))
-    throw std::runtime_error(label + " is not set");
-
-  nx = tmpInt[0];
-  ny = tmpInt[1];
-  nz = tmpInt[2];
-
-  if (dim == 2)
-  {
-    nxNodes = nx + 1;
-    nyNodes = ny + 1;
-    nzNodes = 1;
-    nxCells = nx;
-    nyCells = ny;
-    nzCells = 1;
-  }
-  if (dim == 3)
-  {
-    nxNodes = nx + 1;
-    nyNodes = ny + 1;
-    nzNodes = nz + 1;
-    nxCells = nx;
-    nyCells = ny;
-    nzCells = nz;
-  }
-
-  label = base_label + "/lx";
-  if (!tp.getInspectedVector(label, tmpDouble, dim))
-    throw std::runtime_error(label + " is not set");
-
-  lx = tmpDouble[0];
-  ly = tmpDouble[1];
-  if (dim == 2)
-    lz = 0.0;
-  else if (dim == 3)
-    lz = tmpDouble[2];
-
-  dx = lx / (double)nx;
-  dy = ly / (double)ny;
-  dz = lz / (double)nz;
-
-  nCellsGlobal = nxCells * nyCells * nzCells;
-  nNodesGlobal = nxNodes * nyNodes * nzNodes;
-
-  label = base_label + "/nNodesInCell";
-  if (!tp.getInspectedValue(label, nNodesInCell))
-    throw std::runtime_error(label + " is not set");
-
-  if (nNodesInCell == 4 && dim != 2)
-    throw std::runtime_error("nNodesInCell is not consistent with dim");
-
-  if (nNodesInCell == 8 && dim != 3)
-    throw std::runtime_error("nNodesInCell is not consistent with dim");
-
-  return;
-}
-
-/*****************************
- * @brief Read text parameter.
- */
-void Config::readStructuredBoundaryParameter()
-{
-  std::string str, base_label;
-  std::string labelType, labelValue;
-  std::string bdTypeTmp;
-  int tmp = 0;
-
-  base_label = "/Boundary";
-
-  if (dim == 2)
-  {
-    bdStr.push_back("bottom");
-    labelType = base_label + "/bottom/type";
-    labelValue = base_label + "/bottom/value";
-    readBoundaryTypeAndValue(labelType, labelValue, tmp);
-
-    bdStr.push_back("top");
-    labelType = base_label + "/top/type";
-    labelValue = base_label + "/top/value";
-    readBoundaryTypeAndValue(labelType, labelValue, tmp);
-
-    bdStr.push_back("left");
-    labelType = base_label + "/left/type";
-    labelValue = base_label + "/left/value";
-    readBoundaryTypeAndValue(labelType, labelValue, tmp);
-
-    bdStr.push_back("right");
-    labelType = base_label + "/right/type";
-    labelValue = base_label + "/right/value";
-    readBoundaryTypeAndValue(labelType, labelValue, tmp);
-  }
-  else if (dim == 3)
-  {
-    bdStr.push_back("bottom");
-    labelType = base_label + "/bottom/type";
-    labelValue = base_label + "/bottom/value";
-    readBoundaryTypeAndValue(labelType, labelValue, tmp);
-
-    bdStr.push_back("top");
-    labelType = base_label + "/top/type";
-    labelValue = base_label + "/top/value";
-    readBoundaryTypeAndValue(labelType, labelValue, tmp);
-
-    bdStr.push_back("left");
-    labelType = base_label + "/left/type";
-    labelValue = base_label + "/left/value";
-    readBoundaryTypeAndValue(labelType, labelValue, tmp);
-
-    bdStr.push_back("right");
-    labelType = base_label + "/right/type";
-    labelValue = base_label + "/right/value";
-    readBoundaryTypeAndValue(labelType, labelValue, tmp);
-
-    bdStr.push_back("front");
-    labelType = base_label + "/front/type";
-    labelValue = base_label + "/front/value";
-    readBoundaryTypeAndValue(labelType, labelValue, tmp);
-
-    bdStr.push_back("back");
-    labelType = base_label + "/back/type";
-    labelValue = base_label + "/back/value";
-    readBoundaryTypeAndValue(labelType, labelValue, tmp);
-  }
-  else
-  {
-    throw std::runtime_error("Undefined dim");
-  }
-
-  return;
-}
-
-/*****************************
- * @brief Read text parameter.
- */
-void Config::readBoundaryTypeAndValue(std::string labelType, std::string labelValue, int &tmp)
-{
-  std::string bdTypeTmp;
-  if (!tp.getInspectedValue(labelType, bdTypeTmp))
-    throw std::runtime_error(labelType + " is not set");
-
-  bdType.push_back(bdTypeTmp);
-
-  if (bdTypeTmp == "v")
-  {
-    double value[dim];
-    if (!tp.getInspectedVector(labelValue, value, dim))
-      throw std::runtime_error(labelValue + " is not set");
-
-    bdValue.emplace_back();
-    for (int k = 0; k < dim; k++)
-      bdValue[tmp].push_back(value[k]);
-  }
-  else if (bdTypeTmp == "p")
-  {
-    double value;
-    if (!tp.getInspectedValue(labelValue, value))
-      throw std::runtime_error(labelValue + " is not set");
-
-    bdValue.emplace_back();
-    bdValue[tmp].push_back(value);
-  }
-  else if (bdTypeTmp == "free")
-  {
-    bdValue.emplace_back();
-  }
-  else if (bdTypeTmp == "file")
-  {
-  }
-  else
-  {
-    throw std::runtime_error("label " + bdTypeTmp + " undefined");
-  }
-
-  tmp++;
-
-  return;
-}
 
 /*****************************
  * @brief Read text parameter.

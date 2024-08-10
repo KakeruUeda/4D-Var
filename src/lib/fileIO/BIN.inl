@@ -1,12 +1,19 @@
 /**
  * @file BIN.cpp
  * @author K.Ueda
- * @date July, 2024
+ * @date August, 2024
  */
 
-#include "FileIO.h"
+#ifndef BIN_INL_H
+#define BIN_INL_H
 
-void BIN::exportScalarDataBIN(const std::string &file, std::vector<double> &vec)
+#include "FileIO.h"
+#include <fstream>
+#include <iostream>
+#include <stdexcept>
+
+template <typename T>
+void BINTMP::exportScalarDataBIN(const std::string &file, std::vector<T> &vec)
 {
   std::ofstream ofs(file, std::ios::binary);
   if (!ofs)
@@ -15,8 +22,7 @@ void BIN::exportScalarDataBIN(const std::string &file, std::vector<double> &vec)
     return;
   }
 
-  ofs.write(reinterpret_cast<const char *>(vec.data()), vec.size() * sizeof(double));
-
+  ofs.write(reinterpret_cast<const char *>(vec.data()), vec.size() * sizeof(T));
   ofs.close();
   if (!ofs.good())
   {
@@ -24,7 +30,8 @@ void BIN::exportScalarDataBIN(const std::string &file, std::vector<double> &vec)
   }
 }
 
-void BIN::exportVectorDataBIN(const std::string &file, std::vector<std::vector<double>> &vec)
+template <typename T>
+void BINTMP::exportVectorDataBIN(const std::string &file, std::vector<std::vector<T>> &vec)
 {
   std::ofstream ofs(file, std::ios::binary);
   if (!ofs)
@@ -40,7 +47,7 @@ void BIN::exportVectorDataBIN(const std::string &file, std::vector<std::vector<d
   {
     int cols = row.size();
     ofs.write(reinterpret_cast<const char *>(&cols), sizeof(cols));
-    ofs.write(reinterpret_cast<const char *>(row.data()), cols * sizeof(double));
+    ofs.write(reinterpret_cast<const char *>(row.data()), cols * sizeof(T));
   }
 
   ofs.close();
@@ -50,7 +57,8 @@ void BIN::exportVectorDataBIN(const std::string &file, std::vector<std::vector<d
   }
 }
 
-void BIN::importScalarDataBIN(const std::string &file, std::vector<double> &vec)
+template <typename T>
+void BINTMP::importScalarDataBIN(const std::string &file, std::vector<T> &vec)
 {
   std::ifstream ifs(file, std::ios::binary);
   if (!ifs)
@@ -62,12 +70,12 @@ void BIN::importScalarDataBIN(const std::string &file, std::vector<double> &vec)
   std::streamsize size = ifs.tellg();
   ifs.seekg(0, std::ios::beg);
 
-  if (size % sizeof(double) != 0)
+  if (size % sizeof(T) != 0)
   {
     throw std::runtime_error("File size error: " + file);
   }
 
-  vec.resize(size / sizeof(double));
+  vec.resize(size / sizeof(T));
 
   if (!ifs.read(reinterpret_cast<char *>(vec.data()), size))
   {
@@ -77,7 +85,8 @@ void BIN::importScalarDataBIN(const std::string &file, std::vector<double> &vec)
   ifs.close();
 }
 
-void BIN::importVectorDataBIN(const std::string &file, std::vector<std::vector<double>> &vec)
+template <typename T>
+void BINTMP::importVectorDataBIN(const std::string &file, std::vector<std::vector<T>> &vec)
 {
   std::ifstream ifs(file, std::ios::binary);
   if (!ifs)
@@ -101,7 +110,7 @@ void BIN::importVectorDataBIN(const std::string &file, std::vector<std::vector<d
       throw std::runtime_error("Failed to read cols: " + file);
     }
     vec[j].resize(cols);
-    if (!ifs.read(reinterpret_cast<char *>(vec[j].data()), cols * sizeof(double)))
+    if (!ifs.read(reinterpret_cast<char *>(vec[j].data()), cols * sizeof(T)))
     {
       throw std::runtime_error("Couldn't read file: " + file);
     }
@@ -109,3 +118,5 @@ void BIN::importVectorDataBIN(const std::string &file, std::vector<std::vector<d
 
   ifs.close();
 }
+
+#endif // BIN_INL_H

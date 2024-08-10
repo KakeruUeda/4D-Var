@@ -16,7 +16,7 @@
 #include "Array.h"
 #include "PetscSolver.h"
 #include "Boundary.h"
-#include "VTK.h"
+#include "FileIO.h"
 #include "Config.h"
 #include "Gauss.h"
 #include "ShapeFunction.h"

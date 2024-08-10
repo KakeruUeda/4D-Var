@@ -9,6 +9,7 @@
 
 #include <iostream>
 #include <vector>
+#include <set>
 #include <map>
 #include <cassert>
 #include <fstream>
@@ -23,13 +24,13 @@ extern MyMPI mpi;
 
 enum class Application
 {
-  STRGRID = 0,
-  SNS = 1,
-  USNS = 2,
-  VOXELDATA = 3,
-  FDVAR = 4,
-  FLOWRATE = 5,
-  MAE = 6
+  SNS = 0,
+  USNS = 1,
+  VOXELDATA = 2,
+  FDVAR = 3,
+  FLOWRATE = 4,
+  MAE = 5,
+  GRIDCREATION = 6
 };
 
 enum class GridType
@@ -187,11 +188,12 @@ private:
   void tryReadConfigFile();
   void readConfigFile();
 
+  void readGridType();
+  void readStrGridParameter();
   void readGridParameter();
+  void readStrBoundaryParameter();
   void readBoundaryParameter();
   void readControlBoundaryParameter();
-  void readStructuredGridParameter();
-  void readStructuredBoundaryParameter();
   void readBasicParameter();
   void readPysicalParameter();
   void readNRParameter();
@@ -203,8 +205,33 @@ private:
   void readPostInverseVelocityParameter();
   void readPostInverseFlowRateParameter();
   void readVoxelCreationParameter();
-  void readBoundaryTypeAndValue(std::string labelType,
-                                std::string labelValue, int &tmp);
+  void readStrBoundaryValue(std::string face, std::string labelType, std::string labelValue);
+  void setBoundaryVelocityValue(std::string face, double value[3]);
+  void setBoundaryPressureValue(std::string face, const double value);
+  void setStrGrid();
+  double setStrCoordinate(const int i, const int j, const int k, const int d);
+  int setStrNode(const int i, const int j, const int k, const int p);
+  
+
+public:
+  // Additional Setting for Structured Grid
+  void setSolidDirichletValue();
+  void filterFluidGrid();
+  
+  std::set<int> uniqueCells;
+  std::set<int> uniqueNodes;
+  std::unordered_map<int, int> cellMapping;
+  std::unordered_map<int, int> nodeMapping;
+
+  void getUniqueCells();
+  void getUniqueNodes();
+  void getNewFilterdMap();
+  void filterCell();
+  void filterPhi();
+  void filterNode();
+  void filterVelocityDirichlet();
+  void filterPressureDirichlet();
+
 };
 
 #endif

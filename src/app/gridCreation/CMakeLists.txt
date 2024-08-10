@@ -1,4 +1,4 @@
-set(main_target "DomainPartition")
+set(main_target "GridDivision")
 
 set(compile_options_tmp ${base_compile_options})
 string(REPLACE " " ";" compile_options_tmp ${compile_options_tmp})
@@ -17,7 +17,7 @@ target_link_libraries( ${main_target}
   PRIVATE
     TP petsc metis omp direct
     inverse config mesh solver
-    boundary io common postinverse fem
+    boundary io common preprocess fem
 )
 
 target_include_directories(${main_target} 
@@ -30,6 +30,7 @@ target_include_directories(${main_target}
     ${PROJECT_SOURCE_DIR}/src/lib/solver
     ${PROJECT_SOURCE_DIR}/src/lib/fileIO
     ${PROJECT_SOURCE_DIR}/src/lib/common 
+    ${PROJECT_SOURCE_DIR}/src/lib/preprocess
     ${PROJECT_SOURCE_DIR}/src/lib/postprocess 
 )
 
