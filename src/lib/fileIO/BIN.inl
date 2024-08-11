@@ -1,5 +1,5 @@
 /**
- * @file BIN.cpp
+ * @file BIN.inl
  * @author K.Ueda
  * @date August, 2024
  */

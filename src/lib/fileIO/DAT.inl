@@ -1,5 +1,5 @@
 /**
- * @file FileIO.h
+ * @file DAT.inl
  * @author K.Ueda
  * @date August, 2024
  */
@@ -139,6 +139,55 @@ void DAT::importVectorDataDAT(const std::string &file, std::vector<std::vector<T
   }
 
   ifs.close();
+}
+
+template <typename T>
+void DAT::exportMapDataDAT(const std::string &file, const std::map<int, std::vector<T>> &dataMap)
+{
+  std::ofstream ofs(file);
+  if (!ofs)
+  {
+    std::cerr << "Could not open " << file << std::endl;
+    return;
+  }
+
+  for (const auto &entry : dataMap)
+  {
+    ofs << entry.first;
+    for (const auto &val : entry.second)
+    {
+      ofs << " " << val;
+    }
+    ofs << "\n";
+  }
+
+  ofs.close();
+  if (!ofs.good())
+  {
+    std::cerr << "Error occurred at writing time." << std::endl;
+  }
+}
+
+template <typename T>
+void DAT::exportMapDataDAT(const std::string &file, const std::map<int, T> &dataMap)
+{
+  std::ofstream ofs(file);
+  if (!ofs)
+  {
+    std::cerr << "Could not open " << file << std::endl;
+    return;
+  }
+
+  for (const auto &entry : dataMap)
+  {
+    ofs << entry.first << " " << entry.second << "\n";
+  }
+
+  ofs.close();
+  if (!ofs.good())
+  {
+    std::cerr << "Error occurred at writing time." << std::endl;
+  }
 }
 
 #endif // DAT_INL_H

@@ -17,7 +17,6 @@ void DirectProblem::initialize(Config &conf)
 	VecTool::resize(grid.node.v, grid.node.nNodesGlobal, dim);
 	VecTool::resize(grid.node.vPrev, grid.node.nNodesGlobal, dim);
 	VecTool::resize(grid.node.p, grid.node.nNodesGlobal);
-	VecTool::resize(snap.v, snap.nSnapShot, grid.nNodesGlobal, dim);
 
 	v.resize(grid.nNodesGlobal, dim);
 	vPrev.resize(grid.nNodesGlobal, dim);
@@ -32,7 +31,6 @@ void DirectProblem::initialize(Config &conf)
 		vvti.resize(grid.node.nNodesStrGlobal, dim);
 		pvti.resize(grid.node.nNodesStrGlobal);
 	}
-
 	grid.prepareMatrix(petsc, outputDir, timeMax);
 
 	VecTool::resize(petsc.solution, grid.nDofsGlobal);
@@ -44,4 +42,18 @@ void DirectProblem::initialize(Config &conf)
 	VecTool::resize(vgp, dim);
 	VecTool::resize(advgp, dim);
 	VecTool::resize(dvgpdx, dim, dim);
+}
+
+void DirectProblem::resize()
+{
+	v.resize(grid.nNodesGlobal, dim);
+	vPrev.resize(grid.nNodesGlobal, dim);
+	p.resize(grid.nNodesGlobal);
+
+	if (grid.gridType == GridType::STRUCTURED)
+	{
+		vvti.resize(grid.node.nNodesStrGlobal, dim);
+		pvti.resize(grid.node.nNodesStrGlobal);
+	}
+
 }

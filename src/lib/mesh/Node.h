@@ -17,8 +17,9 @@ class Node
 {
 public:
   Node() {};
-  Node(Config &conf) : nNodesGlobal(conf.nNodesGlobal),
-                       nNodesLocal(0) {}
+  Node(Config &conf) :
+  nNodesGlobal(conf.nNodesGlobal),
+  nNodesLocal(0) {}
   virtual ~Node() {}
 
   int nNodesGlobal, nNodesLocal;
@@ -63,6 +64,11 @@ public:
   std::vector<std::vector<double>> wvti;
   std::vector<std::vector<double>> lvti;
   std::vector<double> qvti;
+
+  int getDof(const int in, const int id)
+  {
+    return dofsMapNew[in][id];
+  }
 
   void initialize(Config &conf);
   void initializeNew();

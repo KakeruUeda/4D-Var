@@ -13,7 +13,6 @@
 #include <algorithm>
 #include "Array.h"
 #include "Grid.h"
-#include "Config.h"
 
 // FEM Interface
 class FEM

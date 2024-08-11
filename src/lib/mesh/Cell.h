@@ -10,8 +10,8 @@
 #include <iostream>
 #include <cassert>
 #include "Array.h"
-#include "Config.h"
 #include "VTKCellType.h"
+#include "Config.h"
 
 struct CellInfo
 {
@@ -56,6 +56,7 @@ public:
     }
 
     int nCellsGlobal;
+    int nCellsLocal;
     int nNodesInCell;
     int nCellsStrGlobal;
 

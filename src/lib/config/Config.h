@@ -3,7 +3,6 @@
  * @author K.Ueda
  * @date May, 2024
  */
-
 #ifndef CONFIG_H
 #define CONFIG_H
 
@@ -19,6 +18,7 @@
 #include "MyMPI.h"
 #include "Define.h"
 #include "Tool.h"
+#include "Import.h"
 
 extern MyMPI mpi;
 
@@ -67,7 +67,7 @@ class Config
 {
 public:
   Config(std::string inputFile, std::string appName);
-  ~Config() {};
+  ~Config();
 
   TextParser tp;
   Application app;
@@ -111,6 +111,9 @@ public:
   int nxCells, nyCells, nzCells;
   int nCellsGlobal, nNodesGlobal, nNodesInCell;
 
+  std::vector<int> cellId;
+  std::vector<int> nodeId;
+
   // SnapShot parameter
   int nSnapShot;
   int snapInterval;
@@ -147,6 +150,7 @@ public:
   std::vector<int> pDirichletNode;
   std::vector<std::vector<double>> vDirichletValue;
   std::vector<double> pDirichletValue;
+
   std::map<int, std::vector<double>> vDirichlet;
   std::map<int, std::vector<double>> vDirichletWall;
   std::map<int, double> pDirichlet;
@@ -191,6 +195,7 @@ private:
   void readGridType();
   void readStrGridParameter();
   void readGridParameter();
+  void readSubGridParameter();
   void readStrBoundaryParameter();
   void readBoundaryParameter();
   void readControlBoundaryParameter();

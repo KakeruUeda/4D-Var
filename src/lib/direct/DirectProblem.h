@@ -13,8 +13,6 @@
 #include <sys/stat.h>
 #include <mpi.h>
 #include <algorithm>
-#include "Grid.h"
-#include "Boundary.h"
 #include "PetscSolver.h"
 #include "Config.h"
 #include "Gauss.h"
@@ -24,6 +22,8 @@
 #include "MathTool.h"
 #include "FileIO.h"
 #include "FEM.h"
+#include "Grid.h"
+#include "Boundary.h"
 
 extern MyMPI mpi;
 
@@ -70,6 +70,7 @@ public:
   std::vector<std::vector<double>> dvgpdx;
 
   void initialize(Config &conf);
+  void resize();
   void runSimulation();
   void outputDomain();
   void solveUSNS(Application &app);
@@ -85,6 +86,7 @@ public:
   void outputSolutionsVTU(const std::string &dir, const int t);
   void outputSolutionsVTI(const std::string &dir, const int t, const int loop);
   void outputSolutionsVTU(const std::string &dir, const int t, const int loop);
+  void outputSolutionsBIN(const std::string &dir, const int t);
 
 private:
   void setValuesInGaussIntegral(MathTools3D &tools, Gauss &g2, const double he,
@@ -96,6 +98,9 @@ private:
   void updateTimeSolutions(const int t);
   void setVariablesZero();
   void compVorticity(const int t);
+
+  // add 
+  void solveNavierStokes();
 };
 
 #endif

@@ -8,6 +8,7 @@
 
 #include <iostream>
 #include <vector>
+#include "Array.h"
 using namespace std;
 
 class ShapeFunction3D
@@ -53,7 +54,6 @@ public:
     dNdr[7][2] = 1.25e-1 * (1e0 - g1) * (1e0 + g2);
   }
 
-  //  add
   static void C3D8_N(Array1D<double> &N, const double &g1, const double &g2, const double &g3)
   {
     N(0) = 1.25e-1 * (1e0 - g1) * (1e0 - g2) * (1e0 - g3);
@@ -173,8 +173,6 @@ public:
     dNdr[5][1] = 4e0 * (L1 - L3);
   }
 
-
-  // add
   static void C2D3_N(Array1D<double> &N, const double &L1, const double &L2, const double &L3)
   {
     N(0) = L1;

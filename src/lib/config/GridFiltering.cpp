@@ -176,8 +176,7 @@ void Config::filterFluidGrid()
   std::map<int, std::vector<double>> vtmp;
   for (auto &entry : vDirichlet)
   {
-    vtmp[nodeMapping[entry.first]] 
-    = std::move(entry.second);
+    vtmp[nodeMapping[entry.first]] = std::move(entry.second);
   }
   vDirichlet = std::move(vtmp);
 
@@ -185,8 +184,7 @@ void Config::filterFluidGrid()
   std::map<int, double> ptmp;
   for (auto &entry : pDirichlet)
   {
-    ptmp[nodeMapping[entry.first]] 
-    = std::move(entry.second);
+    ptmp[nodeMapping[entry.first]] = std::move(entry.second);
   }
   pDirichlet = std::move(ptmp);
 

@@ -50,10 +50,7 @@ void GridCreation::initialize(Config &conf)
     }
   }
 
-  for (int ic = 0; ic < conf.nCellsGlobal; ic++)
-  {
-    grid.cell(ic).phi = conf.phi[ic];
-  }
+  phi = conf.phi;
 
   if (conf.nNodesInCell == 4)
   {
@@ -183,10 +180,20 @@ void GridCreation::outputDat()
   if(mpi.myId != 0) return;
 
   std::string datFile;
-  datFile = outputDir + "/cellId.dat";
+  datFile = outputDir + "/dat/cellId.dat";
   DAT::exportScalarDataDAT<int>(datFile, cellId);
-  datFile = outputDir + "/nodeId.dat";
+  datFile = outputDir + "/dat/nodeId.dat";
   DAT::exportScalarDataDAT<int>(datFile, nodeId);
+  datFile = outputDir +  "/dat/velocityDirichlet.dat";
+  DAT::exportMapDataDAT<double>(datFile, vDirichlet);
+  datFile = outputDir +  "/dat/pressureDirichlet.dat";
+  DAT::exportMapDataDAT<double>(datFile, pDirichlet);
+  datFile = outputDir +  "/dat/cell.dat";
+  DAT::exportCellDataDAT(datFile, grid.cell);
+  datFile = outputDir +  "/dat/node.dat";
+  DAT::exportNodeDataDAT(datFile, grid.node);
+  datFile = outputDir + "/dat/image.dat";
+  DAT::exportScalarDataDAT(datFile, phi);
 }
 
 /**********************
@@ -197,19 +204,8 @@ void GridCreation::outputVTU()
   if(mpi.myId != 0) return;
 
   std::string vtuFile;
-  vtuFile = outputDir + "/cellId.vtu";
+  vtuFile = outputDir + "/vtu/cellId.vtu";
   VTKTMP::exportScalarCellDataVTU<int>(vtuFile, "cellId", grid.node, grid.cell, cellId);
-  vtuFile = outputDir + "/nodeId.vtu";
+  vtuFile = outputDir + "/vtu/nodeId.vtu";
   VTKTMP::exportScalarPointDataVTU<int>(vtuFile, "nodeId", grid.node, grid.cell, nodeId);
-  vtuFile = outputDir + "/phi.vtu";
-  VTK::exportPhiVTU(vtuFile, grid.node, grid.cell);
-
-  std::vector<std::vector<double>> dirichlet;
-  dirichlet.resize(grid.node.nNodesGlobal, std::vector<double>(3, 0e0));
-  for (auto &entry : vDirichlet)
-  {
-    dirichlet[entry.first] = entry.second;
-  }
-  vtuFile = outputDir + "/vDirichlet.vtu";
-  VTK::exportVectorPointDataVTU(vtuFile, "vDirichlet", grid.node, grid.cell, dirichlet);
 }

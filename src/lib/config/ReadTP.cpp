@@ -226,7 +226,6 @@ void Config::readStrGridParameter()
 void Config::readGridParameter()
 {
   std::string str, base_label, label;
-  std::string nodeFile;
 
   base_label = "/Grid";
 
@@ -270,19 +269,6 @@ void Config::readGridParameter()
     dz = lz / (double)nz;
   }
 
-  std::string ON_OFF;
-
-  label = base_label + "/extractFluid";
-  if (!tp.getInspectedValue(label, ON_OFF))
-    throw std::runtime_error(label + " is not set");
-
-  if (ON_OFF == "ON")
-    extractFluid = ON;
-  else if (ON_OFF == "OFF")
-    extractFluid = OFF;
-  else
-    throw std::runtime_error("ON or OFF is not set");
-
   label = base_label + "/nNodesInCell";
   if (!tp.getInspectedValue(label, nNodesInCell))
     throw std::runtime_error(label + " is not set");
@@ -294,81 +280,61 @@ void Config::readGridParameter()
     throw std::runtime_error("nNodesInCell is not consistent with dim");
 
   label = base_label + "/node";
-
+  
+  std::string nodeFile;
   if (!tp.getInspectedValue(label, nodeFile))
     throw std::runtime_error(label + " is not set");
-
-  std::ifstream ifsNode(nodeFile);
-  if (!ifsNode.is_open())
-  {
-    throw std::runtime_error("Failed to open file: " + nodeFile);
-  }
-  while (getline(ifsNode, str))
-  {
-    std::istringstream iss(str);
-    std::vector<double> nodeTmp;
-
-    for (int d = 0; d < dim; d++)
-    {
-      getline(iss, str, ' ');
-      nodeTmp.push_back(stod(str));
-    }
-    node.push_back(nodeTmp);
-  }
-  ifsNode.close();
-
+    
+  IMPORT::importVectorDataDAT<double>(nodeFile, node);
   nNodesGlobal = node.size();
 
   std::string cellFile;
   label = base_label + "/cell";
-
   if (!tp.getInspectedValue(label, cellFile))
     throw std::runtime_error(label + " is not set");
 
-  std::ifstream ifsCell(cellFile);
-  if (!ifsCell.is_open())
-  {
-    throw std::runtime_error("Failed to open file: " + cellFile);
-  }
-  while (getline(ifsCell, str))
-  {
-    std::istringstream iss(str);
-    std::vector<int> cellTmp;
-
-    for (int d = 0; d < nNodesInCell; d++)
-    {
-      getline(iss, str, ' ');
-      cellTmp.push_back(stod(str));
-    }
-    cell.push_back(cellTmp);
-  }
-  ifsCell.close();
-
+  IMPORT::importVectorDataDAT<int>(cellFile, cell);
   nCellsGlobal = cell.size();
 
-  std::string imageFile;
   label = base_label + "/image";
-
+  
+  std::string imageFile;
   if (!tp.getInspectedValue(label, imageFile))
     throw std::runtime_error(label + " is not set");
 
-  std::ifstream ifsImage(imageFile);
-  if (!ifsImage.is_open())
-  {
-    throw std::runtime_error("Failed to open file: " + imageFile);
-  }
-  while (getline(ifsImage, str))
-  {
-    std::istringstream iss(str);
-    for (int d = 0; d < 4; d++)
-    {
-      getline(iss, str, ' ');
-      if (d == 3)
-        phi.push_back(stod(str));
-    }
-  }
-  ifsImage.close();
+  IMPORT::importScalarDataDAT<double>(imageFile, phi);
+
 }
+
+
+/*****************************
+ * @brief Read text parameter.
+ */
+void Config::readSubGridParameter()
+{
+  std::string str, base_label, label;
+  std::string nodeFile;
+
+  base_label = "/Grid";
+
+  std::string nodeIdFile;
+  label = base_label + "/nodeId";
+
+  if (!tp.getInspectedValue(label, nodeIdFile))
+    throw std::runtime_error(label + " is not set");
+
+  IMPORT::importScalarDataDAT<int>(nodeIdFile, nodeId);
+
+  std::string cellIdFile;
+  label = base_label + "/cellId";
+
+  if (!tp.getInspectedValue(label, cellIdFile))
+    throw std::runtime_error(label + " is not set");
+
+  IMPORT::importScalarDataDAT<int>(cellIdFile, cellId);
+
+}
+
 
 /*****************************
  * @brief Read text parameter.

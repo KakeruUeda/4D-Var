@@ -9,10 +9,10 @@
 
 #include <iostream>
 #include "Array.h"
+#include "DataGrid.h"
 #include "Node.h"
 #include "Cell.h"
 #include "MyMPI.h"
-#include "DataGrid.h"
 
 extern MyMPI mpi;
 
@@ -27,6 +27,13 @@ public:
   static void importScalarDataDAT(const std::string &file, std::vector<T> &vec);
   template <typename T>
   static void importVectorDataDAT(const std::string &file, std::vector<std::vector<T>> &vec);
+  template <typename T>
+  static void exportMapDataDAT(const std::string &file, const std::map<int, std::vector<T>> &dataMap);
+  template <typename T>
+  static void exportMapDataDAT(const std::string &file, const std::map<int, T> &dataMap);
+
+  static void exportCellDataDAT(const std::string &file, Cell &cell);
+  static void exportNodeDataDAT(const std::string &file, Node &node);
 };
 
 class BIN

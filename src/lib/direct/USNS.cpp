@@ -81,16 +81,13 @@ void DirectProblem::solveUSNS(Application &app)
     VecRestoreArray(vecSEQ, &arraySolnTmp);
     updateSolutions();
 
-    updateSolutionsVTI();
-    std::string binFile = outputDir + "/input/velocity_" + to_string(t) + ".bin";
-    BIN::exportVectorDataBIN(binFile, grid.node.vvti);
-
     // visualize
     switch (grid.gridType)
     {
     case GridType::STRUCTURED:
       updateSolutionsVTI();
       outputSolutionsVTI("solution", t);
+      outputSolutionsBIN("input", t);
       compVorticity(t);
       break;
     case GridType::UNSTRUCTURED:
@@ -426,19 +423,6 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t)
   VTK::exportScalarPointDataVTI(vtiFile, "pressure", pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 
-/**********************************
- * @brief Export solutions for VTU.
- */
-void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t)
-{
-  if (mpi.myId > 0) return;
-
-  std::string vtuFile;
-  vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".vtu";
-  VTK::exportVectorPointDataVTU(vtuFile, "velocity", grid.node, grid.cell, v);
-  vtuFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".vtu";
-  VTK::exportScalarPointDataVTU(vtuFile, "pressure", grid.node, grid.cell, p);
-}
 
 /**********************************
  * @brief Export solutions for VTI.
@@ -457,6 +441,20 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t, cons
 /**********************************
  * @brief Export solutions for VTU.
  */
+void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t)
+{
+  if (mpi.myId > 0) return;
+
+  std::string vtuFile;
+  vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".vtu";
+  VTK::exportVectorPointDataVTU(vtuFile, "velocity", grid.node, grid.cell, v);
+  vtuFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".vtu";
+  VTK::exportScalarPointDataVTU(vtuFile, "pressure", grid.node, grid.cell, p);
+}
+
+/**********************************
+ * @brief Export solutions for VTU.
+ */
 void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t, const int loop)
 {
   if (mpi.myId > 0) return;
@@ -466,6 +464,18 @@ void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t, cons
   VTK::exportVectorPointDataVTU(vtuFile, "velocity", grid.node, grid.cell, grid.node.v);
   vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";
   VTK::exportScalarPointDataVTU(vtuFile, "pressure", grid.node, grid.cell, grid.node.p);
+}
+
+void DirectProblem::outputSolutionsBIN(const std::string &dir, const int t)
+{
+  if (mpi.myId > 0)
+    return;
+
+  std::string binFile;
+  binFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".bin";
+  BIN::exportVectorDataBIN(binFile, grid.node.vvti);
+  binFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".bin";
+  BIN::exportScalarDataBIN(binFile, grid.node.pvti);
 }
 
 /********************************************

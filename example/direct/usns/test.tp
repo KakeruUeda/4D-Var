@@ -1,46 +1,47 @@
 Base
 {
-    dim = 3
-    outputDir = "bentTube"
-    numOfOMP = 1
+  dim = 3
+  outputDir = "test"
+  numOfOMP = 1
 }
 
 Grid
 {
-    type = "Structured"
-    extractFluid = "ON"
-    nNodesInCell = 8
-    node = "input/bentTube/node.dat"
-    cell = "input/bentTube/cell.dat"
-    image = "input/bentTube/image.dat"
+  type = "Unstructured"
+  nx = (96, 32, 32) 
+  lx = (6.0, 2.0, 2.0)
+  nNodesInCell = 8
+  node = "input/test/node.dat"
+  cell = "input/test/cell.dat"
+  image = "input/test/image.dat"
+  nodeId = "input/test/nodeId.dat"
+  cellId = "input/test/cellId.dat"
 }
 
 Boundary
 {
-    velocityDirichlet = "input/bentTube/velocityDirichlet.dat"
-    pressureDirichlet = "input/bentTube/pressureDirichlet.dat"
+  velocityDirichlet = "input/test/velocityDirichlet.dat"
+  pressureDirichlet = "input/test/pressureDirichlet.dat"
 }
 
 PysicalParameter
 {   
-    rho = 50
-    mu = 1   
+  rho = 100
+  mu = 1   
 }
 
 TimeParameter
 {
-    dt = 0.05
-    timeMax = 100
-    pulsatileFlow = "ON"
-    pulseBeginItr = 10000
-    T = 1.0
+  dt = 0.02
+  timeMax = 2
+  pulsatileFlow = "ON"
+  pulseBeginItr = 250
+  T = 0.5
 }
 
 DarcyParameter
 {
-    alpha = 1e-3
-    resistance = 1e2
+  alpha = 1e-3
+  resistance = 1e2
 }
-
-
 

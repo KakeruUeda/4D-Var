@@ -135,8 +135,12 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
 
 	nDofsGlobal = 0;
 	for (int in = 0; in < node.nNodesGlobal; in++)
+	{
 		for (int id = 0; id < node.nDofsOnNode[in]; id++)
+		{
 			nDofsGlobal++;
+		}
+	}
 
 	if (mpi.nId == 1)
 	{
@@ -144,7 +148,7 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
 	}
 	else if (mpi.nId > 1)
 	{
-		divideWholeGrid();
+		//divideWholeGrid();
 		distributeToLocal(timeMax);
 	}
 
@@ -369,17 +373,28 @@ void Grid::divideWholeGrid()
 void Grid::distributeToLocal(const int timeMax)
 {
 	int kk = 0;
-	std::vector<int> nodeListLocal(nNodesLocal);
+	std::vector<int> nodeListLocal(node.nNodesLocal);
+
+	MPI_Barrier(MPI_COMM_WORLD);
+	std::cout << "e " << mpi.myId << std::endl;
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	for (int in = 0; in < nNodesGlobal; in++)
+	{
 		if (node.subId[in] == mpi.myId)
+		{
 			nodeListLocal[kk++] = in;
+		}
+	}
+	MPI_Barrier(MPI_COMM_WORLD);
+	std::cout << mpi.myId  << std::endl;
+	MPI_Barrier(MPI_COMM_WORLD);
 
 	std::vector<int> nNodesLocalVector(mpi.nId);
-	std::vector<int> nNodesLocalSum(mpi.myId);
+	std::vector<int> nNodesLocalSum(mpi.nId);
 
-	MPI_Allgather(&nNodesLocal, 1, MPI_INT, &nNodesLocalVector[0], 1, MPI_INT, MPI_COMM_WORLD);
-
+	MPI_Allgather(&node.nNodesLocal, 1, MPI_INT, &nNodesLocalVector[0], 1, MPI_INT, MPI_COMM_WORLD);
+std::cout << "2_2" << std::endl;
 	nNodesLocalSum = nNodesLocalVector;
 	for (int i = 1; i < mpi.nId; i++)
 		nNodesLocalSum[i] += nNodesLocalSum[i - 1];
@@ -390,25 +405,25 @@ void Grid::distributeToLocal(const int timeMax)
 	if (mpi.myId > 0)
 		nodeStart = nNodesLocalSum[mpi.myId - 1];
 	nodeEnd = nNodesLocalSum[mpi.myId] - 1;
-
+std::cout << "2_3" << std::endl;
 	printf("nodeStart = %5d \t nodeEnd = %5d \t myId = %5d \n", nodeStart, nodeEnd, mpi.myId);
 
 	std::vector<int> displs(mpi.nId);
-
+std::cout << "2_4" << std::endl;
 	displs[0] = 0;
 	for (int i = 0; i < mpi.nId - 1; i++)
 		displs[i + 1] = displs[i] + nNodesLocalVector[i];
 
 	std::vector<int> tmp(nNodesGlobal);
 
-	MPI_Allgatherv(&nodeListLocal[0], nNodesLocal, MPI_INT, &node.map[0], &nNodesLocalVector[0], &displs[0], MPI_INT, MPI_COMM_WORLD);
-
+	MPI_Allgatherv(&nodeListLocal[0], node.nNodesLocal, MPI_INT, &node.map[0], &nNodesLocalVector[0], &displs[0], MPI_INT, MPI_COMM_WORLD);
+std::cout << "2_5" << std::endl;
 	node.initializeNew();
 
 	for (int ic = 0; ic < nCellsGlobal; ic++)
 		for (int p = 0; p < cell.nNodesInCell; p++)
 			cell(ic).nodeNew[p] = node.mapNew[cell(ic).node[p]];
-
+std::cout << "2_6" << std::endl;
 	int n1;
 	int count;
 
@@ -418,7 +433,7 @@ void Grid::distributeToLocal(const int timeMax)
 	/// add ///
 	dirichlet.vDirichletWallNew.resize(timeMax);
 	//////////
-
+std::cout << "2_7" << std::endl;
 	for (int t = 0; t < timeMax; t++)
 	{
 		for (auto &pair : dirichlet.vDirichlet[t])
@@ -460,7 +475,7 @@ void Grid::distributeToLocal(const int timeMax)
 				node.isDirichletNew[n1][dim] = true;
 		}
 	}
-
+std::cout << "2_8" << std::endl;
 	for (int in = 0; in < node.nNodesGlobal; in++)
 		for (int id = 0; id < node.nDofsOnNodeNew[in]; id++)
 			if (node.isDirichletNew[in][id])

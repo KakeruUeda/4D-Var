@@ -10,16 +10,11 @@
 #include <iostream>
 #include <set>
 #include "metis.h"
-#include "Config.h"
-#include "Cell.h"
-#include "Node.h"
-#include "Array.h"
-#include "PetscSolver.h"
-#include "Boundary.h"
-#include "FileIO.h"
-#include "Config.h"
 #include "Gauss.h"
 #include "ShapeFunction.h"
+#include "Array.h"
+#include "Boundary.h"
+#include "Config.h"
 
 class Grid
 {
@@ -32,7 +27,7 @@ public:
   Cell cell;
   Node node;
   DirichletBoundary dirichlet;
-  VTK vtk;
+  Dirichlet dirichletBCs;
 
   int nx, ny, nz;
   double lx, ly, lz;

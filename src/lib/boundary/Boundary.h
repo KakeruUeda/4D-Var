@@ -10,11 +10,41 @@
 #include <iostream>
 #include <vector>
 #include <memory>
+#include "Config.h"
 #include "Array.h"
 #include "Node.h"
 #include "Cell.h"
 #include "PetscSolver.h"
-#include "Config.h"
+
+class Boundary
+{
+public:
+  virtual void assignBCs(Node &node, const int t) = 0;
+  virtual ~Boundary() {}
+};
+
+class Dirichlet : public Boundary
+{
+public:
+  Dirichlet(){}
+
+  void assignBCs(Node &node, const int t) override;
+
+private:
+  std::map<int, double[3]> vDirichletSet;
+  std::map<int, double> pDirichletSet;
+  Array1D<double> dirichletValue;
+};
+
+class Neumann : public Boundary
+{
+public:
+  Neumann(double gradient) : gradient(gradient) {}
+
+private:
+  double gradient;
+};
+
 
 class DirichletBoundary
 {

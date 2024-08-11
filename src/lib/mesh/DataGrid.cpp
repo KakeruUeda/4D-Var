@@ -6,14 +6,15 @@
 
 #include "DataGrid.h"
 
-DataGrid::DataGrid(Config &conf) : nx(conf.nxData), ny(conf.nyData), nz(conf.nzData),
-                                   lx(conf.lxData), ly(conf.lyData), lz(conf.lzData),
-                                   dx(conf.dxData), dy(conf.dyData), dz(conf.dzData),
-                                   nData(conf.nData), nSnapShot(conf.nSnapShot), dim(conf.dim),
-                                   snapInterval(conf.snapInterval),
-                                   nCellsGlobal(conf.nCellsDataGlobal),
-                                   nNodesInCell(conf.nNodesInCellData),
-                                   data(conf.nCellsDataGlobal)
+DataGrid::DataGrid(Config &conf) :
+nx(conf.nxData), ny(conf.nyData), nz(conf.nzData),
+lx(conf.lxData), ly(conf.lyData), lz(conf.lzData),
+dx(conf.dxData), dy(conf.dyData), dz(conf.dzData),
+nData(conf.nData), nSnapShot(conf.nSnapShot), dim(conf.dim),
+snapInterval(conf.snapInterval),
+nCellsGlobal(conf.nCellsDataGlobal),
+nNodesInCell(conf.nNodesInCellData),
+data(conf.nCellsDataGlobal)
 {
   for (int ic = 0; ic < conf.nCellsDataGlobal; ic++)
   {

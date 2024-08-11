@@ -13,6 +13,7 @@ target_sources(config
 
 target_include_directories(config 
   PUBLIC
+    ${PROJECT_SOURCE_DIR}/src/lib/import
     ${PROJECT_SOURCE_DIR}/src/lib/common
 )
 

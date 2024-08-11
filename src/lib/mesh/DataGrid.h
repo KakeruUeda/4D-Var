@@ -10,9 +10,8 @@
 #include <iostream>
 #include "metis.h"
 #include "Config.h"
-#include "Cell.h"
 #include "Node.h"
-#include "Config.h"
+#include "Cell.h"
 #include "Gauss.h"
 #include "ShapeFunction.h"
 #include "PetscSolver.h"

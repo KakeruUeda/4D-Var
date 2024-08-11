@@ -7,6 +7,7 @@ target_sources(io
     VTI.cpp
     VTU.cpp
     BIN.cpp
+    DAT.cpp
 )
 
 target_include_directories(io
@@ -16,6 +17,8 @@ target_include_directories(io
     ${PROJECT_SOURCE_DIR}/src/lib/boundary
     ${PROJECT_SOURCE_DIR}/src/lib/mesh
     ${PROJECT_SOURCE_DIR}/src/lib/solver
+    ${PROJECT_SOURCE_DIR}/src/lib/fem
+    ${PROJECT_SOURCE_DIR}/src/lib/import
 )
 
 target_compile_options(io PUBLIC ${compile_options_tmp})

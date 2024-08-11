@@ -26,6 +26,13 @@ void Node::initialize(Config &conf)
 
   for (int in = 0; in < nNodesGlobal; in++)
   {
+    subId[in] = conf.nodeId[in];
+  }
+
+  nNodesLocal = count(conf.nodeId.begin(), conf.nodeId.end(), mpi.myId);
+
+  for (int in = 0; in < nNodesGlobal; in++)
+  {
     nDofsOnNode[in] = conf.dim + 1;
     isDirichlet[in].resize(nDofsOnNode[in], false);
   }
@@ -67,8 +74,8 @@ void Node::initialize(Config &conf)
     for (int d = 0; d < conf.dim; d++)
       x[in][d] = conf.node[in][d];
 
-  for (int in = 0; in < nNodesGlobal; in++)
-    sortNode[in] = conf.sortNode[in];
+  //for (int in = 0; in < nNodesGlobal; in++)
+    //sortNode[in] = conf.sortNode[in];
 
   if (conf.gridType == GridType::STRUCTURED)
   {

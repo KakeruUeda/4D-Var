@@ -40,10 +40,8 @@ int main(int argc, char *argv[])
 
   GridCreation gc(conf);
 
-  std::cout << "1" << std::endl;
   try
   {
-    std::cout << "2" << std::endl;
     gc.initialize(conf);
     gc.divideWholeGrid();
     gc.collectLocalGrid();
@@ -59,7 +57,7 @@ int main(int argc, char *argv[])
   }
 
   gc.outputDat();
-  gc.outputVTU();
+  gc.outputVTU(); // debug
 
   MPI_Finalize();
   return EXIT_SUCCESS;

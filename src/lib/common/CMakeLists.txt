@@ -6,6 +6,7 @@ target_sources(common PRIVATE
     MathTool.cpp
     MathCommon.cpp
     Spline.cpp
+    SignalHnadler.cpp
 )
 
 target_compile_options(common PUBLIC ${compile_options_tmp})

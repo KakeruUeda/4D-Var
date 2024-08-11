@@ -20,6 +20,12 @@ public:
     mkdir(output.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
     outputDir = "output/" + conf.outputDir;
     mkdir(outputDir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+
+    std::string dir;
+    dir = outputDir + "/dat";
+    mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+    dir = outputDir + "/vtu";
+    mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
   }
   Grid grid;
 
@@ -27,6 +33,7 @@ public:
 
   std::vector<int> cellId;
   std::vector<int> nodeId;
+  std::vector<double> phi;
 
   std::map<int, std::vector<double>> vDirichlet;
   std::map<int, double> pDirichlet;

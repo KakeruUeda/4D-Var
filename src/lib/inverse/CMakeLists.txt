@@ -18,6 +18,7 @@ target_include_directories(inverse
         ${PROJECT_SOURCE_DIR}/src/lib/common
         ${PROJECT_SOURCE_DIR}/src/lib/boundary
         ${PROJECT_SOURCE_DIR}/src/lib/fileIO
+        ${PROJECT_SOURCE_DIR}/src/lib/import
         ${PROJECT_SOURCE_DIR}/src/lib/solver
         ${PROJECT_SOURCE_DIR}/src/lib/fem
 )

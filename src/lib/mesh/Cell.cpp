@@ -35,6 +35,11 @@ void Cell::initialize(Config &conf)
   for (int ic = 0; ic < nCellsGlobal; ic++)
     data[ic].phi = conf.phi[ic];
 
+  for (int ic = 0; ic < nCellsGlobal; ic++)
+    data[ic].subId = conf.cellId[ic];
+
+  nCellsLocal = count(conf.cellId.begin(), conf.cellId.end(), mpi.myId);
+
   if (conf.nNodesInCell == 4)
     for (int ic = 0; ic < nCellsGlobal; ic++)
       data[ic].cellType = VTK_QUAD;

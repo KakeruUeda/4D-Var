@@ -8,6 +8,7 @@ target_sources(direct
         Initialize.cpp
         AssemblyUSNS.cpp
         USNS.cpp
+        Test.cpp
 )
 
 target_include_directories(direct
@@ -17,6 +18,7 @@ target_include_directories(direct
         ${PROJECT_SOURCE_DIR}/src/lib/common
         ${PROJECT_SOURCE_DIR}/src/lib/boundary
         ${PROJECT_SOURCE_DIR}/src/lib/fileIO
+        ${PROJECT_SOURCE_DIR}/src/lib/import
         ${PROJECT_SOURCE_DIR}/src/lib/solver
         ${PROJECT_SOURCE_DIR}/src/lib/fem
 )

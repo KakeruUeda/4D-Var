@@ -360,3 +360,22 @@ void StructuredBoundaryFace::setDirichletInfo(std::vector<std::string> bdType,
     for (int d = 0; d < bdValue[bdIndex].size(); d++)
       dirichletValue[i].push_back(bdValue[bdIndex][d]);
 }
+
+// add
+void Dirichlet::assignBCs(Node &node, const int t)
+{
+  for (const auto &[idx, values] : vDirichletSet)
+  {
+    for (int d = 0; d < 3; d++)
+    {
+      int dof = node.getDof(idx, d);
+      dirichletValue(dof) = values[d];
+    }
+  }
+  for (const auto &[idx, value] : pDirichletSet)
+  {
+    int dof = node.getDof(idx, 4);
+    dirichletValue(dof) = value;
+  }
+
+}
