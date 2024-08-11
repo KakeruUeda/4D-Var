@@ -12,15 +12,15 @@ Grid
     lx = (5.5, 2.0, 2.0)
     extractFluid = "ON"
     nNodesInCell = 8
-    node = "input/stenosis/44x16x16/input_dat/node.dat"
-    cell = "input/stenosis/44x16x16/input_dat/cell.dat"
-    image = "input/stenosis/44x16x16/input_dat/image.dat"
+    node = "input/stenosis/44x16x16/dat/node.dat"
+    cell = "input/stenosis/44x16x16/dat/cell.dat"
+    image = "input/stenosis/44x16x16/dat/image.dat"
 }
 
 Boundary
 {
-    velocityDirichlet = "input/stenosis/44x16x16/input_dat/velocityDirichletPoiseuille.dat"
-    pressureDirichlet = "input/stenosis/44x16x16/input_dat/pressureDirichlet.dat"
+    velocityDirichlet = "input/stenosis/44x16x16/dat/velocityDirichletPoiseuille.dat"
+    pressureDirichlet = "input/stenosis/44x16x16/dat/pressureDirichlet.dat"
 }
 
 Inverse
@@ -45,10 +45,10 @@ Data
     nxData = (44, 16, 16)
     lxData = (5.5, 2.0, 2.0)
     nControlNodesInCell = 4
-    controlBoundary = "input/stenosis/44x16x16/input_dat/controlBoundary.dat"
-    controlCellMap = "input/stenosis/44x16x16/input_dat/controlCellMap.dat"
-    controlNodeInCell = "input/stenosis/44x16x16/input_dat/controlNodeInCell.dat"
-    inputDir = "input/stenosis/44x16x16/input_bin"
+    controlBoundary = "input/stenosis/44x16x16/dat/controlBoundary.dat"
+    controlCellMap = "input/stenosis/44x16x16/dat/controlCellMap.dat"
+    controlNodeInCell = "input/stenosis/44x16x16/dat/controlNodeInCell.dat"
+    inputDir = "input/stenosis/44x16x16/bin"
 }
 
 PysicalParameter

@@ -12,15 +12,15 @@ Grid
     lx = (2.5, 2.0, 2.0)
     extractFluid = "ON"
     nNodesInCell = 8
-    node = "input/unilateralStenosis/16x16x16/input_dat/node.dat"
-    cell = "input/unilateralStenosis/16x16x16/input_dat/cell.dat"
-    image = "input/unilateralStenosis/16x16x16/input_dat/image.dat"
+    node = "input/unilateralStenosis/16x16x16/dat/node.dat"
+    cell = "input/unilateralStenosis/16x16x16/dat/cell.dat"
+    image = "input/unilateralStenosis/16x16x16/dat/image.dat"
 }
 
 Boundary
 {
-    velocityDirichlet = "input/unilateralStenosis/16x16x16/input_dat/velocityDirichletPoiseuille.dat"
-    pressureDirichlet = "input/unilateralStenosis/16x16x16/input_dat/pressureDirichlet.dat"
+    velocityDirichlet = "input/unilateralStenosis/16x16x16/dat/velocityDirichletPoiseuille.dat"
+    pressureDirichlet = "input/unilateralStenosis/16x16x16/dat/pressureDirichlet.dat"
 }
 
 Inverse
@@ -43,10 +43,10 @@ Data
     nxData = (20, 16, 16)
     lxData = (2.5, 2.0, 2.0)
     nControlNodesInCell = 4
-    controlBoundary = "input/unilateralStenosis/16x16x16/input_dat/controlBoundary.dat"
-    controlCellMap = "input/unilateralStenosis/16x16x16/input_dat/controlCellMap.dat"
-    controlNodeInCell = "input/unilateralStenosis/16x16x16/input_dat/controlNodeInCell.dat"
-    inputDir = "input/unilateralStenosis/16x16x16/input_bin"
+    controlBoundary = "input/unilateralStenosis/16x16x16/dat/controlBoundary.dat"
+    controlCellMap = "input/unilateralStenosis/16x16x16/dat/controlCellMap.dat"
+    controlNodeInCell = "input/unilateralStenosis/16x16x16/dat/controlNodeInCell.dat"
+    inputDir = "input/unilateralStenosis/16x16x16/bin"
 }
 
 PysicalParameter

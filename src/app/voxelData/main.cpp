@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
   mkdir(output.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
   conf.outputDir = "output/" + conf.outputDir;
   mkdir(conf.outputDir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-  dir = conf.outputDir + "/input_bin";
+  dir = conf.outputDir + "/bin";
   mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
   dir = conf.outputDir + "/vtk";
   mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
@@ -157,10 +157,10 @@ int main(int argc, char *argv[])
   // output bin
   for (int step = 0; step < ntInSnapshot; step++)
   {
-    std::string binFile = conf.outputDir + "/input_bin/velocityReference_" + to_string(step) + ".bin";
+    std::string binFile = conf.outputDir + "/bin/velocityReference_" + to_string(step) + ".bin";
     BIN::exportVectorDataBIN(binFile, vRef[step]);
   }
-  std::string binFile = conf.outputDir + "/input_bin/velocityReference_initial.bin";
+  std::string binFile = conf.outputDir + "/bin/velocityReference_initial.bin";
   BIN::exportVectorDataBIN(binFile, vRefInit);
 
   std::vector<std::vector<std::vector<double>>> dataTmp;
@@ -177,7 +177,7 @@ int main(int argc, char *argv[])
   }
   for (int step = 0; step < snap.nSnapShot; step++)
   {
-    std::string binFile = conf.outputDir + "/input_bin/data_" + to_string(step) + ".bin";
+    std::string binFile = conf.outputDir + "/bin/data_" + to_string(step) + ".bin";
     BIN::exportVectorDataBIN(binFile, dataTmp[step]);
   }
 
