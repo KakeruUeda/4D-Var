@@ -288,27 +288,11 @@ void DirectProblem::compInitialCondition(std::vector<std::map<int, std::vector<d
  */
 void DirectProblem::setVariablesZero()
 {
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
-      grid.node.v[in][d] = 0e0;
-      grid.node.vPrev[in][d] = 0e0;
-    }
-    grid.node.p[in] = 0e0;
-  }
-
-  for (int t = 0; t < timeMax; t++)
-  {
-    for (int in = 0; in < grid.node.nNodesGlobal; in++)
-    {
-      for (int d = 0; d < dim; d++)
-      {
-        grid.node.vt[t][in][d] = 0e0;
-      }
-      grid.node.pt[t][in] = 0e0;
-    }
-  }
+  v.fillZero();
+  vPrev.fillZero();
+  p.fillZero();
+  vt.fillZero();
+  pt.fillZero();
 }
 
 /******************************
@@ -316,20 +300,6 @@ void DirectProblem::setVariablesZero()
  */
 void DirectProblem::updateSolutions()
 {
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    int n1 = 0;
-    for (int i = 0; i < grid.node.mapNew[in]; i++)
-      n1 += grid.node.nDofsOnNode[i];
-
-    for (int d = 0; d < dim; d++)
-      grid.node.vPrev[in][d] = grid.node.v[in][d];
-
-    for (int d = 0; d < dim; d++)
-      grid.node.v[in][d] = petsc.solution[n1 + d];
-    grid.node.p[in] = petsc.solution[n1 + dim];
-  }
-
   for (int in = 0; in < grid.node.nNodesGlobal; in++)
   {
     int n1 = 0;

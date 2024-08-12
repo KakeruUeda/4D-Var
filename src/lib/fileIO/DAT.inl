@@ -4,8 +4,8 @@
  * @date August, 2024
  */
 
-#ifndef DAT_INL_H
-#define DAT_INL_H
+#ifndef DATINL_H
+#define DATINL_H
 
 #include "FileIO.h"
 #include <fstream>
@@ -190,4 +190,4 @@ void DAT::exportMapDataDAT(const std::string &file, const std::map<int, T> &data
   }
 }
 
-#endif // DAT_INL_H
+#endif // DATINL_H

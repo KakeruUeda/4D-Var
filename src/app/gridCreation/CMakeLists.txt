@@ -1,4 +1,4 @@
-set(main_target "GridDivision")
+set(main_target "GridCreation")
 
 set(compile_options_tmp ${base_compile_options})
 string(REPLACE " " ";" compile_options_tmp ${compile_options_tmp})

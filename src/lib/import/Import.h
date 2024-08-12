@@ -22,9 +22,14 @@ public:
   template <typename T>
   static void importVectorDataDAT(const std::string &file, std::vector<std::vector<T>> &vec);
 
+  // BIN
+  template <typename T>
+  static void importScalarDataBIN(const std::string &file, std::vector<T> &vec);
+  template <typename T>
+  static void importVectorDataBIN(const std::string &file, std::vector<std::vector<T>> &vec);
 };
 
-
 #include "ImportDAT.inl"
+#include "ImportBIN.inl"
 
 #endif // IMPORT_H

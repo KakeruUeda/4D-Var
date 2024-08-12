@@ -343,48 +343,55 @@ void Config::readStrBoundaryParameter()
 {
   std::string str, base_label;
   std::string face;
-  std::string labelType, labelValue;
+  std::string labelFace, labelType, labelValue;
   std::string bdTypeTmp;
   int tmp = 0;
 
   base_label = "/Boundary";
 
   face = "bottom";
+  labelFace = base_label + "/bottom";
   labelType = base_label + "/bottom/type";
   labelValue = base_label + "/bottom/value";
-  readStrBoundaryValue(face, labelType, labelValue);
+  readStrBoundaryValue(face, labelFace, labelType, labelValue);
 
   face = "top";
+  labelFace = base_label + "/top";
   labelType = base_label + "/top/type";
   labelValue = base_label + "/top/value";
-  readStrBoundaryValue(face, labelType, labelValue);
+  readStrBoundaryValue(face, labelFace, labelType, labelValue);
 
   face = "left";
+  labelFace = base_label + "/left";
   labelType = base_label + "/left/type";
   labelValue = base_label + "/left/value";
-  readStrBoundaryValue(face, labelType, labelValue);
+  readStrBoundaryValue(face, labelFace, labelType, labelValue);
 
   face = "right";
+  labelFace = base_label + "/right";
   labelType = base_label + "/right/type";
   labelValue = base_label + "/right/value";
-  readStrBoundaryValue(face, labelType, labelValue);
+  readStrBoundaryValue(face, labelFace, labelType, labelValue);
 
   face = "front";
+  labelFace = base_label + "/front";
   labelType = base_label + "/front/type";
   labelValue = base_label + "/front/value";
-  readStrBoundaryValue(face, labelType, labelValue);
+  readStrBoundaryValue(face, labelFace, labelType, labelValue);
 
   face = "back";
+  labelFace = base_label + "/back";
   labelType = base_label + "/back/type";
   labelValue = base_label + "/back/value";
-  readStrBoundaryValue(face, labelType, labelValue);
+  readStrBoundaryValue(face, labelFace, labelType, labelValue);
 
 }
 
 /*****************************
  * @brief Read text parameter.
  */
-void Config::readStrBoundaryValue(std::string face, std::string labelType, std::string labelValue)
+void Config::readStrBoundaryValue(std::string face, std::string labelFace, 
+                                  std::string labelType, std::string labelValue)
 {
   std::string bdTypeTmp;
   if (!tp.getInspectedValue(labelType, bdTypeTmp))
@@ -407,6 +414,25 @@ void Config::readStrBoundaryValue(std::string face, std::string labelType, std::
       throw std::runtime_error(labelValue + " is not set");
 
     setBoundaryPressureValue(face, value);
+  }
+  else if (bdTypeTmp == "poiseuille")
+  {
+    std::string label = labelFace + "/center";
+    
+    if (!tp.getInspectedVector(label, center, 3))
+      throw std::runtime_error(label + " is not set");
+
+    label = labelFace + "/R";
+    
+    if (!tp.getInspectedValue(label, R))
+      throw std::runtime_error(label + " is not set");
+    
+    label = labelFace + "/Q";
+    
+    if (!tp.getInspectedValue(label, Q))
+      throw std::runtime_error(label + " is not set");
+
+    setBoundaryPoiseuilleValue(face);
   }
   else if (bdTypeTmp == "free")
   {
@@ -494,23 +520,45 @@ void Config::readControlBoundaryParameter()
 {
   std::string str, base_label, label;
   base_label = "/Boundary";
-  label = base_label + "/control";
+
+  label = base_label + "/extractControlBoundary";
+
+  if (!tp.getInspectedValue(label, str))
+    throw std::runtime_error(label + " is not set");
+
+  if (str == "ON")
+  {
+    extractCB = ON;
+  }
+  else if (str == "OFF")  
+  { 
+    extractCB = OFF;
+    return;
+  }
+  else
+  {
+    throw std::runtime_error("ON or OFF is not set");
+  }
+  
+  label = base_label + "/inletControlBoundary";
 
   if (!tp.getInspectedValue(label, str))
     throw std::runtime_error(label + " is not set");
 
   if (str == "left")
-    controlBoundary = ControlBoundary::left;
+    inletCB = ControlBoundary::left;
   if (str == "right")
-    controlBoundary = ControlBoundary::right;
+    inletCB = ControlBoundary::right;
   if (str == "top")
-    controlBoundary = ControlBoundary::top;
+    inletCB = ControlBoundary::top;
   if (str == "bottom")
-    controlBoundary = ControlBoundary::bottom;
+    inletCB = ControlBoundary::bottom;
   if (str == "front")
-    controlBoundary = ControlBoundary::front;
+    inletCB = ControlBoundary::front;
   if (str == "back")
-    controlBoundary = ControlBoundary::back;
+    inletCB = ControlBoundary::back;
+
+  setControlBoundary();
 }
 
 /*****************************
@@ -724,8 +772,17 @@ void Config::readDataParameter()
   label = base_label + "/inputDir";
   if (!tp.getInspectedValue(label, inputDir))
     throw std::runtime_error(label + " is not set");
-}
 
+  velocityData.resize(nSnapShot);
+
+  // Read data from bin
+  for (int step = 0; step < nSnapShot; step++)
+  {
+    std::string velFile = inputDir + "/data_" + std::to_string(step) + ".bin";
+    IMPORT::importVectorDataBIN<double>(velFile, velocityData[step]);
+  }
+
+}
 
 /*****************************
  * @brief Read text parameter.

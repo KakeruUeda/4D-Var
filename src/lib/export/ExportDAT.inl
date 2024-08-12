@@ -1,5 +1,5 @@
 /**
- * @file DAT.inl
+ * @file ExportDAT.inl
  * @author K.Ueda
  * @date August, 2024
  */
@@ -45,10 +45,8 @@ void EXPORT::exportVectorDataDAT(const std::string &file, const std::vector<std:
     return;
   }
 
-  ofs << vec.size() << "\n";
   for (const auto &row : vec)
   {
-    ofs << row.size() << " ";
     for (const T &val : row)
     {
       ofs << val << " ";

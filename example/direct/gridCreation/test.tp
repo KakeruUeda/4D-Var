@@ -26,8 +26,10 @@ Boundary
     value = (0,0,0)
   }
   left{
-    type = "v"
-    value = (1,0,0)
+    type = "poiseuille"
+    center = (0.0, 1.0, 1.0)
+    R = 0.5
+    Q = 1.0
   }
   right{
     type = "free"
@@ -42,6 +44,8 @@ Boundary
     value = (0,0,0)
   }
 
-  control = "left"
+  extractControlBoundary = "ON"
+  inletControlBoundary = "left"
+
 }
 

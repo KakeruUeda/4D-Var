@@ -1,5 +1,5 @@
 /**
- * @file importDAT.inl
+ * @file ImportDAT.inl
  * @author K.Ueda
  * @date August, 2024
  */

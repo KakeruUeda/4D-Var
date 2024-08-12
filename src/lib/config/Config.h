@@ -11,6 +11,7 @@
 #include <set>
 #include <map>
 #include <cassert>
+#include <string>
 #include <fstream>
 #include <sstream>
 #include "TextParser.h"
@@ -72,6 +73,8 @@ public:
   Application app;
   GridType gridType;
   ControlBoundary controlBoundary;
+  ControlBoundary inletCB;
+  ControlBoundary outletCB;
   VoxelVelocity vvox;
   CrossSection crossSection;
 
@@ -159,6 +162,14 @@ public:
 
   std::vector<bool> isBoundaryEdge;
 
+  double center[3];
+  double R, Q, maxVelocity;
+
+  std::vector<int> mapCB;
+  std::vector<int> mapCBCell;
+  std::vector<std::vector<int>> mapCBInCell;
+  int extractCB;
+
   // For cell and node data
   std::vector<std::vector<double>> node;
   std::vector<std::vector<int>> cell;
@@ -209,9 +220,11 @@ private:
   void readPostInverseVelocityParameter();
   void readPostInverseFlowRateParameter();
   void readVoxelCreationParameter();
-  void readStrBoundaryValue(std::string face, std::string labelType, std::string labelValue);
+  void readStrBoundaryValue(std::string face, std::string labelFace, std::string labelType, std::string labelValue);
   void setBoundaryVelocityValue(std::string face, double value[3]);
   void setBoundaryPressureValue(std::string face, const double value);
+  void setBoundaryPoiseuilleValue(std::string face);
+  void setControlBoundary();
   void setStrGrid();
   double setStrCoordinate(const int i, const int j, const int k, const int d);
   int setStrNode(const int i, const int j, const int k, const int p);
@@ -224,17 +237,28 @@ public:
   
   std::set<int> uniqueCells;
   std::set<int> uniqueNodes;
+  std::set<int> uniqueCBCells;
+  std::set<int> uniqueCBNodes;
+  std::set<int> uniqueCBCellsIdx;
+
   std::unordered_map<int, int> cellMapping;
   std::unordered_map<int, int> nodeMapping;
 
   void getUniqueCells();
   void getUniqueNodes();
+  void getUniqueCBCells();
+  void getUniqueCBNodes();
+  void getUniqueCBCellsIdx();
   void getNewFilterdMap();
   void filterCell();
   void filterPhi();
   void filterNode();
+  void filterMapCB();
+  void filterMapCBCell();
+  void filterMapCBInCell();
   void filterVelocityDirichlet();
   void filterPressureDirichlet();
+  void applyMapping();
 
 };
 

@@ -1,24 +1,17 @@
-/**
- * @file GridFiltering.cpp
- * @author K.Ueda
- * @date August, 2024
- */
-
 #include "Config.h"
 
 /*****************************************
- * @brief Set velocity dirichlet boundary
- *        condition zero on solid nodes.
+ * @brief Set velocity Dirichlet boundary
+ *        condition to zero on solid nodes.
  */
 void Config::setSolidDirichletValue()
 {
-  if(gridType != GridType::STRUCTURED)
+  if (gridType != GridType::STRUCTURED)
   {
     return;
   }
 
-  std::vector<double> vecTmp;
-  vecTmp.resize(3, 0e0);
+  std::vector<double> vecTmp(dim, 0.0);
 
   for (int ic = 0; ic < nCellsGlobal; ic++)
   {
@@ -26,13 +19,15 @@ void Config::setSolidDirichletValue()
     {
       for (int p = 0; p < nNodesInCell; p++)
       {
-        std::vector<double> vecTmp(dim, 0e0);
         vDirichlet[cell[ic][p]] = vecTmp;
       }
     }
   }
 }
 
+/*******************************
+ * @brief Identify unique cells.
+ */
 void Config::getUniqueCells()
 {
   for (int ic = 0; ic < phi.size(); ic++)
@@ -44,6 +39,9 @@ void Config::getUniqueCells()
   }
 }
 
+/*******************************
+ * @brief Identify unique nodes.
+ */
 void Config::getUniqueNodes()
 {
   for (int ic : uniqueCells)
@@ -55,6 +53,57 @@ void Config::getUniqueNodes()
   }
 }
 
+/*****************************************
+ * @brief Identify unique control boundary cells.
+ */
+void Config::getUniqueCBCells()
+{
+  for (int cb : mapCBCell)
+  {
+    if (phi[cb] > 1e-12)
+    {
+      uniqueCBCells.insert(cb);
+    }
+  }
+}
+
+/******************************************************
+ * @brief Identify unique control boundary cells index.
+ */
+void Config::getUniqueCBCellsIdx()
+{
+  for (int icb = 0; icb < mapCBCell.size(); icb++)
+  {
+    int cb = mapCBCell[icb];
+    if (phi[cb] > 1e-12)
+    {
+      uniqueCBCellsIdx.insert(icb);
+    }
+  }
+}
+
+
+/************************************************
+ * @brief Identify unique control boundary nodes.
+ */
+void Config::getUniqueCBNodes()
+{
+  for (int icb = 0; icb < mapCBCell.size(); icb++)
+  {
+    int cb = mapCBCell[icb];
+    if (phi[cb] > 1e-12)
+    {
+      for (int node : mapCBInCell[icb])
+      {
+        uniqueCBNodes.insert(node);
+      }
+    }
+  }
+}
+
+/*****************************************************
+ * @brief Create new filtered map for cells and nodes.
+ */
 void Config::getNewFilterdMap()
 {
   int newIdx = 0;
@@ -70,109 +119,160 @@ void Config::getNewFilterdMap()
   }
 }
 
+/********************************************
+ * @brief Filter cells based on unique cells.
+ */
 void Config::filterCell()
 {
   std::vector<std::vector<int>> filteredValues;
-  filteredValues.reserve(uniqueCells.size());
 
   for (int ic : uniqueCells)
   {
-    filteredValues.push_back(std::move(cell[ic]));
+    filteredValues.push_back(cell[ic]);
   }
 
   cell = std::move(filteredValues);
 }
 
+/*************************************************
+ * @brief Filter phi values based on unique cells.
+ */
 void Config::filterPhi()
 {
   std::vector<double> filteredValues;
-  filteredValues.reserve(uniqueCells.size());
 
   for (int ic : uniqueCells)
   {
-    filteredValues.push_back(std::move(phi[ic]));
+    filteredValues.push_back(phi[ic]);
   }
 
   phi = std::move(filteredValues);
 }
 
+/********************************************
+ * @brief Filter nodes based on unique nodes.
+ */
 void Config::filterNode()
 {
-  std::vector<std::vector<double>> filterdValues;
-  filterdValues.reserve(uniqueNodes.size());
+  std::vector<std::vector<double>> filteredValues;
 
   for (int in : uniqueNodes)
   {
-    filterdValues.push_back(node[in]);
+    filteredValues.push_back(node[in]);
   }
 
-  node = std::move(filterdValues);
+  node = std::move(filteredValues);
 }
 
+/***************************************
+ * @brief Filter control boundary nodes.
+ */
+void Config::filterMapCB()
+{
+  std::vector<int> filteredValues;
+
+  for (int in : uniqueCBNodes)
+  {
+    filteredValues.push_back(in);
+  }
+
+  mapCB = std::move(filteredValues);
+}
+
+/***************************************
+ * @brief Filter control boundary cells.
+ */
+void Config::filterMapCBCell()
+{
+  std::vector<int> filteredValues;
+
+  for (int cb : uniqueCBCells)
+  {
+    filteredValues.push_back(cb);
+  }
+
+  mapCBCell = std::move(filteredValues);
+}
+
+/************************************************
+ * @brief Filter control boundary nodes in cells.
+ */
+void Config::filterMapCBInCell()
+{
+  std::vector<std::vector<int>> filteredValues;
+  for (int cb : uniqueCBCellsIdx)
+  {
+    filteredValues.push_back(mapCBInCell[cb]);
+  }
+
+  mapCBInCell = std::move(filteredValues);
+}
+
+/********************************************************
+ * @brief Filter velocity Dirichlet boundary conditions.
+ */
 void Config::filterVelocityDirichlet()
 {
-  std::map<int, std::vector<double>> fileterdValues;
+  std::map<int, std::vector<double>> filteredValues;
 
   for (const auto &entry : vDirichlet)
   {
     if (uniqueNodes.find(entry.first) != uniqueNodes.end())
     {
-      fileterdValues[entry.first] = entry.second;
+      filteredValues[entry.first] = entry.second;
     }
   }
-  vDirichlet = std::move(fileterdValues);
+  vDirichlet = std::move(filteredValues);
 }
 
+/*******************************************************
+ * @brief Filter pressure Dirichlet boundary conditions.
+ */
 void Config::filterPressureDirichlet()
 {
-  std::map<int, double> fileterdValues;
+  std::map<int, double> filteredValues;
 
   for (const auto &entry : pDirichlet)
   {
     if (uniqueNodes.find(entry.first) != uniqueNodes.end())
     {
-      fileterdValues[entry.first] = entry.second;
+      filteredValues[entry.first] = entry.second;
     }
   }
-  pDirichlet = std::move(fileterdValues);
+  pDirichlet = std::move(filteredValues);
 }
 
-/***************************************************
- * @brief Extract fluid domain from structured grid
- *        to lower the computational cost.
- *        Might need to simplify.
+/******************************************
+ * @brief Apply new cell and node mappings.
  */
-void Config::filterFluidGrid()
+void Config::applyMapping()
 {
-  if(!((gridType == GridType::STRUCTURED) && (extractFluid == ON)))
-  {
-    return;
-  }
-
-  getUniqueCells();
-  getUniqueNodes();
-  getNewFilterdMap();
-
-  nCellsGlobal = uniqueCells.size();
-  nNodesGlobal = uniqueNodes.size();
-
-  filterCell();
-  filterPhi();
-  filterNode();
-
-  filterVelocityDirichlet();
-  filterPressureDirichlet();
-
-  // New Cell Mapping
   for (auto &vec : cell)
   {
-    for (auto &val : vec)
+    for (auto &value : vec)
     {
-      val = nodeMapping[val];
+      value = nodeMapping[value];
     }
   }
 
-  // New vDirichlet Mapping
+  for (auto &value : mapCBCell)
+  {
+    value = cellMapping[value];
+  }
+
+  for (auto &vec : mapCBInCell)
+  {
+    for (auto &value : vec)
+    {
+      value = nodeMapping[value];
+    }
+  }
+
+  for (auto &value : mapCB)
+  {
+    value = nodeMapping[value];
+  }
+
   std::map<int, std::vector<double>> vtmp;
   for (auto &entry : vDirichlet)
   {
@@ -180,12 +280,55 @@ void Config::filterFluidGrid()
   }
   vDirichlet = std::move(vtmp);
 
-  // New pDirichlet Mapping
   std::map<int, double> ptmp;
   for (auto &entry : pDirichlet)
   {
     ptmp[nodeMapping[entry.first]] = std::move(entry.second);
   }
   pDirichlet = std::move(ptmp);
+}
 
+/**************************************************
+ * @brief Filter fluid domain from structured grid.
+ */
+void Config::filterFluidGrid()
+{
+  if (!((gridType == GridType::STRUCTURED) && (extractFluid == ON)))
+  {
+    return;
+  }
+
+  // Get unique cells and nodes
+  getUniqueCells();
+  getUniqueNodes();
+
+  if (extractCB == ON)
+  {
+    getUniqueCBCells();
+    getUniqueCBNodes();
+    getUniqueCBCellsIdx();
+  }
+
+  getNewFilterdMap();
+
+  nCellsGlobal = uniqueCells.size();
+  nNodesGlobal = uniqueNodes.size();
+
+  // Filtering
+  filterCell();
+  filterPhi();
+  filterNode();
+
+  if (extractCB == ON)
+  {
+    filterMapCB();
+    filterMapCBCell();
+    filterMapCBInCell();
+  }
+
+  filterVelocityDirichlet();
+  filterPressureDirichlet();
+
+  // Apply new mappings (node numbers start from 0)
+  applyMapping();
 }

@@ -25,6 +25,7 @@
 #include "Grid.h"
 #include "Boundary.h"
 #include "Export.h"
+#include "Import.h"
 
 extern MyMPI mpi;
 

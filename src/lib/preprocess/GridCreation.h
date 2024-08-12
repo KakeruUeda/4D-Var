@@ -8,7 +8,7 @@
 #include <map>
 #include "Config.h"
 #include "Grid.h"
-#include "FileIO.h"
+#include "Export.h"
 
 class GridCreation
 {
@@ -27,9 +27,11 @@ public:
     dir = outputDir + "/vtu";
     mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
   }
+  
   Grid grid;
 
   std::string outputDir;
+  int extractCB;
 
   std::vector<int> cellId;
   std::vector<int> nodeId;
@@ -37,6 +39,10 @@ public:
 
   std::map<int, std::vector<double>> vDirichlet;
   std::map<int, double> pDirichlet;
+  
+  std::vector<int> mapCB;
+  std::vector<int> mapCBCell;
+  std::vector<std::vector<int>> mapCBInCell;
   
   void initialize(Config &conf);
   void divideWholeGrid();

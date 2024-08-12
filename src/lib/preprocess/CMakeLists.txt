@@ -16,6 +16,7 @@ target_include_directories(preprocess
     ${PROJECT_SOURCE_DIR}/src/lib/solver
     ${PROJECT_SOURCE_DIR}/src/lib/fileIO
     ${PROJECT_SOURCE_DIR}/src/lib/import
+    ${PROJECT_SOURCE_DIR}/src/lib/export
 )
 
 target_compile_options(preprocess PUBLIC ${compile_options_tmp})

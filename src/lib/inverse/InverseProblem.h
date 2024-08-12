@@ -29,6 +29,7 @@
 #include "DirectProblem.h"
 #include "Function.h"
 #include "Adjoint.h"
+#include "Import.h"
 
 extern MyMPI mpi;
 

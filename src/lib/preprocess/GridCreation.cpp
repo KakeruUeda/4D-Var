@@ -6,7 +6,6 @@
 
 #include "GridCreation.h"
 
-
 /**********************
  * @brief tmp function.
  */
@@ -83,7 +82,7 @@ void GridCreation::initialize(Config &conf)
     {
       grid.node.x[in][d] = conf.node[in][d];
     }
-    //grid.node.sortNode[in] = conf.sortNode[in];
+    // grid.node.sortNode[in] = conf.sortNode[in];
   }
 
   cellId.resize(grid.cell.nCellsGlobal, 0);
@@ -92,6 +91,15 @@ void GridCreation::initialize(Config &conf)
   // initialize dirichlet
   vDirichlet = conf.vDirichlet;
   pDirichlet = conf.pDirichlet;
+
+  extractCB = conf.extractCB;
+  
+  if (extractCB == ON)
+  {
+    mapCB = conf.mapCB;
+    mapCBCell = conf.mapCBCell;
+    mapCBInCell = conf.mapCBInCell;
+  }
 }
 
 /**********************
@@ -99,7 +107,8 @@ void GridCreation::initialize(Config &conf)
  */
 void GridCreation::divideWholeGrid()
 {
-  if (mpi.myId != 0) return;
+  if (mpi.myId != 0)
+    return;
 
   int kk = 0;
   int nparts = mpi.nId;
@@ -142,8 +151,8 @@ void GridCreation::divideWholeGrid()
   options[METIS_OPTION_NUMBERING] = 0;
 
   // METIS partition routine
-  int ret = METIS_PartMeshDual(&grid.cell.nCellsGlobal, &grid.node.nNodesGlobal, 
-                               eptr.get(), eind.get(), NULL, NULL, &ncommon_nodes, 
+  int ret = METIS_PartMeshDual(&grid.cell.nCellsGlobal, &grid.node.nNodesGlobal,
+                               eptr.get(), eind.get(), NULL, NULL, &ncommon_nodes,
                                &nparts, NULL, options, &objval, &cellId[0], &nodeId[0]);
 
   if (ret == METIS_OK)
@@ -172,40 +181,65 @@ void GridCreation::collectLocalGrid()
   printf("nNodesLocal =  %5d \t numOfId = %5d \t myId = %5d \n", grid.nNodesLocal, mpi.nId, mpi.myId);
 }
 
-/**********************
- * @brief tmp function.
+/******************************************************
+ * @brief output dat files.
+ * These files are needed for direct or inverse solver
  */
 void GridCreation::outputDat()
 {
-  if(mpi.myId != 0) return;
+  if (mpi.myId != 0)
+    return;
 
   std::string datFile;
   datFile = outputDir + "/dat/cellId.dat";
-  DAT::exportScalarDataDAT<int>(datFile, cellId);
+  EXPORT::exportScalarDataDAT<int>(datFile, cellId);
   datFile = outputDir + "/dat/nodeId.dat";
-  DAT::exportScalarDataDAT<int>(datFile, nodeId);
-  datFile = outputDir +  "/dat/velocityDirichlet.dat";
-  DAT::exportMapDataDAT<double>(datFile, vDirichlet);
-  datFile = outputDir +  "/dat/pressureDirichlet.dat";
-  DAT::exportMapDataDAT<double>(datFile, pDirichlet);
-  datFile = outputDir +  "/dat/cell.dat";
-  DAT::exportCellDataDAT(datFile, grid.cell);
-  datFile = outputDir +  "/dat/node.dat";
-  DAT::exportNodeDataDAT(datFile, grid.node);
+  EXPORT::exportScalarDataDAT<int>(datFile, nodeId);
+  datFile = outputDir + "/dat/velocityDirichlet.dat";
+  EXPORT::exportMapDataDAT<double>(datFile, vDirichlet);
+  datFile = outputDir + "/dat/pressureDirichlet.dat";
+  EXPORT::exportMapDataDAT<double>(datFile, pDirichlet);
+  datFile = outputDir + "/dat/cell.dat";
+  EXPORT::exportCellDataDAT(datFile, grid.cell);
+  datFile = outputDir + "/dat/node.dat";
+  EXPORT::exportNodeDataDAT(datFile, grid.node);
   datFile = outputDir + "/dat/image.dat";
-  DAT::exportScalarDataDAT(datFile, phi);
+
+  if (extractCB == ON)
+  {
+    datFile = outputDir + "/dat/phi.dat";
+    EXPORT::exportScalarDataDAT<double>(datFile, phi);
+    datFile = outputDir + "/dat/controlBoundaryNode.dat";
+    EXPORT::exportScalarDataDAT<int>(datFile, mapCB);
+    datFile = outputDir + "/dat/controlCell.dat";
+    EXPORT::exportScalarDataDAT<int>(datFile, mapCBCell);
+    datFile = outputDir + "/dat/controlBoundaryNodeInCell.dat";
+    EXPORT::exportVectorDataDAT<int>(datFile, mapCBInCell);
+  }
 }
 
-/**********************
- * @brief tmp function.
+/********************
+ * @brief Visualize.
  */
 void GridCreation::outputVTU()
 {
-  if(mpi.myId != 0) return;
+  if (mpi.myId != 0)
+    return;
 
   std::string vtuFile;
   vtuFile = outputDir + "/vtu/cellId.vtu";
-  VTKTMP::exportScalarCellDataVTU<int>(vtuFile, "cellId", grid.node, grid.cell, cellId);
+  EXPORT::exportScalarCellDataVTU<int>(vtuFile, "cellId", grid.node, grid.cell, cellId);
   vtuFile = outputDir + "/vtu/nodeId.vtu";
-  VTKTMP::exportScalarPointDataVTU<int>(vtuFile, "nodeId", grid.node, grid.cell, nodeId);
+  EXPORT::exportScalarPointDataVTU<int>(vtuFile, "nodeId", grid.node, grid.cell, nodeId);
 }
+
+/*
+ * std::vector<std::vector<double>> dirichlet;
+ * dirichlet.resize(grid.node.nNodesGlobal, std::vector<double>(3, 0e0));
+ * for (auto &entry : vDirichlet)
+ * {
+ *   dirichlet[entry.first] = entry.second;
+ * }
+ * vtuFile = outputDir + "/vtu/vDirichlet.vtu";
+ * EXPORT::exportVectorPointDataVTU<double>(vtuFile, "vDirichlet", grid.node, grid.cell, dirichlet);
+ */
