@@ -13,7 +13,7 @@ void DirectProblem::solveNavierStokes()
 {
   PetscPrintf(MPI_COMM_WORLD, "\nMain solver\n");
 
-  PetscScalar *arraySolnTmp;
+  PetscScalar *arraySolution;
   Vec vecSEQ;
   VecScatter ctx;
   VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ);
@@ -21,26 +21,21 @@ void DirectProblem::solveNavierStokes()
   petsc.setMatAndVecZero(grid.cell);
   petsc.initialAssembly();
 
-  for (int id = 0; id < grid.nDofsGlobal; id++)
-  {
-    grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
-    grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
-  }
-
-  int snapCount = 0;
   for (int t = 0; t < timeMax; t++)
   {
     petsc.setValueZero();
-    grid.dirichletBCs.assignBCs(grid.node, t);
+    dirichlet.assignBCs(grid.node, t);
 
     if (pulsatileFlow == ON)
     {
       if (t >= pulseBeginItr)
       {
-        grid.dirichlet.assignPulsatileBCs(t, dt, T, pulseBeginItr, grid.nDofsGlobal);
+        double timePhase = (t - pulseBeginItr) * dt;
+        double pulse = 0.25 * sin((2e0 * PI / T) * timePhase) + 1.0;
+        dirichlet.assignPulsatileBCs(pulse, grid.nDofsGlobal);
       }
     }
-    grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
+    dirichlet.applyBCs(grid.cell, petsc);
 
     MPI_Barrier(MPI_COMM_WORLD);
     double timer1 = MPI_Wtime();
@@ -49,10 +44,10 @@ void DirectProblem::solveNavierStokes()
     {
       if (grid.cell(ic).subId == mpi.myId)
       {
-        int nDofsInCell = grid.cell(ic).dofsMap.size();
+        int nDofs = grid.cell(ic).dofsMap.size();
         MathTools3D tools(grid.cell.nNodesInCell);
-        MatrixXd Klocal(nDofsInCell, nDofsInCell);
-        VectorXd Flocal(nDofsInCell);
+        MatrixXd Klocal(nDofs, nDofs);
+        VectorXd Flocal(nDofs);
         Klocal.setZero();
         Flocal.setZero();
         matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
@@ -60,7 +55,6 @@ void DirectProblem::solveNavierStokes()
                        grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
     }
-    petsc.currentStatus = ASSEMBLY_OK;
     timer1 = MPI_Wtime() - timer1;
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -71,18 +65,16 @@ void DirectProblem::solveNavierStokes()
 
     VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
     VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
-    VecGetArray(vecSEQ, &arraySolnTmp);
+    VecGetArray(vecSEQ, &arraySolution);
 
     // update solution vector
     for (int id = 0; id < grid.nDofsGlobal; id++)
-      petsc.solution[id] = arraySolnTmp[id];
+    {
+      petsc.solution[id] = arraySolution[id];
+    }
 
-    VecRestoreArray(vecSEQ, &arraySolnTmp);
+    VecRestoreArray(vecSEQ, &arraySolution);
     updateSolutions();
-
-    updateSolutionsVTI();
-    std::string binFile = outputDir + "/input/velocity_" + to_string(t) + ".bin";
-    BIN::exportVectorDataBIN(binFile, grid.node.vvti);
 
     // visualize
     switch (grid.gridType)
@@ -90,6 +82,7 @@ void DirectProblem::solveNavierStokes()
     case GridType::STRUCTURED:
       updateSolutionsVTI();
       outputSolutionsVTI("solution", t);
+      outputSolutionsBIN("input", t);
       compVorticity(t);
       break;
     case GridType::UNSTRUCTURED:
@@ -113,13 +106,12 @@ void DirectProblem::solveNavierStokes()
   VecDestroy(&vecSEQ);
 }
 
+
 /******************************************************
- * @brief Solve Unsteady Navier Stokes.
- *        This function takes boundary arguments
- *        for the purpose of armijo criteria.
+ * @brief Solve Unsteady Navier Stokes
+ *        for the purpose of checking armijo criteria.
  */
-void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
-                              std::vector<std::map<int, double>> &pDirichletTmp, std::vector<std::vector<double>> &v0Tmp)
+void DirectProblem::solveFowardNavierStokes(Array2D<double> &X0, Array3D<double> &X)
 {
   PetscPrintf(MPI_COMM_WORLD, "\nMain Solver\n");
 
@@ -132,37 +124,26 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
   petsc.initialAssembly();
   setVariablesZero();
 
-  for (int id = 0; id < grid.nDofsGlobal; id++)
-  {
-    grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
-    grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
-  }
-
-  // Give initial velocity value
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
-      grid.node.v[in][d] = v0Tmp[in][d];
-    }
-  }
+  updateInitialVelocity(X0);
 
   int snapCount = 0;
   for (int t = 0; t < timeMax; t++)
   {
     petsc.setValueZero();
-    grid.dirichlet.assignDirichletBCs(vDirichletTmp, pDirichletTmp,
-                                      grid.node, dim, t);
-    grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
+
+    dirichlet.updateValues(X, t);
+    dirichlet.getNewArray(grid.node.mapNew);
+    dirichlet.assignBCs(grid.node, t);
+    dirichlet.applyBCs(grid.cell, petsc);
 
     for (int ic = 0; ic < grid.cell.nCellsGlobal; ic++)
     {
       if (grid.cell(ic).subId == mpi.myId)
       {
-        int nDofsInCell = grid.cell(ic).dofsMap.size();
+        int nDofs = grid.cell(ic).dofsMap.size();
         MathTools3D tools(grid.cell.nNodesInCell);
-        MatrixXd Klocal(nDofsInCell, nDofsInCell);
-        VectorXd Flocal(nDofsInCell);
+        MatrixXd Klocal(nDofs, nDofs);
+        VectorXd Flocal(nDofs);
         Klocal.setZero();
         Flocal.setZero();
         matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
@@ -178,7 +159,9 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
 
     // update solution vector
     for (int id = 0; id < grid.nDofsGlobal; id++)
+    {
       petsc.solution[id] = arraySolnTmp[id];
+    }
 
     VecRestoreArray(vecSEQ, &arraySolnTmp);
     updateSolutions();
@@ -200,4 +183,16 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
 
   VecScatterDestroy(&ctx);
   VecDestroy(&vecSEQ);
+}
+
+void DirectProblem::updateInitialVelocity(Array2D<double> &X0)
+{
+  for (int i = 0; i < grid.node.nNodesGlobal; i++)
+  {
+    for (int d = 0; d < dim; d++)
+    {
+      v(i, d) = X0(i, d);
+      vPrev(i, d) = X0(i, d);
+    }
+  }
 }

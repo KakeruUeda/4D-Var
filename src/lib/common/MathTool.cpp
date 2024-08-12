@@ -25,20 +25,20 @@ MathTools3D::MathTools3D(const int nNodesInCell)
 
 void MathTools2D::setZero()
 {
-  N.zeroFill();
-  xCurrent.zeroFill();
-  dNdr.zeroFill();
-  dNdx.zeroFill();
-  K.zeroFill();
+  N.fillZero();
+  xCurrent.fillZero();
+  dNdr.fillZero();
+  dNdx.fillZero();
+  K.fillZero();
 }
 
 void MathTools3D::setZero()
 {
-  N.zeroFill();
-  xCurrent.zeroFill();
-  dNdr.zeroFill();
-  dNdx.zeroFill();
-  K.zeroFill();
+  N.fillZero();
+  xCurrent.fillZero();
+  dNdr.fillZero();
+  dNdx.fillZero();
+  K.fillZero();
 }
 
 void MathTools2D::compInverseMatrix(double (&inv_a)[2][2], const double (&a)[2][2])

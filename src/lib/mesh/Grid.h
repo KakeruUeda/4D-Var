@@ -27,7 +27,6 @@ public:
   Cell cell;
   Node node;
   DirichletBoundary dirichlet;
-  Dirichlet dirichletBCs;
 
   int nx, ny, nz;
   double lx, ly, lz;

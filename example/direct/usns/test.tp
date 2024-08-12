@@ -33,7 +33,7 @@ PysicalParameter
 TimeParameter
 {
   dt = 0.02
-  timeMax = 2
+  timeMax = 5
   pulsatileFlow = "ON"
   pulseBeginItr = 250
   T = 0.5

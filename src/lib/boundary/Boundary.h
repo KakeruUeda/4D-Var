@@ -16,6 +16,7 @@
 #include "Cell.h"
 #include "PetscSolver.h"
 
+
 class Boundary
 {
 public:
@@ -28,12 +29,23 @@ class Dirichlet : public Boundary
 public:
   Dirichlet(){}
 
+  Array1D<double> initialValues;
+  Array1D<double> values;
+
+  void initialize(Config &conf);
+  void getNewArray(std::vector<int> mapNew);
   void assignBCs(Node &node, const int t) override;
+  void assignPulsatileBCs(const double pulse, const int nDofsGlobal);
+  void applyBCs(Cell &cell, PetscSolver &petsc);
+
+  void updateValues(Array3D<double> &X, const int t);
 
 private:
-  std::map<int, double[3]> vDirichletSet;
-  std::map<int, double> pDirichletSet;
-  Array1D<double> dirichletValue;
+  std::map<int, std::vector<double>> velocitySet;
+  std::map<int, double> pressureSet;
+
+  std::map<int, std::vector<double>> velocitySetNew;
+  std::map<int, double> pressureSetNew;
 };
 
 class Neumann : public Boundary
@@ -87,37 +99,6 @@ public:
                           const int pulseBeginItr, const int nDofsGlobal);
   void applyDirichletBCs(Cell &cell, PetscSolver &petsc);
   void applyDirichletBCsAdjoint(Cell &cell, PetscSolver &petsc);
-
-private:
-};
-
-class StructuredBoundaryFace
-{
-public:
-  int size;
-  StructuredBoundaryFace(std::string face) : bdFaceStr(face) {};
-  ~StructuredBoundaryFace() {};
-
-  std::vector<int> node;
-  std::vector<std::string> dirichletType;
-  std::vector<std::vector<double>> dirichletValue;
-
-  int getNodeSize()
-  {
-    return node.size();
-  };
-
-  void setSize(int n)
-  {
-    size = n;
-  };
-
-  std::string bdFaceStr;
-  void setNodesOnBoundaryFace(int nxNodes, int nyNodes, int nzNodes);
-
-  void setDirichletInfo(std::vector<std::string> bdType,
-                        std::vector<std::vector<double>> bdValue,
-                        int dim, int bdIndex);
 
 private:
 };

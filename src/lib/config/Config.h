@@ -67,7 +67,6 @@ class Config
 {
 public:
   Config(std::string inputFile, std::string appName);
-  ~Config();
 
   TextParser tp;
   Application app;

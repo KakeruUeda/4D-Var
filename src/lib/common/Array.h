@@ -34,7 +34,7 @@ public:
     width = newWidth;
   }
 
-  inline void zeroFill()
+  inline void fillZero()
   {
     std::fill(data.get(), data.get() + width, 0);
   }
@@ -68,7 +68,7 @@ public:
     width = newWidth;
   }
 
-  inline void zeroFill()
+  inline void fillZero()
   {
     std::fill(data.get(), data.get() + height * width, 0);
   }
@@ -103,7 +103,7 @@ public:
     width = newWidth;
   }
 
-  inline void zeroFill()
+  inline void fillZero()
   {
     std::fill(data.get(), data.get() + depth * height * width, 0);
   }
@@ -139,7 +139,7 @@ public:
     width = newWidth;
   }
 
-  inline void zeroFill()
+  inline void fillZero()
   {
     std::fill(data.get(), data.get() + time * depth * height * width, 0);
   }

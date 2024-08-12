@@ -17,7 +17,8 @@ target_link_libraries( ${main_target}
     PRIVATE
         TP petsc metis omp direct
         inverse config mesh solver
-        boundary io common postinverse fem
+        boundary io common postinverse 
+        fem export
 )
 
 target_include_directories(${main_target} 

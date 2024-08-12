@@ -25,6 +25,6 @@ public:
 };
 
 
-#include "importDAT.inl"
+#include "ImportDAT.inl"
 
 #endif // IMPORT_H

@@ -14,6 +14,17 @@ void DirectProblem::initialize(Config &conf)
 	nu = mu / rho;
 	Re = 1e0 / nu;
 
+	grid.dirichlet.initialize(conf);
+	grid.cell.initialize(conf);
+	grid.node.initialize(conf);
+	dirichlet.initialize(conf);
+
+	grid.prepareMatrix(petsc, outputDir, timeMax);
+  dirichlet.getNewArray(grid.node.mapNew);
+}
+
+void DirectProblem::resize()
+{
 	VecTool::resize(grid.node.v, grid.node.nNodesGlobal, dim);
 	VecTool::resize(grid.node.vPrev, grid.node.nNodesGlobal, dim);
 	VecTool::resize(grid.node.p, grid.node.nNodesGlobal);
@@ -22,16 +33,20 @@ void DirectProblem::initialize(Config &conf)
 	vPrev.resize(grid.nNodesGlobal, dim);
 	p.resize(grid.nNodesGlobal);
 
-	grid.dirichlet.initialize(conf);
-	grid.cell.initialize(conf);
-	grid.node.initialize(conf);
+	dirichlet.values.resize(grid.nDofsGlobal);
+	dirichlet.initialValues.resize(grid.nDofsGlobal);
 
-	if (conf.gridType == GridType::STRUCTURED)
+	v.fillZero();
+	vPrev.fillZero();
+	p.fillZero();
+	dirichlet.values.fillZero();
+	dirichlet.initialValues.fillZero();
+
+	if (grid.gridType == GridType::STRUCTURED)
 	{
 		vvti.resize(grid.node.nNodesStrGlobal, dim);
 		pvti.resize(grid.node.nNodesStrGlobal);
 	}
-	grid.prepareMatrix(petsc, outputDir, timeMax);
 
 	VecTool::resize(petsc.solution, grid.nDofsGlobal);
 	VecTool::resize(grid.dirichlet.dirichletBCsValue, grid.nDofsGlobal);
@@ -42,18 +57,4 @@ void DirectProblem::initialize(Config &conf)
 	VecTool::resize(vgp, dim);
 	VecTool::resize(advgp, dim);
 	VecTool::resize(dvgpdx, dim, dim);
-}
-
-void DirectProblem::resize()
-{
-	v.resize(grid.nNodesGlobal, dim);
-	vPrev.resize(grid.nNodesGlobal, dim);
-	p.resize(grid.nNodesGlobal);
-
-	if (grid.gridType == GridType::STRUCTURED)
-	{
-		vvti.resize(grid.node.nNodesStrGlobal, dim);
-		pvti.resize(grid.node.nNodesStrGlobal);
-	}
-
 }

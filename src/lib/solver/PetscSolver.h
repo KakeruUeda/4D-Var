@@ -41,6 +41,7 @@ public:
   void setMatAndVecZero(Cell &cell);
   void setValueZero();
   void initialAssembly();
+  void flashAssembly();
   void setValue(std::vector<int> &lhsRow, std::vector<int> &lhsColumn,
                 std::vector<int> &rhs, MatrixXd &Klocal, VectorXd &Flocal);
   void setMatValue(std::vector<int> &lhsRow, std::vector<int> &lhsColumn, MatrixXd &Klocal);

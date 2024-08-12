@@ -107,6 +107,14 @@ void PetscSolver::initialAssembly()
   VecAssemblyEnd(rhsVec);
 }
 
+void PetscSolver::flashAssembly()
+{
+  MatAssemblyBegin(mtx, MAT_FLUSH_ASSEMBLY);
+  MatAssemblyEnd(mtx, MAT_FLUSH_ASSEMBLY);
+  VecAssemblyBegin(rhsVec);
+  VecAssemblyEnd(rhsVec);
+}
+
 void PetscSolver::setValueZero()
 {
   MatZeroEntries(mtx);

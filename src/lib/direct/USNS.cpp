@@ -27,7 +27,6 @@ void DirectProblem::solveUSNS(Application &app)
     grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
   }
 
-  int snapCount = 0;
   for (int t = 0; t < timeMax; t++)
   {
     petsc.setValueZero();
@@ -355,9 +354,9 @@ void DirectProblem::updateTimeSolutions(const int t)
   {
     for (int d = 0; d < dim; d++)
     {
-      grid.node.vt[t][in][d] = grid.node.v[in][d];
+      vt(t, in, d) = v(in, d);
     }
-    grid.node.pt[t][in] = grid.node.p[in];
+    pt(t, in) = p(in);
   }
 }
 
@@ -366,15 +365,6 @@ void DirectProblem::updateTimeSolutions(const int t)
  */
 void DirectProblem::updateSolutionsVTI()
 {
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
-      grid.node.vvti[grid.node.sortNode[in]][d] = grid.node.v[in][d];
-    }
-    grid.node.pvti[grid.node.sortNode[in]] = grid.node.p[in];
-  }
-
   for (int in = 0; in < grid.node.nNodesGlobal; in++)
   {
     for (int d = 0; d < dim; d++)
@@ -394,15 +384,6 @@ void DirectProblem::updateSolutionsVTI(const int t)
   {
     for (int d = 0; d < dim; d++)
     {
-      grid.node.vvti[grid.node.sortNode[in]][d] = grid.node.vt[t][in][d];
-    }
-    grid.node.pvti[grid.node.sortNode[in]] = grid.node.pt[t][in];
-  }
-
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
       vvti(grid.node.sortNode[in], d) = vt(t, in, d);
     }
     pvti(grid.node.sortNode[in]) = pt(t, in);
@@ -418,9 +399,9 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t)
 
   std::string vtiFile;
   vtiFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".vti";
-  VTK::exportVectorPointDataVTI(vtiFile, "velocity", vvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+  EXPORT::exportVectorPointDataVTI(vtiFile, "velocity", vvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
   vtiFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".vti";
-  VTK::exportScalarPointDataVTI(vtiFile, "pressure", pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+  EXPORT::exportScalarPointDataVTI(vtiFile, "pressure", pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 
 
@@ -433,9 +414,9 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t, cons
 
   std::string vtiFile;
   vtiFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vti";
-  VTK::exportVectorPointDataVTI(vtiFile, "velocity", grid.node.vvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+  EXPORT::exportVectorPointDataVTI(vtiFile, "velocity", grid.node.vvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
   vtiFile = outputDir + "/" + dir + "/pressure_" + to_string(loop) + "_" + to_string(t) + ".vti";
-  VTK::exportScalarPointDataVTI(vtiFile, "pressure", grid.node.pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+  EXPORT::exportScalarPointDataVTI(vtiFile, "pressure", grid.node.pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 
 /**********************************
@@ -447,9 +428,9 @@ void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t)
 
   std::string vtuFile;
   vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".vtu";
-  VTK::exportVectorPointDataVTU(vtuFile, "velocity", grid.node, grid.cell, v);
+  EXPORT::exportVectorPointDataVTU(vtuFile, "velocity", grid.node, grid.cell, v);
   vtuFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".vtu";
-  VTK::exportScalarPointDataVTU(vtuFile, "pressure", grid.node, grid.cell, p);
+  EXPORT::exportScalarPointDataVTU(vtuFile, "pressure", grid.node, grid.cell, p);
 }
 
 /**********************************
@@ -461,9 +442,9 @@ void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t, cons
 
   std::string vtuFile;
   vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-  VTK::exportVectorPointDataVTU(vtuFile, "velocity", grid.node, grid.cell, grid.node.v);
+  EXPORT::exportVectorPointDataVTU(vtuFile, "velocity", grid.node, grid.cell, grid.node.v);
   vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-  VTK::exportScalarPointDataVTU(vtuFile, "pressure", grid.node, grid.cell, grid.node.p);
+  EXPORT::exportScalarPointDataVTU(vtuFile, "pressure", grid.node, grid.cell, grid.node.p);
 }
 
 void DirectProblem::outputSolutionsBIN(const std::string &dir, const int t)
@@ -473,9 +454,9 @@ void DirectProblem::outputSolutionsBIN(const std::string &dir, const int t)
 
   std::string binFile;
   binFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".bin";
-  BIN::exportVectorDataBIN(binFile, grid.node.vvti);
+  EXPORT::exportVectorDataBIN(binFile, grid.node.vvti);
   binFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".bin";
-  BIN::exportScalarDataBIN(binFile, grid.node.pvti);
+  EXPORT::exportScalarDataBIN(binFile, grid.node.pvti);
 }
 
 /********************************************
@@ -528,5 +509,5 @@ void DirectProblem::compVorticity(const int t)
 
   std::string vtiFile;
   vtiFile = outputDir + "/solution/vorticity" + to_string(t) + ".vti";
-  VTK::exportVectorPointDataVTI(vtiFile, "vorticity", omega, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+  EXPORT::exportVectorPointDataVTI(vtiFile, "vorticity", omega, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }

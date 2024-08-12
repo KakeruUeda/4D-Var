@@ -246,136 +246,106 @@ void DirichletBoundary::applyDirichletBCsAdjoint(Cell &cell, PetscSolver &petsc)
   VecAssemblyEnd(petsc.rhsVec);
 }
 
-void StructuredBoundaryFace::setNodesOnBoundaryFace(int nxNodes, int nyNodes, int nzNodes)
-{
-  if (bdFaceStr == "top")
-  {
-    for (int k = 0; k < nzNodes; k++)
-    {
-      for (int j = 0; j < nyNodes; j++)
-      {
-        for (int i = 0; i < nxNodes; i++)
-        {
-          if (j == nyNodes - 1)
-          {
-            node.push_back(k * nxNodes * nyNodes + j * nxNodes + i);
-          }
-        }
-      }
-    }
-  }
-  if (bdFaceStr == "bottom")
-  {
-    for (int k = 0; k < nzNodes; k++)
-    {
-      for (int j = 0; j < nyNodes; j++)
-      {
-        for (int i = 0; i < nxNodes; i++)
-        {
-          if (j == 0)
-          {
-            node.push_back(k * nxNodes * nyNodes + j * nxNodes + i);
-          }
-        }
-      }
-    }
-  }
-  if (bdFaceStr == "left")
-  {
-    for (int k = 0; k < nzNodes; k++)
-    {
-      for (int j = 0; j < nyNodes; j++)
-      {
-        for (int i = 0; i < nxNodes; i++)
-        {
-          if (i == 0)
-          {
-            node.push_back(k * nxNodes * nyNodes + j * nxNodes + i);
-          }
-        }
-      }
-    }
-  }
-  if (bdFaceStr == "right")
-  {
-    for (int k = 0; k < nzNodes; k++)
-    {
-      for (int j = 0; j < nyNodes; j++)
-      {
-        for (int i = 0; i < nxNodes; i++)
-        {
-          if (i == nxNodes - 1)
-          {
-            node.push_back(k * nxNodes * nyNodes + j * nxNodes + i);
-          }
-        }
-      }
-    }
-  }
-  if (bdFaceStr == "front")
-  {
-    for (int k = 0; k < nzNodes; k++)
-    {
-      for (int j = 0; j < nyNodes; j++)
-      {
-        for (int i = 0; i < nxNodes; i++)
-        {
-          if (k == 0)
-          {
-            node.push_back(k * nxNodes * nyNodes + j * nxNodes + i);
-          }
-        }
-      }
-    }
-  }
-  if (bdFaceStr == "back")
-  {
-    for (int k = 0; k < nzNodes; k++)
-    {
-      for (int j = 0; j < nyNodes; j++)
-      {
-        for (int i = 0; i < nxNodes; i++)
-        {
-          if (k == nzNodes - 1)
-          {
-            node.push_back(k * nxNodes * nyNodes + j * nxNodes + i);
-          }
-        }
-      }
-    }
-  }
-}
-
-void StructuredBoundaryFace::setDirichletInfo(std::vector<std::string> bdType,
-                                              std::vector<std::vector<double>> bdValue,
-                                              int dim, int bdIndex)
-{
-  dirichletType.resize(node.size());
-  dirichletValue.resize(node.size());
-
-  for (int i = 0; i < dirichletType.size(); i++)
-    dirichletType[i] = bdType[bdIndex];
-
-  for (int i = 0; i < dirichletValue.size(); i++)
-    for (int d = 0; d < bdValue[bdIndex].size(); d++)
-      dirichletValue[i].push_back(bdValue[bdIndex][d]);
-}
-
 // add
+
+/***************************************
+ * @brief Initialize dirichlet boundary.
+ */
+void Dirichlet::initialize(Config &conf)
+{
+  velocitySet = std::move(conf.vDirichlet);
+  pressureSet = std::move(conf.pDirichlet);
+}
+
+void Dirichlet::getNewArray(std::vector<int> mapNew)
+{
+  for (const auto &[idx, values] : velocitySet)
+  {
+    int newIdx = mapNew[idx];
+    velocitySetNew[newIdx] = values;
+  }
+  for (const auto &[idx, value] : pressureSet)
+  {
+    int newIdx = mapNew[idx];
+    pressureSetNew[newIdx] = value;
+  }
+}
+
 void Dirichlet::assignBCs(Node &node, const int t)
 {
-  for (const auto &[idx, values] : vDirichletSet)
+  for (const auto &[idx, vec] : velocitySetNew)
   {
     for (int d = 0; d < 3; d++)
     {
       int dof = node.getDof(idx, d);
-      dirichletValue(dof) = values[d];
+      values(dof) = vec[d];
+      initialValues(dof) = vec[d];
     }
   }
-  for (const auto &[idx, value] : pDirichletSet)
+  for (const auto &[idx, value] : pressureSetNew)
   {
     int dof = node.getDof(idx, 4);
-    dirichletValue(dof) = value;
+    values(dof) = value;
+    initialValues(dof) = value;
+  }
+}
+
+/*******************************************************
+ * @brief Assign pulsatile dirichlet boundary condition.
+ */
+void Dirichlet::assignPulsatileBCs(const double pulse, const int nDofsGlobal)
+{
+  for (int id = 0; id < nDofsGlobal; id++)
+  {
+    if (values(id) > 0)
+    {
+      values(id) = initialValues(id) * pulse;
+    }
+  }
+}
+
+/*******************************************
+ * @brief Set dirichlet boundary conditions.
+ */
+void Dirichlet::applyBCs(Cell &cell, PetscSolver &petsc)
+{
+  for (int ic = 0; ic < cell.nCellsGlobal; ic++)
+  {
+    if (cell(ic).subId == mpi.myId)
+    {
+      std::vector<int> vec = cell(ic).dofsMap;
+      int nDofs = vec.size();
+
+      MatrixXd Klocal(nDofs, nDofs);
+      VectorXd Flocal(nDofs);
+
+      Klocal.setZero();
+      Flocal.setZero();
+
+      for (int i = 0; i < nDofs; i++)
+      {
+        int dof = cell(ic).dofsMap[i];
+        if (cell(ic).dofsBCsMap[i] == -1)
+        {
+          Klocal(i, i) = 1;
+          Flocal(i) = values(dof);
+        }
+      }
+      petsc.setMatValue(vec, vec, Klocal);
+      petsc.setVecValue(vec, Flocal);
+    }
   }
 
+  petsc.flashAssembly();
+}
+
+void Dirichlet::updateValues(Array3D<double> &X, const int t)
+{
+  for (auto &[idx, vec] : velocitySet)
+  {
+    for (int d = 0; d < 3; d++)
+    {
+       vec[d] = X(t, idx, d);
+    }
+  }
 }

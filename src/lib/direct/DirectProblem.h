@@ -24,6 +24,7 @@
 #include "FEM.h"
 #include "Grid.h"
 #include "Boundary.h"
+#include "Export.h"
 
 extern MyMPI mpi;
 
@@ -35,6 +36,7 @@ public:
 
   Application app;
   Grid grid;
+  Dirichlet dirichlet;
   PetscSolver petsc;
   SnapShot snap;
 
@@ -101,6 +103,9 @@ private:
 
   // add 
   void solveNavierStokes();
+  void solveFowardNavierStokes(Array2D<double> &X0, Array3D<double> &X);
+
+  void updateInitialVelocity(Array2D<double> &X0);
 };
 
 #endif

@@ -271,15 +271,16 @@ void DirectProblem::setVelocityValue(MathTools3D &tools, const int ic, const int
     vgp[d] = 0e0;
     for (int p = 0; p < grid.cell.nNodesInCell; p++)
     {
+      int n = grid.cell(ic).node[p];
       if (t == 0)
       {
         advgp[d] += tools.N(p) * grid.node.v[grid.cell(ic).node[p]][d];
       }
       else
       {
-        advgp[d] += tools.N(p) * (1.5 * grid.node.v[grid.cell(ic).node[p]][d] - 0.5 * grid.node.vPrev[grid.cell(ic).node[p]][d]);
+        advgp[d] += tools.N(p) * (1.5 * v(n, d) - 0.5 * vPrev(n, d));
       }
-      vgp[d] += tools.N(p) * grid.node.v[grid.cell(ic).node[p]][d];
+      vgp[d] += tools.N(p) * v(n, d);
     }
   }
   for (int d = 0; d < dim; d++)
@@ -289,7 +290,8 @@ void DirectProblem::setVelocityValue(MathTools3D &tools, const int ic, const int
       dvgpdx[d][e] = 0e0;
       for (int p = 0; p < grid.cell.nNodesInCell; p++)
       {
-        dvgpdx[d][e] += tools.dNdx(p, e) * grid.node.v[grid.cell(ic).node[p]][d];
+        int n = grid.cell(ic).node[p];
+        dvgpdx[d][e] += tools.dNdx(p, e) * v(n, d);
       }
     }
   }

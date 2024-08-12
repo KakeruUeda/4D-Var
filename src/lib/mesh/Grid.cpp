@@ -375,10 +375,6 @@ void Grid::distributeToLocal(const int timeMax)
 	int kk = 0;
 	std::vector<int> nodeListLocal(node.nNodesLocal);
 
-	MPI_Barrier(MPI_COMM_WORLD);
-	std::cout << "e " << mpi.myId << std::endl;
-	MPI_Barrier(MPI_COMM_WORLD);
-
 	for (int in = 0; in < nNodesGlobal; in++)
 	{
 		if (node.subId[in] == mpi.myId)

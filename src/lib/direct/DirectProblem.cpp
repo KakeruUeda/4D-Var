@@ -39,7 +39,7 @@ nOMP(conf.nOMP), grid(conf), snap(conf)
 void DirectProblem::runSimulation()
 {
   outputDomain();
-  solveUSNS(app);
+  solveNavierStokes();
 }
 
 /**********************************************
@@ -53,9 +53,9 @@ void DirectProblem::outputDomain()
   std::string vtiFile;
 
   vtuFile = outputDir + "/domain/meshPartition.vtu";
-  VTK::exportMeshPartitionVTU(vtuFile, grid.node, grid.cell);
+  EXPORT::exportMeshPartitionVTU(vtuFile, grid.node, grid.cell);
   vtuFile = outputDir + "/domain/phi.vtu";
-  VTK::exportPhiVTU(vtuFile, grid.node, grid.cell);
+  EXPORT::exportPhiVTU(vtuFile, grid.node, grid.cell);
 }
 
 
