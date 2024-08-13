@@ -8,14 +8,18 @@ Base
 Grid
 {
   type = "Structured"
-  nx = (96, 32, 32) 
-  lx = (6.0, 2.0, 2.0)
   nNodesInCell = 8
-  extractFluid = "ON"
-  image = "input/stenosis/96x32x32/image.dat"
 }
 
-Boundary
+StructuredGrid
+{
+  nx = (96, 32, 32) 
+  lx = (6.0, 2.0, 2.0)
+  extractFluid = "ON"
+  image = "input/image.dat"
+}
+
+StructuredBoundary
 {
   top{
     type = "v"
@@ -44,7 +48,7 @@ Boundary
     value = (0,0,0)
   }
 
-  extractControlBoundary = "ON"
+  extractControlBoundary = "OFF"
   inletControlBoundary = "left"
 
 }

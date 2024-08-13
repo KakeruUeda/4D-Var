@@ -20,7 +20,7 @@ void DirectProblem::initialize(Config &conf)
 	dirichlet.initialize(conf);
 
 	grid.prepareMatrix(petsc, outputDir, timeMax);
-  dirichlet.getNewArray(grid.node.mapNew);
+	dirichlet.getNewArray(grid.node.mapNew);
 }
 
 void DirectProblem::resize()

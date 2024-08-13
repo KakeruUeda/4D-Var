@@ -53,7 +53,7 @@ public:
   static void exportVectorPointDataVTI(const std::string &file, const char *dataName, std::vector<std::vector<double>> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
   static void exportScalarCellDataVTI(const std::string &file, const char *dataName, std::vector<double> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
   static void exportVectorCellDataVTI(const std::string &file, const char *dataName, std::vector<std::vector<double>> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
-  
+
   // takes custom array argument (vti)
   static void exportScalarPointDataVTI(const std::string &file, const char *dataName, Array1D<double> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
   static void exportVectorPointDataVTI(const std::string &file, const char *dataName, Array2D<double> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
@@ -67,7 +67,7 @@ public:
   static void exportVectorPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<std::vector<double>> &p);
   static void exportScalarCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<double> &c);
   static void exportVectorCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<std::vector<double>> &c);
-  
+
   // takes custom array argument (vtu)
   static void exportScalarPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array1D<double> &p);
   static void exportVectorPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array2D<double> &p);
@@ -81,63 +81,63 @@ public:
 class BINTMP
 {
 public:
-    template <typename T>
-    static void exportScalarDataBIN(const std::string &file, std::vector<T> &vec);
-    template <typename T>
-    static void exportVectorDataBIN(const std::string &file, std::vector<std::vector<T>> &vec);
-    template <typename T>
-    static void importScalarDataBIN(const std::string &file, std::vector<T> &vec);
-    template <typename T>
-    static void importVectorDataBIN(const std::string &file, std::vector<std::vector<T>> &vec);
+  template <typename T>
+  static void exportScalarDataBIN(const std::string &file, std::vector<T> &vec);
+  template <typename T>
+  static void exportVectorDataBIN(const std::string &file, std::vector<std::vector<T>> &vec);
+  template <typename T>
+  static void importScalarDataBIN(const std::string &file, std::vector<T> &vec);
+  template <typename T>
+  static void importVectorDataBIN(const std::string &file, std::vector<std::vector<T>> &vec);
 };
 
 class VTKTMP
 {
 public:
-    // takes std::vector argument (vti)
-    template <typename T>
-    static void exportScalarPointDataVTI(const std::string &file, const char *dataName, std::vector<T> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
-    template <typename T>
-    static void exportVectorPointDataVTI(const std::string &file, const char *dataName, std::vector<std::vector<T>> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
-    template <typename T>
-    static void exportScalarCellDataVTI(const std::string &file, const char *dataName, std::vector<T> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
-    template <typename T>
-    static void exportVectorCellDataVTI(const std::string &file, const char *dataName, std::vector<std::vector<T>> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
+  // takes std::vector argument (vti)
+  template <typename T>
+  static void exportScalarPointDataVTI(const std::string &file, const char *dataName, std::vector<T> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
+  template <typename T>
+  static void exportVectorPointDataVTI(const std::string &file, const char *dataName, std::vector<std::vector<T>> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
+  template <typename T>
+  static void exportScalarCellDataVTI(const std::string &file, const char *dataName, std::vector<T> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
+  template <typename T>
+  static void exportVectorCellDataVTI(const std::string &file, const char *dataName, std::vector<std::vector<T>> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
 
-    // takes custom array argument (vti)
-    template <typename T>
-    static void exportScalarPointDataVTI(const std::string &file, const char *dataName, Array1D<T> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
-    template <typename T>
-    static void exportVectorPointDataVTI(const std::string &file, const char *dataName, Array2D<T> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
-    template <typename T>
-    static void exportScalarCellDataVTI(const std::string &file, const char *dataName, Array1D<T> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
-    template <typename T>
-    static void exportVectorCellDataVTI(const std::string &file, const char *dataName, Array2D<T> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
+  // takes custom array argument (vti)
+  template <typename T>
+  static void exportScalarPointDataVTI(const std::string &file, const char *dataName, Array1D<T> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
+  template <typename T>
+  static void exportVectorPointDataVTI(const std::string &file, const char *dataName, Array2D<T> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
+  template <typename T>
+  static void exportScalarCellDataVTI(const std::string &file, const char *dataName, Array1D<T> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
+  template <typename T>
+  static void exportVectorCellDataVTI(const std::string &file, const char *dataName, Array2D<T> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
 
-    static void exportVelocityDataVTI(const std::string &file, DataGrid &data, const int t);
+  static void exportVelocityDataVTI(const std::string &file, DataGrid &data, const int t);
 
-    // takes std::vector argument (vtu)
-    template <typename T>
-    static void exportScalarPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<T> &p);
-    template <typename T>
-    static void exportVectorPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<std::vector<T>> &p);
-    template <typename T>
-    static void exportScalarCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<T> &c);
-    template <typename T>
-    static void exportVectorCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<std::vector<T>> &c);
-    
-    // takes custom array argument (vtu)
-    template <typename T>
-    static void exportScalarPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array1D<T> &p);
-    template <typename T>
-    static void exportVectorPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array2D<T> &p);
-    template <typename T>
-    static void exportScalarCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array1D<T> &c);
-    template <typename T>
-    static void exportVectorCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array2D<T> &c);
+  // takes std::vector argument (vtu)
+  template <typename T>
+  static void exportScalarPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<T> &p);
+  template <typename T>
+  static void exportVectorPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<std::vector<T>> &p);
+  template <typename T>
+  static void exportScalarCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<T> &c);
+  template <typename T>
+  static void exportVectorCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<std::vector<T>> &c);
 
-    static void exportMeshPartitionVTU(const std::string &file, Node &node, Cell &cell);
-    static void exportPhiVTU(const std::string &file, Node &node, Cell &cell);
+  // takes custom array argument (vtu)
+  template <typename T>
+  static void exportScalarPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array1D<T> &p);
+  template <typename T>
+  static void exportVectorPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array2D<T> &p);
+  template <typename T>
+  static void exportScalarCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array1D<T> &c);
+  template <typename T>
+  static void exportVectorCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array2D<T> &c);
+
+  static void exportMeshPartitionVTU(const std::string &file, Node &node, Cell &cell);
+  static void exportPhiVTU(const std::string &file, Node &node, Cell &cell);
 };
 
 #include "DAT.inl"

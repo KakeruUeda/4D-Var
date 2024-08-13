@@ -1,35 +1,35 @@
 /**
  * @file GridCreation.h
- * @author K.Ueda
+ * @brief Header file for GridCreation class
  * @date August, 2024
  */
 
+#ifndef GRIDCREATION_H
+#define GRIDCREATION_H
+
 #include <sys/stat.h>
 #include <map>
+#include <string>
+#include <vector>
+#include <memory>
 #include "Config.h"
 #include "Grid.h"
 #include "Export.h"
+#include "metis.h"
 
 class GridCreation
 {
 public:
-  GridCreation(Config &conf)
-  {
-    outputDir = conf.outputDir;
-    std::string output = "output";
-    mkdir(output.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-    outputDir = "output/" + conf.outputDir;
-    mkdir(outputDir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+  GridCreation(Config &conf);
 
-    std::string dir;
-    dir = outputDir + "/dat";
-    mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-    dir = outputDir + "/vtu";
-    mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
-  }
-  
+  void initialize(Config &conf);
+  void divideWholeGrid();
+  void collectLocalGrid();
+  void outputDat();
+  void outputVTU();
+
+private:
   Grid grid;
-
   std::string outputDir;
   int extractCB;
 
@@ -39,14 +39,15 @@ public:
 
   std::map<int, std::vector<double>> vDirichlet;
   std::map<int, double> pDirichlet;
-  
+
   std::vector<int> mapCB;
   std::vector<int> mapCBCell;
   std::vector<std::vector<int>> mapCBInCell;
-  
-  void initialize(Config &conf);
-  void divideWholeGrid();
-  void collectLocalGrid();
-  void outputDat();
-  void outputVTU();
+
+  void initializeCells(Config &conf);
+  void initializeNodes(Config &conf);
+  void setCellType(int nNodesInCell);
+  void partitionMesh(int *eptr, int *eind, int nparts);
 };
+
+#endif // GRIDCREATION_H

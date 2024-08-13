@@ -47,8 +47,7 @@ struct CostFunction
   std::vector<double> history;
   void sum()
   {
-    total = term1 + term2 + term3 
-          + term4 + term5 + term6 + term7;
+    total = term1 + term2 + term3 + term4 + term5 + term6 + term7;
   }
 };
 

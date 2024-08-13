@@ -9,9 +9,8 @@
 /***************************************************
  * @brief Construct direct problem from config file.
  */
-DirectProblem::DirectProblem(Config &conf) : 
-FEM(conf), app(conf.app), dim(conf.dim), outputDir(conf.outputDir),
-nOMP(conf.nOMP), grid(conf), snap(conf)
+DirectProblem::DirectProblem(Config &conf) : FEM(conf), app(conf.app), dim(conf.dim), outputDir(conf.outputDir),
+                                             nOMP(conf.nOMP), grid(conf), snap(conf)
 {
   if (app == Application::USNS)
   {
@@ -57,5 +56,3 @@ void DirectProblem::outputDomain()
   vtuFile = outputDir + "/domain/phi.vtu";
   EXPORT::exportPhiVTU(vtuFile, grid.node, grid.cell);
 }
-
-

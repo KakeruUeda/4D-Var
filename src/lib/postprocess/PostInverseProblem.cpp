@@ -48,6 +48,7 @@ double PostInverseProblem::compFlowRate(std::vector<std::vector<double>> &vel)
       for (int i = 0; i < grid.nx + 1; i++)
       {
         int n = i + j * (grid.nx + 1) + k * (grid.nx + 1) * (grid.ny + 1);
+
         if (crossSection == CrossSection::YZ)
         {
           if (i == crossPoint)

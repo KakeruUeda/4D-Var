@@ -17,9 +17,8 @@ class Node
 {
 public:
   Node() {};
-  Node(Config &conf) :
-  nNodesGlobal(conf.nNodesGlobal),
-  nNodesLocal(0) {}
+  Node(Config &conf) : nNodesGlobal(conf.nNodesGlobal),
+                       nNodesLocal(0) {}
   virtual ~Node() {}
 
   int nNodesGlobal, nNodesLocal;

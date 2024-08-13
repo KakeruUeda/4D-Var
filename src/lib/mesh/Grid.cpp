@@ -38,8 +38,7 @@ void Grid::setStructuredGrid(const int nxCells, const int nyCells, const int nzC
 			{
 				for (int p = 0; p < nNodesInCell; p++)
 				{
-					cell(k * nxCells * nyCells + j * nxCells + i).node[p] 
-					= structuredGridNodeSet(nxNodes, nyNodes, nzNodes, i, j, k, p);
+					cell(k * nxCells * nyCells + j * nxCells + i).node[p] = structuredGridNodeSet(nxNodes, nyNodes, nzNodes, i, j, k, p);
 				}
 			}
 		}
@@ -53,8 +52,7 @@ void Grid::setStructuredGrid(const int nxCells, const int nyCells, const int nzC
 			{
 				for (int d = 0; d < dim; d++)
 				{
-					node.x[k * nxNodes * nyNodes + j * nxNodes + i][d] 
-					= structuredGridCoordinateSet(dx, dy, dz, i, j, k, d);
+					node.x[k * nxNodes * nyNodes + j * nxNodes + i][d] = structuredGridCoordinateSet(dx, dy, dz, i, j, k, d);
 				}
 			}
 		}
@@ -148,7 +146,7 @@ void Grid::prepareMatrix(PetscSolver &petsc, std::string outputDir, const int ti
 	}
 	else if (mpi.nId > 1)
 	{
-		//divideWholeGrid();
+		// divideWholeGrid();
 		distributeToLocal(timeMax);
 	}
 
@@ -352,7 +350,7 @@ void Grid::divideWholeGrid()
 		else
 			std::cout << "METIS partition routine failed " << std::endl;
 	}
-	
+
 	MPI_Barrier(MPI_COMM_WORLD);
 	MPI_Bcast(cellId.data(), nCellsGlobal, MPI_INT, 0, MPI_COMM_WORLD);
 	MPI_Bcast(nodeId.data(), nNodesGlobal, MPI_INT, 0, MPI_COMM_WORLD);
@@ -383,7 +381,7 @@ void Grid::distributeToLocal(const int timeMax)
 		}
 	}
 	MPI_Barrier(MPI_COMM_WORLD);
-	std::cout << mpi.myId  << std::endl;
+	std::cout << mpi.myId << std::endl;
 	MPI_Barrier(MPI_COMM_WORLD);
 
 	std::vector<int> nNodesLocalVector(mpi.nId);

@@ -30,8 +30,8 @@ public:
   static void exportMapDataDAT(const std::string &file, const std::map<int, T> &dataMap);
 
   static void exportCellDataDAT(const std::string &file, Cell &cell);
-  static void exportNodeDataDAT(const std::string &file, Node &node); 
-  
+  static void exportNodeDataDAT(const std::string &file, Node &node);
+
   // BIN
   template <typename T>
   static void exportScalarDataBIN(const std::string &file, std::vector<T> &vec);
@@ -71,7 +71,7 @@ public:
   static void exportScalarCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<T> &c);
   template <typename T>
   static void exportVectorCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, std::vector<std::vector<T>> &c);
-  
+
   // takes custom array argument
   template <typename T>
   static void exportScalarPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array1D<T> &p);

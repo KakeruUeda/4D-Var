@@ -37,7 +37,6 @@ public:
   static double comp_tau(std::vector<double> &vel, const double &he, const double &Re, const double &dt);
 };
 
-
 class MathTools3D
 {
 public:
@@ -56,7 +55,7 @@ public:
   static void compInverseMatrix(double (&inv_a)[3][3], const double (&a)[3][3]);
   static double compDeterminant(const double (&a)[3][3]);
 
-  static void comp_dxdr(double (&dxdr)[3][3], Array2D<double>&dNdr, Array2D<double> &x1, const int &nNodesInCell);
+  static void comp_dxdr(double (&dxdr)[3][3], Array2D<double> &dNdr, Array2D<double> &x1, const int &nNodesInCell);
   static void comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const double (&dxdr)[3][3], const int &nNodesInCell);
 };
 

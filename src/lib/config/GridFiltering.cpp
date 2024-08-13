@@ -82,7 +82,6 @@ void Config::getUniqueCBCellsIdx()
   }
 }
 
-
 /************************************************
  * @brief Identify unique control boundary nodes.
  */

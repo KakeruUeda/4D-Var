@@ -14,10 +14,8 @@ int main(int argc, char *argv[])
   mpi.setSizeAndRank();
   mpi.printSizeAndRank();
 
-  if (argc < 2)
-  {
-    if(mpi.myId == 0)
-    {
+  if(argc < 2){
+    if(mpi.myId == 0){
       std::cerr << "argc error" << std::endl;
     }
     MPI_Finalize();
@@ -28,8 +26,7 @@ int main(int argc, char *argv[])
   std::string appName = "GRIDCREATION";
 
   Config conf(inputFile, appName);
-  if (conf.isReadingError)
-  {
+  if (conf.isReadingError){
     std::cerr << "Error reading configuration file." << std::endl;
     MPI_Finalize();
     return EXIT_FAILURE;
@@ -40,20 +37,15 @@ int main(int argc, char *argv[])
 
   GridCreation gc(conf);
 
-  try
-  {
+  try{
     gc.initialize(conf);
     gc.divideWholeGrid();
     gc.collectLocalGrid();
-  }
-  catch (const std::runtime_error &e)
-  {
-    if(mpi.myId == 0)
-    {
+  }catch(const std::runtime_error &e){
+    if(mpi.myId == 0){
       std::cerr << "Exception caught: " << e.what() << std::endl;
     }
     MPI_Finalize();
-    return EXIT_FAILURE;
   }
 
   gc.outputDat();

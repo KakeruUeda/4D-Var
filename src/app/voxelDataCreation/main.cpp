@@ -7,24 +7,52 @@
  * @date July, 2024
  */
 
-
-#include <unistd.h>
 #include "DirectProblem.h"
 #include "MyMPI.h"
+#include "VoxelDataCreation.h"
+#include <unistd.h>
 MyMPI mpi;
 
+/*
 void createData(Config &conf, Cell &cell, Node &node, DataGrid &voxel, SnapShot &snap);
 void createReferenceDA(Config &conf, std::vector<std::vector<double>> &vt,
                        std::vector<std::vector<double>> &velRef);
+*/
 
 int main(int argc, char *argv[])
 {
-  std::string inputFile = argv[1];
-  std::string appName = "VOXELDATA";
-  Config conf(inputFile, appName);
-  if (conf.isReadingError)
+  if(argc < 2) {
+    if(mpi.myId == 0) {
+      std::cerr << "argc error" << std::endl;
+    }
+    MPI_Finalize();
     return EXIT_FAILURE;
+  }
 
+  std::string inputFile = argv[1];
+  std::string appName   = "VOXELDATA";
+
+  Config conf(inputFile, appName);
+  if(conf.isReadingError) {
+    std::cerr << "Error reading configuration file." << std::endl;
+    MPI_Finalize();
+    return EXIT_FAILURE;
+  }
+
+  VoxelDataCreation vdc(conf);
+
+  try {
+    vdc.Initialize(conf);
+    vdc.createRefAndData();
+  } catch(const std::runtime_error &e) {
+    std::cerr << "Exception : " << e.what() << std::endl;
+    return EXIT_FAILURE;
+  }
+
+  vdc.outputVTK();
+  vdc.outputBIN();
+
+  /*
   std::string dir;
   std::string output = "output";
   mkdir(output.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
@@ -90,6 +118,7 @@ int main(int argc, char *argv[])
   }
 
   vOrig.resize(conf.stepMax);
+
   for (int step = 0; step < conf.stepMax; step++)
   {
     std::string velFile = conf.inputDir + "/velocity_" + to_string(step) + ".bin";
@@ -134,6 +163,8 @@ int main(int argc, char *argv[])
   }
 
   createData(conf, cell, node, voxel, snap);
+
+
 
   // output vtk
   for (int step = 0; step < conf.stepMax; step++)
@@ -180,12 +211,13 @@ int main(int argc, char *argv[])
     std::string binFile = conf.outputDir + "/bin/data_" + to_string(step) + ".bin";
     BIN::exportVectorDataBIN(binFile, dataTmp[step]);
   }
+    */
 
   std::cout << "Terminated." << std::endl;
 
   return EXIT_SUCCESS;
 }
-
+/*
 void createData(Config &conf, Cell &cell, Node &node, DataGrid &voxel, SnapShot &snap)
 {
   voxel.range = 5e-1 * sqrt(voxel.dx * voxel.dx + voxel.dy * voxel.dy + voxel.dz * voxel.dz);
@@ -288,3 +320,4 @@ void createReferenceDA(Config &conf, std::vector<std::vector<double>> &vOrig,
     }
   }
 }
+*/

@@ -228,13 +228,12 @@ private:
   void setStrGrid();
   double setStrCoordinate(const int i, const int j, const int k, const int d);
   int setStrNode(const int i, const int j, const int k, const int p);
-  
 
 public:
   // Additional Setting for Structured Grid
   void setSolidDirichletValue();
   void filterFluidGrid();
-  
+
   std::set<int> uniqueCells;
   std::set<int> uniqueNodes;
   std::set<int> uniqueCBCells;
@@ -259,7 +258,6 @@ public:
   void filterVelocityDirichlet();
   void filterPressureDirichlet();
   void applyMapping();
-
 };
 
 #endif

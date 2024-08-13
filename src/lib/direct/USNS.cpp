@@ -365,7 +365,8 @@ void DirectProblem::updateSolutionsVTI(const int t)
  */
 void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t)
 {
-  if (mpi.myId > 0) return;
+  if (mpi.myId > 0)
+    return;
 
   std::string vtiFile;
   vtiFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".vti";
@@ -374,13 +375,13 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t)
   EXPORT::exportScalarPointDataVTI(vtiFile, "pressure", pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 
-
 /**********************************
  * @brief Export solutions for VTI.
  */
 void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t, const int loop)
 {
-  if (mpi.myId > 0) return;
+  if (mpi.myId > 0)
+    return;
 
   std::string vtiFile;
   vtiFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vti";
@@ -394,7 +395,8 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t, cons
  */
 void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t)
 {
-  if (mpi.myId > 0) return;
+  if (mpi.myId > 0)
+    return;
 
   std::string vtuFile;
   vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".vtu";
@@ -408,7 +410,8 @@ void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t)
  */
 void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t, const int loop)
 {
-  if (mpi.myId > 0) return;
+  if (mpi.myId > 0)
+    return;
 
   std::string vtuFile;
   vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";

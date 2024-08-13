@@ -29,12 +29,11 @@
 #include "DirectProblem.h"
 #include "Function.h"
 
-class Adjoint 
+class Adjoint
 {
 public:
-  Adjoint(Config &conf) : 
-  grid(conf), dim(conf.dim), planeDir(conf.planeDir), timeMax(conf.timeMax),
-  rho(conf.rho), mu(conf.mu), dt(conf.dt), alpha(conf.alpha), resistance(conf.resistance)
+  Adjoint(Config &conf) : grid(conf), dim(conf.dim), planeDir(conf.planeDir), timeMax(conf.timeMax),
+                          rho(conf.rho), mu(conf.mu), dt(conf.dt), alpha(conf.alpha), resistance(conf.resistance)
   {
   }
 

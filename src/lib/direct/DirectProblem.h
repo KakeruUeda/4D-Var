@@ -102,7 +102,7 @@ private:
   void setVariablesZero();
   void compVorticity(const int t);
 
-  // add 
+  // add
   void solveNavierStokes();
   void solveFowardNavierStokes(Array2D<double> &X0, Array3D<double> &X);
 

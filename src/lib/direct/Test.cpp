@@ -106,7 +106,6 @@ void DirectProblem::solveNavierStokes()
   VecDestroy(&vecSEQ);
 }
 
-
 /******************************************************
  * @brief Solve Unsteady Navier Stokes
  *        for the purpose of checking armijo criteria.

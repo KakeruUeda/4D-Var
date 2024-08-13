@@ -6,15 +6,13 @@
 
 #include "DataGrid.h"
 
-DataGrid::DataGrid(Config &conf) :
-nx(conf.nxData), ny(conf.nyData), nz(conf.nzData),
-lx(conf.lxData), ly(conf.lyData), lz(conf.lzData),
-dx(conf.dxData), dy(conf.dyData), dz(conf.dzData),
-nData(conf.nData), nSnapShot(conf.nSnapShot), dim(conf.dim),
-snapInterval(conf.snapInterval),
-nCellsGlobal(conf.nCellsDataGlobal),
-nNodesInCell(conf.nNodesInCellData),
-data(conf.nCellsDataGlobal)
+DataGrid::DataGrid(Config &conf)
+    : nx(conf.nxData), ny(conf.nyData), nz(conf.nzData), lx(conf.lxData),
+      ly(conf.lyData), lz(conf.lzData), dx(conf.dxData), dy(conf.dyData),
+      dz(conf.dzData), nData(conf.nData), nSnapShot(conf.nSnapShot),
+      dim(conf.dim), snapInterval(conf.snapInterval),
+      nCellsGlobal(conf.nCellsDataGlobal), nNodesInCell(conf.nNodesInCellData),
+      data(conf.nCellsDataGlobal)
 {
   for (int ic = 0; ic < conf.nCellsDataGlobal; ic++)
   {
@@ -49,7 +47,8 @@ data(conf.nCellsDataGlobal)
   }
 }
 
-void DataGrid::initialize(Config &conf, Node &node, Cell &cell, const int &dim)
+void DataGrid::initialize(Config &conf, Node &node, Cell &cell,
+                          const int &dim)
 {
   range = 5e-1 * sqrt(dx * dx + dy * dy + dz * dz);
 
@@ -63,8 +62,8 @@ void DataGrid::initialize(Config &conf, Node &node, Cell &cell, const int &dim)
         {
           for (int d = 0; d < dim; d++)
           {
-            data[k * nx * ny + j * nx + i].vMRI[t][d] 
-            = conf.velocityData[t][k * nx * ny + j * nx + i][d];
+            data[k * nx * ny + j * nx + i].vMRI[t][d] =
+                conf.velocityData[t][k * nx * ny + j * nx + i][d];
           }
         }
       }
@@ -120,15 +119,15 @@ void DataGrid::compEdgeValue(const int t)
       {
         for (int d = 0; d < dim; d++)
         {
-          vEX[k + 1][j + 1][i + 1][d] 
-          = data[k * nx * ny + j * nx + i].ve[t][d];
+          vEX[k + 1][j + 1][i + 1][d] = data[k * nx * ny + j * nx + i].ve[t][d];
         }
       }
     }
   }
 }
 
-void VoxelInfo::setNearCell(Node &node, Cell &cell, const double range, const int dim)
+void VoxelInfo::setNearCell(Node &node, Cell &cell, const double range,
+                            const int dim)
 {
   double distance;
   double diff[dim];
@@ -147,10 +146,14 @@ void VoxelInfo::setNearCell(Node &node, Cell &cell, const double range, const in
       }
       distance = sqrt(distance);
       if (distance < range)
+      {
         flag = true;
+      }
     }
     if (flag)
+    {
       cellChildren.push_back(ic);
+    }
   }
 }
 
@@ -214,18 +217,27 @@ void VoxelInfo::setCellOnCenterPoint(Node &node, Cell &cell, const int dim)
   }
 
   if (minDiff[0] > dx / 2e0)
+  {
     isIncluded = false;
+  }
   if (minDiff[1] > dy / 2e0)
+  {
     isIncluded = false;
+  }
   if (minDiff[2] > dz / 2e0)
+  {
     isIncluded = false;
+  }
 }
 
-void VoxelInfo::interpolate(Node &node, Cell &cell, std::vector<std::vector<double>> &_v,
-                            const int &t, const int &dim)
+void VoxelInfo::interpolate(Node &node, Cell &cell,
+                            std::vector<std::vector<double>> &_v, const int &t,
+                            const int &dim)
 {
   if (isIncluded == false)
+  {
     return;
+  }
 
   std::vector<std::vector<double>> xCurrent;
   VecTool::resize(xCurrent, cell.nNodesInCell, dim);
@@ -294,7 +306,9 @@ void VoxelInfo::average(Cell &cell, std::vector<std::vector<double>> &_v,
                         const int t, const int dim)
 {
   if (cellChildren.size() == 0)
+  {
     return;
+  }
   double a = 0.1 * std::min(std::min(dx, dy), dz);
 
   double weightIntegral = 0e0;
@@ -327,21 +341,28 @@ void VoxelInfo::average(Cell &cell, std::vector<std::vector<double>> &_v,
       {
         for (int i3 = 0; i3 < 2; i3++)
         {
-          ShapeFunction3D::C3D8_N(func3d.N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-          ShapeFunction3D::C3D8_dNdr(func3d.dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
-          MathCommon::comp_dxdr(dxdr, func3d.dNdr, func3d.xCurrent, nNodesInCell);
+          ShapeFunction3D::C3D8_N(func3d.N, gauss.point[i1], gauss.point[i2],
+                                  gauss.point[i3]);
+          ShapeFunction3D::C3D8_dNdr(func3d.dNdr, gauss.point[i1],
+                                     gauss.point[i2], gauss.point[i3]);
+          MathCommon::comp_dxdr(dxdr, func3d.dNdr, func3d.xCurrent,
+                                nNodesInCell);
           func3d.detJ = MathCommon::compDeterminant_3x3(dxdr);
           func3d.weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
-          gaussIntegral(func3d, velCurrent, smoothing, weightIntegral, nNodesInCell, t, dim);
+          gaussIntegral(func3d, velCurrent, smoothing, weightIntegral,
+                        nNodesInCell, t, dim);
         }
       }
     }
   }
   for (int d = 0; d < dim; d++)
+  {
     vCFD[t][d] /= weightIntegral;
+  }
 }
 
-double VoxelInfo::compSmoothing(Function &func, const double a, const int dim, const int p)
+double VoxelInfo::compSmoothing(Function &func, const double a, const int dim,
+                                const int p)
 {
   double sinc_x, sinc_y, sinc_z;
   double kai_x, kai_y, kai_z;
@@ -363,7 +384,9 @@ double VoxelInfo::compSmoothing(Function &func, const double a, const int dim, c
   auto sinc = [](double x)
   {
     if (x == 0)
+    {
       return 1e0;
+    }
     return sin(PI * x) / (PI * x);
   };
 
@@ -371,15 +394,21 @@ double VoxelInfo::compSmoothing(Function &func, const double a, const int dim, c
   sinc_y = sinc((func.xCurrent[p][1] - y0) / dy);
   sinc_z = sinc((func.xCurrent[p][2] - z0) / dz);
 
-  kai_x = 1 / (1 + exp(-(func.xCurrent[p][0] - (x0 - 4 * dx / 2)) / a)) - 1 / (1 + exp(-(func.xCurrent[p][0] - (x0 + 4 * dx / 2)) / a));
-  kai_y = 1 / (1 + exp(-(func.xCurrent[p][1] - (y0 - 4 * dy / 2)) / a)) - 1 / (1 + exp(-(func.xCurrent[p][1] - (y0 + 4 * dy / 2)) / a));
-  kai_z = 1 / (1 + exp(-(func.xCurrent[p][2] - (z0 - 4 * dz / 2)) / a)) - 1 / (1 + exp(-(func.xCurrent[p][2] - (z0 + 4 * dz / 2)) / a));
+  kai_x = 1 / (1 + exp(-(func.xCurrent[p][0] - (x0 - 4 * dx / 2)) / a)) -
+          1 / (1 + exp(-(func.xCurrent[p][0] - (x0 + 4 * dx / 2)) / a));
+  kai_y = 1 / (1 + exp(-(func.xCurrent[p][1] - (y0 - 4 * dy / 2)) / a)) -
+          1 / (1 + exp(-(func.xCurrent[p][1] - (y0 + 4 * dy / 2)) / a));
+  kai_z = 1 / (1 + exp(-(func.xCurrent[p][2] - (z0 - 4 * dz / 2)) / a)) -
+          1 / (1 + exp(-(func.xCurrent[p][2] - (z0 + 4 * dz / 2)) / a));
 
   return sinc_x * sinc_y * sinc_z * kai_x * kai_y * kai_z;
 }
 
-void VoxelInfo::gaussIntegral(Function &func, std::vector<std::vector<double>> &velCurrent, std::vector<double> &smoothing,
-                              double &weightIntegral, const int nNodesInCell, const int t, const int dim)
+void VoxelInfo::gaussIntegral(Function &func,
+                              std::vector<std::vector<double>> &velCurrent,
+                              std::vector<double> &smoothing,
+                              double &weightIntegral, const int nNodesInCell,
+                              const int t, const int dim)
 {
   func.vol = func.detJ * func.weight;
   for (int d = 0; d < dim; d++)
@@ -390,5 +419,7 @@ void VoxelInfo::gaussIntegral(Function &func, std::vector<std::vector<double>> &
     }
   }
   for (int p = 0; p < nNodesInCell; p++)
+  {
     weightIntegral += func.N[p] * smoothing[p] * func.vol;
+  }
 }
