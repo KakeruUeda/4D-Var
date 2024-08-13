@@ -67,9 +67,8 @@ void MathTools3D::compInverseMatrix(double (&inv_a)[3][3], const double (&a)[3][
   inv_a[2][1] = a[0][1] * a[2][0] - a[0][0] * a[2][1];
   inv_a[2][2] = a[0][0] * a[1][1] - a[0][1] * a[1][0];
 
-  for (int i = 0; i < 3; i++)
-  {
-    for (int j = 0; j < 3; j++)
+  for(int i = 0; i < 3; i++) {
+    for(int j = 0; j < 3; j++)
       inv_a[i][j] = inv_a[i][j] / det;
   }
 }
@@ -82,37 +81,33 @@ double MathTools2D::compDeterminant(const double (&a)[2][2])
 
 double MathTools3D::compDeterminant(const double (&a)[3][3])
 {
-  double det = a[0][0] * a[1][1] * a[2][2] + a[1][0] * a[2][1] * a[0][2] + a[2][0] * a[0][1] * a[1][2] - a[2][0] * a[1][1] * a[0][2] - a[1][0] * a[0][1] * a[2][2] - a[0][0] * a[2][1] * a[1][2];
+  double det = a[0][0] * a[1][1] * a[2][2] + a[1][0] * a[2][1] * a[0][2] + a[2][0] * a[0][1] * a[1][2] -
+               a[2][0] * a[1][1] * a[0][2] - a[1][0] * a[0][1] * a[2][2] - a[0][0] * a[2][1] * a[1][2];
   return det;
 }
 
 void MathTools2D::comp_dxdr(double (&dxdr)[2][2], Array2D<double> &dNdr, Array2D<double> &x1, const int &numOfNodeInElm)
 {
-  for (int i = 0; i < 2; i++)
-  {
-    for (int j = 0; j < 2; j++)
-    {
+  for(int i = 0; i < 2; i++) {
+    for(int j = 0; j < 2; j++) {
       dxdr[i][j] = 0e0;
-      for (int p = 0; p < numOfNodeInElm; p++)
-      {
+      for(int p = 0; p < numOfNodeInElm; p++) {
         dxdr[i][j] += dNdr(p, j) * x1(p, i);
       }
     }
   }
 }
 
-void MathTools2D::comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const double (&dxdr)[2][2], const int &numOfNodeInElm)
+void MathTools2D::comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const double (&dxdr)[2][2],
+                            const int &numOfNodeInElm)
 {
   double drdx[2][2];
   MathTools2D::compInverseMatrix(drdx, dxdr);
 
-  for (int p = 0; p < numOfNodeInElm; p++)
-  {
-    for (int i = 0; i < 2; i++)
-    {
+  for(int p = 0; p < numOfNodeInElm; p++) {
+    for(int i = 0; i < 2; i++) {
       dNdx(p, i) = 0e0;
-      for (int j = 0; j < 2; j++)
-      {
+      for(int j = 0; j < 2; j++) {
         dNdx(p, i) += dNdr(p, j) * drdx[j][i];
       }
     }
@@ -121,31 +116,26 @@ void MathTools2D::comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const 
 
 void MathTools3D::comp_dxdr(double (&dxdr)[3][3], Array2D<double> &dNdr, Array2D<double> &x1, const int &numOfNodeInElm)
 {
-  for (int i = 0; i < 3; i++)
-  {
-    for (int j = 0; j < 3; j++)
-    {
+  for(int i = 0; i < 3; i++) {
+    for(int j = 0; j < 3; j++) {
       dxdr[i][j] = 0e0;
-      for (int p = 0; p < numOfNodeInElm; p++)
-      {
+      for(int p = 0; p < numOfNodeInElm; p++) {
         dxdr[i][j] += dNdr(p, j) * x1(p, i);
       }
     }
   }
 }
 
-void MathTools3D::comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const double (&dxdr)[3][3], const int &numOfNodeInElm)
+void MathTools3D::comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const double (&dxdr)[3][3],
+                            const int &numOfNodeInElm)
 {
   double drdx[3][3];
   MathTools3D::compInverseMatrix(drdx, dxdr);
 
-  for (int p = 0; p < numOfNodeInElm; p++)
-  {
-    for (int i = 0; i < 3; i++)
-    {
+  for(int p = 0; p < numOfNodeInElm; p++) {
+    for(int i = 0; i < 3; i++) {
       dNdx(p, i) = 0e0;
-      for (int j = 0; j < 3; j++)
-      {
+      for(int j = 0; j < 3; j++) {
         dNdx(p, i) += dNdr(p, j) * drdx[j][i];
       }
     }
@@ -163,3 +153,4 @@ double MathTools2D::comp_tau(std::vector<double> &vel, const double &he, const d
 
   return tau = pow(term1 + term2 + term3, -5e-1);
 }
+

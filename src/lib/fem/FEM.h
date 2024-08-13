@@ -34,9 +34,11 @@ public:
   int pulsatileFlow;
   int pulseBeginItr;
   double T;
+  double pulse;
 
   // Stabilization parameter
   double tau;
+
 
   // Pysical parameter
   double Re, rho, mu, nu;
@@ -84,6 +86,7 @@ public:
   double comp_he(Array2D<double> &x);
   double comp_f(const double phi);
   double comp_tau(std::vector<double> &vel, const double he);
+  double comp_pulse(const int t);
 
   void updateRowIndex(Grid &grid, const int ii, const int ic);
   void updateColumnIndex(Grid &grid, const int jj, const int ic);

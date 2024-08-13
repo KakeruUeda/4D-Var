@@ -39,25 +39,13 @@ public:
   int nNodesGlobal, nCellsGlobal, nDofsGlobal;
   int nNodesLocal, nCellsLocal, nDofsLocal;
 
-  void setStructuredGrid(
-      const int nxCells, const int nyCells, const int nzCells,
-      const int nxNodes, const int nyNodes, const int nzNodes,
-      const double dx, const double dy, const double dz,
-      const int nNodesInCell, const int dim,
-      Cell &cell, Node &node);
+  std::vector<int> vecFluidUniqueNodes;
 
   void prepareMatrix(PetscSolver &petsc, std::string outputDir, const int timeMax);
   void setForSerial();
-  void divideWholeGrid();
   void distributeToLocal(const int timeMax);
 
 private:
-  int structuredGridNodeSet(
-      const int nxNodes, const int nyNodes, const int nzNodes,
-      const int i, const int j, const int k, const int p);
-  double structuredGridCoordinateSet(
-      const double dx, const double dy, const double dz,
-      const int i, const int j, const int k, const int d);
 };
 
 #endif

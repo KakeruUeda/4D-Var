@@ -7,12 +7,12 @@
 #ifndef EXPORT_H
 #define EXPORT_H
 
-#include <iostream>
 #include "Array.h"
-#include "DataGrid.h"
-#include "Node.h"
 #include "Cell.h"
+#include "DataGrid.h"
 #include "MyMPI.h"
+#include "Node.h"
+#include <iostream>
 
 extern MyMPI mpi;
 
@@ -22,6 +22,8 @@ public:
   // DAT
   template <typename T>
   static void exportScalarDataDAT(const std::string &file, const std::vector<T> &vec);
+  template <typename T>
+  static void exportScalarDataDAT(const std::string &file, const std::set<T> &set);
   template <typename T>
   static void exportVectorDataDAT(const std::string &file, const std::vector<std::vector<T>> &vec);
   template <typename T>
@@ -86,9 +88,9 @@ public:
   static void exportPhiVTU(const std::string &file, Node &node, Cell &cell);
 };
 
-#include "ExportDAT.inl"
 #include "ExportBIN.inl"
-#include "ExportVTU.inl"
+#include "ExportDAT.inl"
 #include "ExportVTI.inl"
+#include "ExportVTU.inl"
 
-#endif // EXPORT_H
+#endif  // EXPORT_H

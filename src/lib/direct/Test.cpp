@@ -21,17 +21,13 @@ void DirectProblem::solveNavierStokes()
   petsc.setMatAndVecZero(grid.cell);
   petsc.initialAssembly();
 
-  for (int t = 0; t < timeMax; t++)
-  {
+  for(int t = 0; t < timeMax; t++) {
     petsc.setValueZero();
     dirichlet.assignBCs(grid.node, t);
 
-    if (pulsatileFlow == ON)
-    {
-      if (t >= pulseBeginItr)
-      {
-        double timePhase = (t - pulseBeginItr) * dt;
-        double pulse = 0.25 * sin((2e0 * PI / T) * timePhase) + 1.0;
+    if(pulsatileFlow == ON) {
+      if(t >= pulseBeginItr) {
+        double pulse = comp_pulse(t);
         dirichlet.assignPulsatileBCs(pulse, grid.nDofsGlobal);
       }
     }
@@ -40,17 +36,13 @@ void DirectProblem::solveNavierStokes()
     MPI_Barrier(MPI_COMM_WORLD);
     double timer1 = MPI_Wtime();
 
-    for (int ic = 0; ic < grid.cell.nCellsGlobal; ic++)
-    {
-      if (grid.cell(ic).subId == mpi.myId)
-      {
-        int nDofs = grid.cell(ic).dofsMap.size();
-        MathTools3D tools(grid.cell.nNodesInCell);
+    for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
+      int nDofs = grid.cell(ic).dofsMap.size();
+
+      if(grid.cell(ic).subId == mpi.myId) {
         MatrixXd Klocal(nDofs, nDofs);
         VectorXd Flocal(nDofs);
-        Klocal.setZero();
-        Flocal.setZero();
-        matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
+        matrixAssemblyUSNS(Klocal, Flocal, ic, t);
         petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
                        grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
@@ -68,34 +60,16 @@ void DirectProblem::solveNavierStokes()
     VecGetArray(vecSEQ, &arraySolution);
 
     // update solution vector
-    for (int id = 0; id < grid.nDofsGlobal; id++)
-    {
+    for(int id = 0; id < grid.nDofsGlobal; id++) {
       petsc.solution[id] = arraySolution[id];
     }
 
     VecRestoreArray(vecSEQ, &arraySolution);
+    
     updateSolutions();
+    outputSolutions(t);
 
-    // visualize
-    switch (grid.gridType)
-    {
-    case GridType::STRUCTURED:
-      updateSolutionsVTI();
-      outputSolutionsVTI("solution", t);
-      outputSolutionsBIN("input", t);
-      compVorticity(t);
-      break;
-    case GridType::UNSTRUCTURED:
-      outputSolutionsVTU("solution", t);
-      break;
-    default:
-      PetscPrintf(MPI_COMM_WORLD, "\nUndifined gridType\n");
-      exit(1);
-      break;
-    }
-
-    if (mpi.myId == 0)
-    {
+    if(mpi.myId == 0) {
       double timeNow = t * dt;
       printf("Assy: %fs | Solve: %fs | SimTime: %fs \n", timer1, timer2, timeNow);
     }
@@ -126,8 +100,7 @@ void DirectProblem::solveFowardNavierStokes(Array2D<double> &X0, Array3D<double>
   updateInitialVelocity(X0);
 
   int snapCount = 0;
-  for (int t = 0; t < timeMax; t++)
-  {
+  for(int t = 0; t < timeMax; t++) {
     petsc.setValueZero();
 
     dirichlet.updateValues(X, t);
@@ -135,17 +108,13 @@ void DirectProblem::solveFowardNavierStokes(Array2D<double> &X0, Array3D<double>
     dirichlet.assignBCs(grid.node, t);
     dirichlet.applyBCs(grid.cell, petsc);
 
-    for (int ic = 0; ic < grid.cell.nCellsGlobal; ic++)
-    {
-      if (grid.cell(ic).subId == mpi.myId)
-      {
-        int nDofs = grid.cell(ic).dofsMap.size();
-        MathTools3D tools(grid.cell.nNodesInCell);
+    for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
+      int nDofs = grid.cell(ic).dofsMap.size();
+
+      if(grid.cell(ic).subId == mpi.myId) {
         MatrixXd Klocal(nDofs, nDofs);
         VectorXd Flocal(nDofs);
-        Klocal.setZero();
-        Flocal.setZero();
-        matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
+        matrixAssemblyUSNS(Klocal, Flocal, ic, t);
         petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
                        grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
@@ -157,8 +126,7 @@ void DirectProblem::solveFowardNavierStokes(Array2D<double> &X0, Array3D<double>
     VecGetArray(vecSEQ, &arraySolnTmp);
 
     // update solution vector
-    for (int id = 0; id < grid.nDofsGlobal; id++)
-    {
+    for(int id = 0; id < grid.nDofsGlobal; id++) {
       petsc.solution[id] = arraySolnTmp[id];
     }
 
@@ -166,14 +134,12 @@ void DirectProblem::solveFowardNavierStokes(Array2D<double> &X0, Array3D<double>
     updateSolutions();
     updateTimeSolutions(t);
 
-    if ((t - snap.snapTimeBeginItr) % snap.snapInterval == 0)
-    {
+    if((t - snap.snapTimeBeginItr) % snap.snapInterval == 0) {
       snap.takeSnapShot(grid.node.v, snapCount, grid.node.nNodesGlobal, dim);
       snapCount++;
     }
 
-    if (mpi.myId == 0)
-    {
+    if(mpi.myId == 0) {
       double timeNow = t * dt;
       printf("Main Solver : Time = %f \n", timeNow);
     }
@@ -186,12 +152,29 @@ void DirectProblem::solveFowardNavierStokes(Array2D<double> &X0, Array3D<double>
 
 void DirectProblem::updateInitialVelocity(Array2D<double> &X0)
 {
-  for (int i = 0; i < grid.node.nNodesGlobal; i++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
+  for(int i = 0; i < grid.node.nNodesGlobal; i++) {
+    for(int d = 0; d < dim; d++) {
       v(i, d) = X0(i, d);
       vPrev(i, d) = X0(i, d);
     }
+  }
+}
+
+void DirectProblem::outputSolutions(const int t)
+{
+  switch(grid.gridType) {
+  case GridType::STRUCTURED:
+    updateSolutionsVTI();
+    outputSolutionsVTI("solution", t);
+    outputSolutionsBIN("input", t);
+    compVorticity(t);
+    break;
+  case GridType::UNSTRUCTURED:
+    outputSolutionsVTU("solution", t);
+    break;
+  default:
+    PetscPrintf(MPI_COMM_WORLD, "\nUndifined gridType\n");
+    exit(1);
+    break;
   }
 }

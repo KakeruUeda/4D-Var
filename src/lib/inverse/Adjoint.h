@@ -7,33 +7,34 @@
 #ifndef ADJOINT_H
 #define ADJOINT_H
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <cstdio>
-#include <set>
-#include <cmath>
-#include <cstdlib>
-#include <cstring>
-#include <sys/stat.h>
-#include <mpi.h>
-#include <algorithm>
-#include "Grid.h"
 #include "Boundary.h"
-#include "PetscSolver.h"
 #include "Config.h"
-#include "Gauss.h"
-#include "Tool.h"
-#include "Spline.h"
-#include "ShapeFunction.h"
 #include "DirectProblem.h"
 #include "Function.h"
+#include "Gauss.h"
+#include "Grid.h"
+#include "PetscSolver.h"
+#include "ShapeFunction.h"
+#include "Spline.h"
+#include "Tool.h"
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+#include <mpi.h>
+#include <set>
+#include <string>
+#include <sys/stat.h>
 
 class Adjoint
 {
 public:
-  Adjoint(Config &conf) : grid(conf), dim(conf.dim), planeDir(conf.planeDir), timeMax(conf.timeMax),
-                          rho(conf.rho), mu(conf.mu), dt(conf.dt), alpha(conf.alpha), resistance(conf.resistance)
+  Adjoint(Config &conf)
+      : grid(conf), dim(conf.dim), planeDir(conf.planeDir), timeMax(conf.timeMax),
+        rho(conf.rho), mu(conf.mu), dt(conf.dt), alpha(conf.alpha), resistance(conf.resistance)
   {
   }
 

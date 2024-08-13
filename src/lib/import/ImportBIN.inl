@@ -7,18 +7,17 @@
 #ifndef IMPORT_BIN_INL_H
 #define IMPORT_BIN_INL_H
 
+#include "Import.h"
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <stdexcept>
-#include "Import.h"
 
-template <typename T>
+template <typename T> 
 void IMPORT::importScalarDataBIN(const std::string &file, std::vector<T> &vec)
 {
   std::ifstream ifs(file, std::ios::binary);
-  if (!ifs)
-  {
+  if(!ifs) {
     throw std::runtime_error("Couldn't open file: " + file);
   }
 
@@ -26,15 +25,13 @@ void IMPORT::importScalarDataBIN(const std::string &file, std::vector<T> &vec)
   std::streamsize size = ifs.tellg();
   ifs.seekg(0, std::ios::beg);
 
-  if (size % sizeof(T) != 0)
-  {
+  if(size % sizeof(T) != 0) {
     throw std::runtime_error("File size error: " + file);
   }
 
   vec.resize(size / sizeof(T));
 
-  if (!ifs.read(reinterpret_cast<char *>(vec.data()), size))
-  {
+  if(!ifs.read(reinterpret_cast<char *>(vec.data()), size)) {
     throw std::runtime_error("Couldn't read file: " + file);
   }
 
@@ -45,29 +42,24 @@ template <typename T>
 void IMPORT::importVectorDataBIN(const std::string &file, std::vector<std::vector<T>> &vec)
 {
   std::ifstream ifs(file, std::ios::binary);
-  if (!ifs)
-  {
+  if(!ifs) {
     throw std::runtime_error("Couldn't open file: " + file);
   }
 
   int rows;
-  if (!ifs.read(reinterpret_cast<char *>(&rows), sizeof(rows)))
-  {
+  if(!ifs.read(reinterpret_cast<char *>(&rows), sizeof(rows))) {
     throw std::runtime_error("Failed to read rows: " + file);
   }
 
   vec.resize(rows);
 
-  for (int j = 0; j < rows; j++)
-  {
+  for(int j = 0; j < rows; j++) {
     int cols;
-    if (!ifs.read(reinterpret_cast<char *>(&cols), sizeof(cols)))
-    {
+    if(!ifs.read(reinterpret_cast<char *>(&cols), sizeof(cols))) {
       throw std::runtime_error("Failed to read cols: " + file);
     }
     vec[j].resize(cols);
-    if (!ifs.read(reinterpret_cast<char *>(vec[j].data()), cols * sizeof(T)))
-    {
+    if(!ifs.read(reinterpret_cast<char *>(vec[j].data()), cols * sizeof(T))) {
       throw std::runtime_error("Couldn't read file: " + file);
     }
   }
@@ -75,4 +67,4 @@ void IMPORT::importVectorDataBIN(const std::string &file, std::vector<std::vecto
   ifs.close();
 }
 
-#endif // IMPORT_BIN_INL_H
+#endif  // IMPORT_BIN_INL_H

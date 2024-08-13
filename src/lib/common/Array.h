@@ -7,16 +7,19 @@
 #ifndef ARRAY_H
 #define ARRAY_H
 
+#include <algorithm>
 #include <iostream>
 #include <memory>
-#include <algorithm>
 
-template <class T>
-class Array1D
+template <class T> class Array1D
 {
 public:
-  Array1D(int width) : width(width), data(std::make_unique<T[]>(width)) {}
-  Array1D() : width(0) {}
+  Array1D(int width) : width(width), data(std::make_unique<T[]>(width))
+  {
+  }
+  Array1D() : width(0)
+  {
+  }
 
   inline T &operator()(int x)
   {
@@ -44,12 +47,15 @@ private:
   std::unique_ptr<T[]> data;
 };
 
-template <class T>
-class Array2D
+template <class T> class Array2D
 {
 public:
-  Array2D(int height, int width) : width(width), height(height), data(std::make_unique<T[]>(width * height)) {}
-  Array2D() : width(0), height(0) {}
+  Array2D(int height, int width) : width(width), height(height), data(std::make_unique<T[]>(width * height))
+  {
+  }
+  Array2D() : width(0), height(0)
+  {
+  }
 
   inline T &operator()(int y, int x)
   {
@@ -78,12 +84,16 @@ private:
   std::unique_ptr<T[]> data;
 };
 
-template <class T>
-class Array3D
+template <class T> class Array3D
 {
 public:
-  Array3D(int depth, int height, int width) : width(width), height(height), depth(depth), data(std::make_unique<T[]>(depth * height * width)) {}
-  Array3D() : width(0), height(0), depth(0) {}
+  Array3D(int depth, int height, int width)
+      : width(width), height(height), depth(depth), data(std::make_unique<T[]>(depth * height * width))
+  {
+  }
+  Array3D() : width(0), height(0), depth(0)
+  {
+  }
 
   inline T &operator()(int z, int y, int x)
   {
@@ -113,12 +123,17 @@ private:
   std::unique_ptr<T[]> data;
 };
 
-template <class T>
-class Array4D
+template <class T> class Array4D
 {
 public:
-  Array4D(int time, int depth, int height, int width) : time(time), depth(depth), height(height), width(width), data(std::make_unique<T[]>(time * depth * height * width)) {}
-  Array4D() : time(0), depth(0), height(0), width(0) {}
+  Array4D(int time, int depth, int height, int width)
+      : time(time), depth(depth), height(height), width(width),
+        data(std::make_unique<T[]>(time * depth * height * width))
+  {
+  }
+  Array4D() : time(0), depth(0), height(0), width(0)
+  {
+  }
 
   inline T &operator()(int t, int z, int y, int x)
   {

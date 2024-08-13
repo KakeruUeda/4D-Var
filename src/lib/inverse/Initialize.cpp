@@ -83,14 +83,11 @@ void InverseProblem::initialize(Config &conf)
   adjoint.grid.node.initializeAdjoint(conf, adjoint.grid.dirichlet.controlBoundaryMap);
   adjoint.grid.prepareMatrix(adjoint.petsc, outputDir, adjoint.timeMax);
 
-  for (int ic = 0; ic < adjoint.grid.cell.nCellsGlobal; ic++)
-  {
+  for(int ic = 0; ic < adjoint.grid.cell.nCellsGlobal; ic++) {
     int count = 0;
     VecTool::resize(adjoint.grid.cell(ic).dofStartPlane, adjoint.grid.dirichlet.nControlNodesInCell);
-    for (int p = 0; p < adjoint.grid.cell.nNodesInCell; p++)
-    {
-      if (adjoint.grid.node.nDofsOnNode[adjoint.grid.cell(ic).node[p]] > dim + 1)
-      {
+    for(int p = 0; p < adjoint.grid.cell.nNodesInCell; p++) {
+      if(adjoint.grid.node.nDofsOnNode[adjoint.grid.cell(ic).node[p]] > dim + 1) {
         adjoint.grid.cell(ic).dofStartPlane[count] = adjoint.grid.cell(ic).dofStart[p];
         count++;
       }
@@ -117,8 +114,7 @@ void InverseProblem::initialize(Config &conf)
   VecTool::resize(adjoint.advgp, dim);
   VecTool::resize(adjoint.dvgpdx, dim, dim);
 
-  if (main.grid.gridType == GridType::STRUCTURED)
-  {
+  if(main.grid.gridType == GridType::STRUCTURED) {
     VecTool::resize(X0vti, main.grid.node.nNodesStrGlobal, conf.dim);
   }
 

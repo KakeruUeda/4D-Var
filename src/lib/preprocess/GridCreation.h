@@ -44,6 +44,8 @@ private:
   std::vector<int> mapCBCell;
   std::vector<std::vector<int>> mapCBInCell;
 
+  std::set<int> fluidUniqueNodes;
+
   void initializeCells(Config &conf);
   void initializeNodes(Config &conf);
   void setCellType(int nNodesInCell);

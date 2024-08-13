@@ -24,7 +24,7 @@ int main(int argc, char *argv[])
     return EXIT_FAILURE;
   }
 
-  std::string input   = argv[1];
+  std::string input = argv[1];
   std::string appName = "USNS";
 
   std::unique_ptr<Config> conf;

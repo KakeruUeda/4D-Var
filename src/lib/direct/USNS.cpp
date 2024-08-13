@@ -21,22 +21,16 @@ void DirectProblem::solveUSNS(Application &app)
   petsc.setMatAndVecZero(grid.cell);
   petsc.initialAssembly();
 
-  for (int id = 0; id < grid.nDofsGlobal; id++)
-  {
+  for(int id = 0; id < grid.nDofsGlobal; id++) {
     grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
     grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
   }
 
-  for (int t = 0; t < timeMax; t++)
-  {
+  for(int t = 0; t < timeMax; t++) {
     petsc.setValueZero();
-    grid.dirichlet.assignDirichletBCs(grid.dirichlet.vDirichletNew,
-                                      grid.dirichlet.pDirichletNew,
-                                      grid.node, dim, t);
-    if (pulsatileFlow == ON)
-    {
-      if (t >= pulseBeginItr)
-      {
+    grid.dirichlet.assignDirichletBCs(grid.dirichlet.vDirichletNew, grid.dirichlet.pDirichletNew, grid.node, dim, t);
+    if(pulsatileFlow == ON) {
+      if(t >= pulseBeginItr) {
         grid.dirichlet.assignPulsatileBCs(t, dt, T, pulseBeginItr, grid.nDofsGlobal);
       }
     }
@@ -45,19 +39,16 @@ void DirectProblem::solveUSNS(Application &app)
     MPI_Barrier(MPI_COMM_WORLD);
     double timer1 = MPI_Wtime();
 
-    for (int ic = 0; ic < grid.cell.nCellsGlobal; ic++)
-    {
-      if (grid.cell(ic).subId == mpi.myId)
-      {
+    for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
+      if(grid.cell(ic).subId == mpi.myId) {
         int nDofsInCell = grid.cell(ic).dofsMap.size();
         MathTools3D tools(grid.cell.nNodesInCell);
         MatrixXd Klocal(nDofsInCell, nDofsInCell);
         VectorXd Flocal(nDofsInCell);
         Klocal.setZero();
         Flocal.setZero();
-        matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
-        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
-                       grid.cell(ic).dofsBCsMap, Klocal, Flocal);
+        //matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
+        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
     }
     petsc.currentStatus = ASSEMBLY_OK;
@@ -74,15 +65,14 @@ void DirectProblem::solveUSNS(Application &app)
     VecGetArray(vecSEQ, &arraySolnTmp);
 
     // update solution vector
-    for (int id = 0; id < grid.nDofsGlobal; id++)
+    for(int id = 0; id < grid.nDofsGlobal; id++)
       petsc.solution[id] = arraySolnTmp[id];
 
     VecRestoreArray(vecSEQ, &arraySolnTmp);
     updateSolutions();
 
     // visualize
-    switch (grid.gridType)
-    {
+    switch(grid.gridType) {
     case GridType::STRUCTURED:
       updateSolutionsVTI();
       outputSolutionsVTI("solution", t);
@@ -98,8 +88,7 @@ void DirectProblem::solveUSNS(Application &app)
       break;
     }
 
-    if (mpi.myId == 0)
-    {
+    if(mpi.myId == 0) {
       double timeNow = t * dt;
       printf("Assy: %fs | Solve: %fs | SimTime: %fs \n", timer1, timer2, timeNow);
     }
@@ -116,7 +105,8 @@ void DirectProblem::solveUSNS(Application &app)
  *        for the purpose of armijo criteria.
  */
 void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
-                              std::vector<std::map<int, double>> &pDirichletTmp, std::vector<std::vector<double>> &v0Tmp)
+                              std::vector<std::map<int, double>> &pDirichletTmp,
+                              std::vector<std::vector<double>> &v0Tmp)
 {
   PetscPrintf(MPI_COMM_WORLD, "\nMain Solver\n");
 
@@ -129,42 +119,34 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
   petsc.initialAssembly();
   setVariablesZero();
 
-  for (int id = 0; id < grid.nDofsGlobal; id++)
-  {
+  for(int id = 0; id < grid.nDofsGlobal; id++) {
     grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
     grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
   }
 
   // Give initial velocity value
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+    for(int d = 0; d < dim; d++) {
       grid.node.v[in][d] = v0Tmp[in][d];
     }
   }
 
   int snapCount = 0;
-  for (int t = 0; t < timeMax; t++)
-  {
+  for(int t = 0; t < timeMax; t++) {
     petsc.setValueZero();
-    grid.dirichlet.assignDirichletBCs(vDirichletTmp, pDirichletTmp,
-                                      grid.node, dim, t);
+    grid.dirichlet.assignDirichletBCs(vDirichletTmp, pDirichletTmp, grid.node, dim, t);
     grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
 
-    for (int ic = 0; ic < grid.cell.nCellsGlobal; ic++)
-    {
-      if (grid.cell(ic).subId == mpi.myId)
-      {
+    for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
+      if(grid.cell(ic).subId == mpi.myId) {
         int nDofsInCell = grid.cell(ic).dofsMap.size();
         MathTools3D tools(grid.cell.nNodesInCell);
         MatrixXd Klocal(nDofsInCell, nDofsInCell);
         VectorXd Flocal(nDofsInCell);
         Klocal.setZero();
         Flocal.setZero();
-        matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
-        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
-                       grid.cell(ic).dofsBCsMap, Klocal, Flocal);
+        //matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
+        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
     }
     petsc.solve();
@@ -174,21 +156,19 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
     VecGetArray(vecSEQ, &arraySolnTmp);
 
     // update solution vector
-    for (int id = 0; id < grid.nDofsGlobal; id++)
+    for(int id = 0; id < grid.nDofsGlobal; id++)
       petsc.solution[id] = arraySolnTmp[id];
 
     VecRestoreArray(vecSEQ, &arraySolnTmp);
     updateSolutions();
     updateTimeSolutions(t);
 
-    if ((t - snap.snapTimeBeginItr) % snap.snapInterval == 0)
-    {
+    if((t - snap.snapTimeBeginItr) % snap.snapInterval == 0) {
       snap.takeSnapShot(grid.node.v, snapCount, grid.node.nNodesGlobal, dim);
       snapCount++;
     }
 
-    if (mpi.myId == 0)
-    {
+    if(mpi.myId == 0) {
       double timeNow = t * dt;
       printf("Main Solver : Time = %f \n", timeNow);
     }
@@ -218,32 +198,27 @@ void DirectProblem::compInitialCondition(std::vector<std::map<int, std::vector<d
   petsc.initialAssembly();
   setVariablesZero();
 
-  for (int id = 0; id < grid.nDofsGlobal; id++)
-  {
+  for(int id = 0; id < grid.nDofsGlobal; id++) {
     grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
     grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
   }
 
   int snapCount = 0;
-  for (int t = 0; t < timeMax * 3; t++)
-  {
+  for(int t = 0; t < timeMax * 3; t++) {
     petsc.setValueZero();
     grid.dirichlet.assignConstantDirichletBCs(vDirichletTmp, pDirichletTmp, grid.node, dim, t);
     grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
 
-    for (int ic = 0; ic < grid.cell.nCellsGlobal; ic++)
-    {
-      if (grid.cell(ic).subId == mpi.myId)
-      {
+    for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
+      if(grid.cell(ic).subId == mpi.myId) {
         int nDofsInCell = grid.cell(ic).dofsMap.size();
         MathTools3D tools(grid.cell.nNodesInCell);
         MatrixXd Klocal(nDofsInCell, nDofsInCell);
         VectorXd Flocal(nDofsInCell);
         Klocal.setZero();
         Flocal.setZero();
-        matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
-        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
-                       grid.cell(ic).dofsBCsMap, Klocal, Flocal);
+        //matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
+        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
     }
 
@@ -254,25 +229,21 @@ void DirectProblem::compInitialCondition(std::vector<std::map<int, std::vector<d
     VecGetArray(vecSEQ, &arraySolnTmp);
 
     // update solution vector
-    for (int id = 0; id < grid.nDofsGlobal; id++)
+    for(int id = 0; id < grid.nDofsGlobal; id++)
       petsc.solution[id] = arraySolnTmp[id];
 
     VecRestoreArray(vecSEQ, &arraySolnTmp);
     updateSolutions();
 
-    if (t == timeMax * 3 - 1)
-    {
-      for (int in = 0; in < grid.node.nNodesGlobal; in++)
-      {
-        for (int d = 0; d < dim; d++)
-        {
+    if(t == timeMax * 3 - 1) {
+      for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+        for(int d = 0; d < dim; d++) {
           grid.node.v0[in][d] = grid.node.v[in][d];
         }
       }
     }
 
-    if (mpi.myId == 0)
-    {
+    if(mpi.myId == 0) {
       double timeNow = t * dt;
       printf("Compute initial condition : Time = %f \n", timeNow);
     }
@@ -300,16 +271,15 @@ void DirectProblem::setVariablesZero()
  */
 void DirectProblem::updateSolutions()
 {
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
     int n1 = 0;
-    for (int i = 0; i < grid.node.mapNew[in]; i++)
+    for(int i = 0; i < grid.node.mapNew[in]; i++)
       n1 += grid.node.nDofsOnNode[i];
 
-    for (int d = 0; d < dim; d++)
+    for(int d = 0; d < dim; d++)
       vPrev(in, d) = v(in, d);
 
-    for (int d = 0; d < dim; d++)
+    for(int d = 0; d < dim; d++)
       v(in, d) = petsc.solution[n1 + d];
     p(in) = petsc.solution[n1 + dim];
   }
@@ -320,10 +290,8 @@ void DirectProblem::updateSolutions()
  */
 void DirectProblem::updateTimeSolutions(const int t)
 {
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+    for(int d = 0; d < dim; d++) {
       vt(t, in, d) = v(in, d);
     }
     pt(t, in) = p(in);
@@ -335,13 +303,11 @@ void DirectProblem::updateTimeSolutions(const int t)
  */
 void DirectProblem::updateSolutionsVTI()
 {
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
-      vvti(grid.node.sortNode[in], d) = v(in, d);
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+    for(int d = 0; d < dim; d++) {
+      vvti(grid.vecFluidUniqueNodes[in], d) = v(in, d);
     }
-    pvti(grid.node.sortNode[in]) = p(in);
+    pvti(grid.vecFluidUniqueNodes[in]) = p(in);
   }
 }
 
@@ -350,10 +316,8 @@ void DirectProblem::updateSolutionsVTI()
  */
 void DirectProblem::updateSolutionsVTI(const int t)
 {
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+    for(int d = 0; d < dim; d++) {
       vvti(grid.node.sortNode[in], d) = vt(t, in, d);
     }
     pvti(grid.node.sortNode[in]) = pt(t, in);
@@ -365,7 +329,7 @@ void DirectProblem::updateSolutionsVTI(const int t)
  */
 void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t)
 {
-  if (mpi.myId > 0)
+  if(mpi.myId > 0)
     return;
 
   std::string vtiFile;
@@ -380,14 +344,16 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t)
  */
 void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t, const int loop)
 {
-  if (mpi.myId > 0)
+  if(mpi.myId > 0)
     return;
 
   std::string vtiFile;
   vtiFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vti";
-  EXPORT::exportVectorPointDataVTI(vtiFile, "velocity", grid.node.vvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+  EXPORT::exportVectorPointDataVTI(vtiFile, "velocity", grid.node.vvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy,
+                                   grid.dz);
   vtiFile = outputDir + "/" + dir + "/pressure_" + to_string(loop) + "_" + to_string(t) + ".vti";
-  EXPORT::exportScalarPointDataVTI(vtiFile, "pressure", grid.node.pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+  EXPORT::exportScalarPointDataVTI(vtiFile, "pressure", grid.node.pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy,
+                                   grid.dz);
 }
 
 /**********************************
@@ -395,7 +361,7 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t, cons
  */
 void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t)
 {
-  if (mpi.myId > 0)
+  if(mpi.myId > 0)
     return;
 
   std::string vtuFile;
@@ -410,7 +376,7 @@ void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t)
  */
 void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t, const int loop)
 {
-  if (mpi.myId > 0)
+  if(mpi.myId > 0)
     return;
 
   std::string vtuFile;
@@ -422,7 +388,7 @@ void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t, cons
 
 void DirectProblem::outputSolutionsBIN(const std::string &dir, const int t)
 {
-  if (mpi.myId > 0)
+  if(mpi.myId > 0)
     return;
 
   std::string binFile;
@@ -435,13 +401,11 @@ void DirectProblem::outputSolutionsBIN(const std::string &dir, const int t)
 /********************************************
  * @brief Take snapshots for error functions.
  */
-void SnapShot::takeSnapShot(std::vector<std::vector<double>> &_v,
-                            const int &snapCount, const int &nNodesGlobal, const int &dim)
+void SnapShot::takeSnapShot(std::vector<std::vector<double>> &_v, const int &snapCount, const int &nNodesGlobal,
+                            const int &dim)
 {
-  for (int in = 0; in < nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
+  for(int in = 0; in < nNodesGlobal; in++) {
+    for(int d = 0; d < dim; d++) {
       v[snapCount][in][d] = _v[in][d];
     }
   }
@@ -449,16 +413,13 @@ void SnapShot::takeSnapShot(std::vector<std::vector<double>> &_v,
 
 void DirectProblem::compVorticity(const int t)
 {
-  if (mpi.myId != 0)
+  if(mpi.myId != 0)
     return;
 
   std::vector<std::vector<double>> omega((grid.nx + 1) * (grid.ny + 1) * (grid.nz + 1), std::vector<double>(3, 0e0));
-  for (int k = 1; k < grid.nz; k++)
-  {
-    for (int j = 1; j < grid.ny; j++)
-    {
-      for (int i = 1; i < grid.nx; i++)
-      {
+  for(int k = 1; k < grid.nz; k++) {
+    for(int j = 1; j < grid.ny; j++) {
+      for(int i = 1; i < grid.nx; i++) {
         int n = i + j * (grid.nx + 1) + k * (grid.nx + 1) * (grid.ny + 1);
         int n_iminus1 = i - 1 + j * (grid.nx + 1) + k * (grid.nx + 1) * (grid.ny + 1);
         int n_iplus1 = i + 1 + j * (grid.nx + 1) + k * (grid.nx + 1) * (grid.ny + 1);

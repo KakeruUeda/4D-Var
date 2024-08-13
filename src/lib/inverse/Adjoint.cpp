@@ -18,8 +18,7 @@ void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
   VecScatter ctx;
   VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ);
 
-  for (int id = 0; id < grid.nDofsGlobal; id++)
-  {
+  for(int id = 0; id < grid.nDofsGlobal; id++) {
     grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
     grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
   }
@@ -28,18 +27,15 @@ void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
   setVariablesZero(main.dim);
 
   int st = 0;
-  for (int t = timeMax - 1; t >= 0; t--)
-  {
+  for(int t = timeMax - 1; t >= 0; t--) {
     petsc.setValueZero();
     grid.dirichlet.assignDirichletBCs(grid.dirichlet.vDirichletWallNew,
                                       grid.dirichlet.pDirichletNew,
                                       grid.node, main.dim, t);
     grid.dirichlet.applyDirichletBCsAdjoint(grid.cell, petsc);
 
-    for (int ic = 0; ic < grid.cell.nCellsGlobal; ic++)
-    {
-      if (grid.cell(ic).subId == mpi.myId)
-      {
+    for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
+      if(grid.cell(ic).subId == mpi.myId) {
         int nDofsInCell = grid.cell(ic).dofsMap.size();
         Function f3(grid.cell.nNodesInCell, dim);
         MatrixXd Klocal(nDofsInCell, nDofsInCell);
@@ -52,11 +48,9 @@ void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
       }
     }
 
-    for (int ib = 0; ib < grid.dirichlet.controlCellMap.size(); ib++)
-    {
+    for(int ib = 0; ib < grid.dirichlet.controlCellMap.size(); ib++) {
       int ic = grid.dirichlet.controlCellMap[ib];
-      if (grid.cell(ic).subId == mpi.myId)
-      {
+      if(grid.cell(ic).subId == mpi.myId) {
         int nDofsInCell = grid.cell(ic).dofsMap.size();
         Function f2(grid.dirichlet.nControlNodesInCell, dim - 1);
         MatrixXd Klocal(nDofsInCell, nDofsInCell);
@@ -68,14 +62,12 @@ void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
       }
     }
 
-    for (int in = 0; in < grid.node.nNodesGlobal; in++)
-    {
+    for(int in = 0; in < grid.node.nNodesGlobal; in++) {
       int n = grid.node.mapNew[in];
       int size = grid.node.dofsBCsMapNew[n].size();
       VectorXd Flocal(size);
       Flocal.setZero();
-      if (grid.node.subId[in] == mpi.myId)
-      {
+      if(grid.node.subId[in] == mpi.myId) {
         Flocal(0) -= feedbackForceT[t][in][0];
         Flocal(1) -= feedbackForceT[t][in][1];
         Flocal(2) -= feedbackForceT[t][in][2];
@@ -89,15 +81,14 @@ void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
     VecGetArray(vecSEQ, &arraySolnTmp);
 
     // update solution vector
-    for (int id = 0; id < grid.nDofsGlobal; id++)
+    for(int id = 0; id < grid.nDofsGlobal; id++)
       petsc.solution[id] = arraySolnTmp[id];
 
     VecRestoreArray(vecSEQ, &arraySolnTmp);
     updateSolutions();
     updateTimeSolutions(t);
 
-    if (mpi.myId == 0)
-    {
+    if(mpi.myId == 0) {
       double timeNow = t * dt;
       printf("Adjoint Solver : Time = %f \n", timeNow);
     }
@@ -114,10 +105,8 @@ void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
  */
 void Adjoint::setVariablesZero(const int dim)
 {
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+    for(int d = 0; d < dim; d++) {
       grid.node.w[in][d] = 0e0;
       grid.node.wPrev[in][d] = 0e0;
       grid.node.l[in][d] = 0e0;
@@ -126,12 +115,9 @@ void Adjoint::setVariablesZero(const int dim)
     grid.node.qPrev[in] = 0e0;
   }
 
-  for (int t = 0; t < timeMax; t++)
-  {
-    for (int in = 0; in < grid.node.nNodesGlobal; in++)
-    {
-      for (int d = 0; d < dim; d++)
-      {
+  for(int t = 0; t < timeMax; t++) {
+    for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+      for(int d = 0; d < dim; d++) {
         grid.node.lt[t][in][d] = 0e0;
       }
     }
@@ -143,10 +129,8 @@ void Adjoint::setVariablesZero(const int dim)
  */
 void Adjoint::updateSolutionsVTI()
 {
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+    for(int d = 0; d < dim; d++) {
       grid.node.wvti[grid.node.sortNode[in]][d] = grid.node.w[in][d];
       grid.node.lvti[grid.node.sortNode[in]][d] = grid.node.l[in][d];
     }
@@ -159,10 +143,8 @@ void Adjoint::updateSolutionsVTI()
  */
 void Adjoint::updateSolutionsVTI(const int t)
 {
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+    for(int d = 0; d < dim; d++) {
       grid.node.wvti[grid.node.sortNode[in]][d] = grid.node.wt[t][in][d];
       grid.node.lvti[grid.node.sortNode[in]][d] = grid.node.lt[t][in][d];
     }
@@ -175,33 +157,31 @@ void Adjoint::updateSolutionsVTI(const int t)
  */
 void Adjoint::updateSolutions()
 {
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
     int n1 = 0;
-    for (int i = 0; i < grid.node.mapNew[in]; i++)
+    for(int i = 0; i < grid.node.mapNew[in]; i++) {
       n1 += grid.node.nDofsOnNodeNew[i];
+    }
 
-    for (int d = 0; d < dim; d++)
+    for(int d = 0; d < dim; d++) {
       grid.node.wPrev[in][d] = grid.node.w[in][d];
+    }
     grid.node.qPrev[in] = grid.node.q[in];
 
-    for (int d = 0; d < dim; d++)
+    for(int d = 0; d < dim; d++) {
       grid.node.w[in][d] = petsc.solution[n1 + d];
+    }
     grid.node.q[in] = petsc.solution[n1 + dim];
 
-    if (grid.node.nDofsOnNodeNew[grid.node.mapNew[in]] > dim + 1)
-    {
-      for (int d = 0; d < dim; d++)
+    if(grid.node.nDofsOnNodeNew[grid.node.mapNew[in]] > dim + 1) {
+      for(int d = 0; d < dim; d++)
         grid.node.l[in][d] = petsc.solution[n1 + dim + 1 + d];
     }
   }
 
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    if (grid.dirichlet.isBoundaryEdge[in])
-    {
-      for (int d = 0; d < dim; d++)
-      {
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+    if(grid.dirichlet.isBoundaryEdge[in]) {
+      for(int d = 0; d < dim; d++) {
         grid.node.l[in][d] = 0e0;
       }
     }
@@ -213,10 +193,8 @@ void Adjoint::updateSolutions()
  */
 void Adjoint::updateTimeSolutions(const int t)
 {
-  for (int in = 0; in < grid.node.nNodesGlobal; in++)
-  {
-    for (int d = 0; d < dim; d++)
-    {
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+    for(int d = 0; d < dim; d++) {
       grid.node.wt[t][in][d] = grid.node.w[in][d];
       grid.node.lt[t][in][d] = grid.node.l[in][d];
     }
@@ -229,7 +207,7 @@ void Adjoint::updateTimeSolutions(const int t)
  */
 void Adjoint::outputSolutionsVTU(const std::string &dir, const int t)
 {
-  if (mpi.myId > 0)
+  if(mpi.myId > 0)
     return;
 
   std::string vtuFile;
@@ -246,7 +224,7 @@ void Adjoint::outputSolutionsVTU(const std::string &dir, const int t)
  */
 void Adjoint::outputSolutionsVTU(const std::string &dir, const int t, const int loop)
 {
-  if (mpi.myId > 0)
+  if(mpi.myId > 0)
     return;
 
   std::string vtuFile;
@@ -263,7 +241,7 @@ void Adjoint::outputSolutionsVTU(const std::string &dir, const int t, const int 
  */
 void Adjoint::outputSolutionsVTI(const std::string &dir, const int t)
 {
-  if (mpi.myId > 0)
+  if(mpi.myId > 0)
     return;
 
   std::string vtiFile;
@@ -280,7 +258,7 @@ void Adjoint::outputSolutionsVTI(const std::string &dir, const int t)
  */
 void Adjoint::outputSolutionsVTI(const std::string &dir, const int t, const int loop)
 {
-  if (mpi.myId > 0)
+  if(mpi.myId > 0)
     return;
 
   std::string vtiFile;

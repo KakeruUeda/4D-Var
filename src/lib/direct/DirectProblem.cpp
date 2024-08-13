@@ -9,11 +9,11 @@
 /***************************************************
  * @brief Construct direct problem from config file.
  */
-DirectProblem::DirectProblem(Config &conf) : FEM(conf), app(conf.app), dim(conf.dim), outputDir(conf.outputDir),
-                                             nOMP(conf.nOMP), grid(conf), snap(conf)
+DirectProblem::DirectProblem(Config &conf)
+    : FEM(conf), app(conf.app), dim(conf.dim), outputDir(conf.outputDir),
+      nOMP(conf.nOMP), grid(conf), snap(conf)
 {
-  if (app == Application::USNS)
-  {
+  if(app == Application::USNS) {
     std::string dir;
     std::string output = "output";
     mkdir(output.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
@@ -46,8 +46,9 @@ void DirectProblem::runSimulation()
  */
 void DirectProblem::outputDomain()
 {
-  if (mpi.myId > 0)
+  if(mpi.myId > 0) {
     return;
+  }
   std::string vtuFile;
   std::string vtiFile;
 

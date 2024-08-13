@@ -118,3 +118,5 @@ void Cell::assignCellType(Config &conf)
 		}
 	}
 }
+
+

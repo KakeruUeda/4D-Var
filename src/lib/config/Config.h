@@ -6,20 +6,20 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <iostream>
-#include <vector>
-#include <set>
-#include <map>
-#include <cassert>
-#include <string>
-#include <fstream>
-#include <sstream>
-#include "TextParser.h"
 #include "Array.h"
-#include "MyMPI.h"
 #include "Define.h"
-#include "Tool.h"
 #include "Import.h"
+#include "MyMPI.h"
+#include "TextParser.h"
+#include "Tool.h"
+#include <cassert>
+#include <fstream>
+#include <iostream>
+#include <map>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
 
 extern MyMPI mpi;
 
@@ -105,6 +105,7 @@ public:
   double alpha, resistance;
 
   // Grid parameter
+  bool isOnlyFluidGrid;
   int extractFluid;
   int nx, ny, nz;
   double lx, ly, lz;
@@ -112,6 +113,7 @@ public:
   int nxNodes, nyNodes, nzNodes;
   int nxCells, nyCells, nzCells;
   int nCellsGlobal, nNodesGlobal, nNodesInCell;
+  int nStrCellsGlobal, nStrNodesGlobal;
 
   std::vector<int> cellId;
   std::vector<int> nodeId;
@@ -196,6 +198,41 @@ public:
   void setSolidBoundary();
   void setFluidDomain();
 
+  class TextReaderInterface
+  {
+  protected:
+    Config *ptr;
+
+  public:
+    TextReaderInterface(Config *conf) : ptr(conf)
+    {
+    }
+    void readBasicInfo();
+    void readPhysicalInfo();
+    void readDarcyInfo();
+    void readTimeInfo();
+  };
+
+  class TextReaderGridCreation : public TextReaderInterface
+  {
+  public:
+    TextReaderGridCreation(Config *conf) : TextReaderInterface(conf)
+    {
+    }
+    void readGridInfo();
+    void readStructuredBoundaryInfo();
+  };
+
+  class TextReaderUSNS : public TextReaderInterface
+  {
+  public:
+    TextReaderUSNS(Config *conf) : TextReaderInterface(conf)
+    {
+    }
+    void readGridInfo();
+    void readBoundaryInfo();
+  };
+
 private:
   void setApplication(std::string appName);
   void tryOpenConfigFile(std::string inputFile);
@@ -205,6 +242,7 @@ private:
   void readGridType();
   void readStrGridParameter();
   void readGridParameter();
+  void readBaseGridParameter();
   void readSubGridParameter();
   void readStrBoundaryParameter();
   void readBoundaryParameter();
@@ -234,11 +272,13 @@ public:
   void setSolidDirichletValue();
   void filterFluidGrid();
 
-  std::set<int> uniqueCells;
-  std::set<int> uniqueNodes;
-  std::set<int> uniqueCBCells;
-  std::set<int> uniqueCBNodes;
-  std::set<int> uniqueCBCellsIdx;
+  std::set<int> fluidUniqueCells;
+  std::set<int> fluidUniqueNodes;
+  std::set<int> fluidUniqueCBCells;
+  std::set<int> fluidUniqueCBNodes;
+  std::set<int> fluidUniqueCBCellsIdx;
+
+  std::vector<int> vecFluidUniqueNodes;
 
   std::unordered_map<int, int> cellMapping;
   std::unordered_map<int, int> nodeMapping;

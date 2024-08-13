@@ -7,15 +7,28 @@ Base
 
 Grid
 {
-  type = "Unstructured"
-  nx = (96, 32, 32) 
-  lx = (6.0, 2.0, 2.0)
-  nNodesInCell = 8
-  node = "input/test/node.dat"
-  cell = "input/test/cell.dat"
-  image = "input/test/image.dat"
-  nodeId = "input/test/nodeId.dat"
-  cellId = "input/test/cellId.dat"
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  BaseGrid{
+    node = "input/test/node.dat"
+    cell = "input/test/cell.dat"
+  }
+
+  SubGrid{
+    nodeId = "input/test/nodeId.dat"
+    cellId = "input/test/cellId.dat"
+  }
+
+  StructuredGrid{
+    nx = (96, 32, 32) 
+    lx = (6.0, 2.0, 2.0)
+    image = "input/image.dat"
+    isOnlyFluidGrid = "YES"
+    fluidUniqueNodes = "input/fluidUniqueNodes.dat"
+  }
 }
 
 Boundary

@@ -6,11 +6,10 @@
 
 #include "FEM.h"
 
-FEM::FEM(Config &conf) :
-dim(conf.dim), nOMP(conf.nOMP), rho(conf.rho), mu(conf.mu), 
-dt(conf.dt), timeMax(conf.timeMax), pulsatileFlow(conf.pulsatileFlow),
-pulseBeginItr(conf.pulseBeginItr), T(conf.T),
-alpha(conf.alpha), resistance(conf.resistance)
+FEM::FEM(Config &conf)
+    : dim(conf.dim), nOMP(conf.nOMP), rho(conf.rho), mu(conf.mu), dt(conf.dt), timeMax(conf.timeMax),
+      pulsatileFlow(conf.pulsatileFlow), pulseBeginItr(conf.pulseBeginItr), T(conf.T), alpha(conf.alpha),
+      resistance(conf.resistance)
 {
 }
 
@@ -45,6 +44,12 @@ double FEM::comp_tau(std::vector<double> &vel, const double he)
   double term3 = (4e0 / (Re * he * he)) * (4e0 / (Re * he * he));
 
   return tau = pow(term1 + term2 + term3, -5e-1);
+}
+
+double FEM::comp_pulse(const int t)
+{
+  double timePhase = (t - pulseBeginItr) * dt;
+  return pulse = 0.25 * sin((2e0 * PI / T) * timePhase) + 1.0;
 }
 
 /**************************

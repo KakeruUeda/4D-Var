@@ -9,6 +9,9 @@ target_sources(config
     StrBoundarySetting.cpp
     StrGridSetting.cpp
     GridFiltering.cpp
+    TextReaderInterface.cpp
+    TextReaderGridCreation.cpp
+    TextReaderUSNS.cpp
 )
 
 target_include_directories(config 

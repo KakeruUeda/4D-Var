@@ -2,21 +2,21 @@ Base
 {
   dim = 3
   outputDir = "test"
-  numOfOMP = 1
 }
+
 
 Grid
 {
-  type = "Structured"
-  nNodesInCell = 8
-}
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
 
-StructuredGrid
-{
-  nx = (96, 32, 32) 
-  lx = (6.0, 2.0, 2.0)
-  extractFluid = "ON"
-  image = "input/image.dat"
+  StructuredGrid{
+    nx = (96, 32, 32) 
+    lx = (6.0, 2.0, 2.0)
+    image = "input/image.dat"
+  }
 }
 
 StructuredBoundary
@@ -52,4 +52,3 @@ StructuredBoundary
   inletControlBoundary = "left"
 
 }
-
