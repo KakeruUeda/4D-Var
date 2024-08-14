@@ -1,7 +1,7 @@
 Base
 {
   dim = 3
-  outputDir = "test"
+  outputDir = "stenosis96x32x32"
   numOfOMP = 1
 }
 
@@ -46,8 +46,8 @@ PysicalParameter
 TimeParameter
 {
   dt = 0.02
-  timeMax = 5
-  pulsatileFlow = "ON"
+  timeMax = 400
+  pulsatileFlow = "OFF"
   pulseBeginItr = 250
   T = 0.5
 }
@@ -57,4 +57,3 @@ DarcyParameter
   alpha = 1e-3
   resistance = 1e2
 }
-

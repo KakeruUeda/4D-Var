@@ -14,12 +14,11 @@ void DirectProblem::initialize(Config &conf)
   nu = mu / rho;
   Re = 1e0 / nu;
 
-  grid.dirichlet.initialize(conf);
   grid.cell.initialize(conf);
   grid.node.initialize(conf);
   dirichlet.initialize(conf);
 
-  grid.prepareMatrix(petsc, outputDir, timeMax);
+  grid.prepareMatrix(dirichlet, petsc, outputDir, timeMax);
   dirichlet.getNewArray(grid.node.mapNew);
 }
 
@@ -29,9 +28,11 @@ void DirectProblem::resize()
   VecTool::resize(grid.node.vPrev, grid.node.nNodesGlobal, dim);
   VecTool::resize(grid.node.p, grid.node.nNodesGlobal);
 
-  v.resize(grid.nNodesGlobal, dim);
-  vPrev.resize(grid.nNodesGlobal, dim);
-  p.resize(grid.nNodesGlobal);
+  v.resize(grid.node.nNodesGlobal, dim);
+  vPrev.resize(grid.node.nNodesGlobal, dim);
+  p.resize(grid.node.nNodesGlobal);
+
+	vrt.resize(grid.node.nStrNodesGlobal, dim);
 
   dirichlet.values.resize(grid.nDofsGlobal);
   dirichlet.initialValues.resize(grid.nDofsGlobal);
@@ -39,6 +40,8 @@ void DirectProblem::resize()
   v.fillZero();
   vPrev.fillZero();
   p.fillZero();
+	vrt.fillZero();
+
   dirichlet.values.fillZero();
   dirichlet.initialValues.fillZero();
 

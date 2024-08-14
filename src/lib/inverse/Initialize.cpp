@@ -31,7 +31,7 @@ void InverseProblem::initialize(Config &conf)
   main.grid.dirichlet.initialize(conf);
   main.grid.cell.initialize(conf);
   main.grid.node.initialize(conf);
-  main.grid.prepareMatrix(main.petsc, main.outputDir, main.timeMax);
+  //main.grid.prepareMatrix(main.petsc, main.outputDir, main.timeMax);
 
   VecTool::resize(main.petsc.solution, main.grid.nDofsGlobal);
   VecTool::resize(main.grid.dirichlet.dirichletBCsValue, main.grid.nDofsGlobal);
@@ -81,7 +81,7 @@ void InverseProblem::initialize(Config &conf)
   adjoint.grid.dirichlet.initializeAdjoint(conf);
   adjoint.grid.cell.initializeAdjoint(conf);
   adjoint.grid.node.initializeAdjoint(conf, adjoint.grid.dirichlet.controlBoundaryMap);
-  adjoint.grid.prepareMatrix(adjoint.petsc, outputDir, adjoint.timeMax);
+  //adjoint.grid.prepareMatrix(adjoint.petsc, outputDir, adjoint.timeMax);
 
   for(int ic = 0; ic < adjoint.grid.cell.nCellsGlobal; ic++) {
     int count = 0;

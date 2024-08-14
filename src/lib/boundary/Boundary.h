@@ -37,18 +37,19 @@ public:
 
   void initialize(Config &conf);
   void getNewArray(std::vector<int> mapNew);
+  void setValuesZero(int n);
   void assignBCs(Node &node, const int t) override;
   void assignPulsatileBCs(const double pulse, const int nDofsGlobal);
   void applyBCs(Cell &cell, PetscSolver &petsc);
 
   void updateValues(Array3D<double> &X, const int t);
 
-private:
+public:
   std::map<int, std::vector<double>> velocitySet;
-  std::map<int, double>              pressureSet;
+  std::map<int, double> pressureSet;
 
   std::map<int, std::vector<double>> velocitySetNew;
-  std::map<int, double>              pressureSetNew;
+  std::map<int, double> pressureSetNew;
 };
 
 class Neumann : public Boundary
@@ -85,13 +86,13 @@ public:
 
   std::vector<std::map<int, std::vector<double>>> vDirichlet;
   std::vector<std::map<int, std::vector<double>>> vDirichletWall;
-  std::vector<std::map<int, double>>              pDirichlet;
+  std::vector<std::map<int, double>> pDirichlet;
   std::vector<std::map<int, std::vector<double>>> vDirichletNew;
   std::vector<std::map<int, std::vector<double>>> vDirichletWallNew;
-  std::vector<std::map<int, double>>              pDirichletNew;
+  std::vector<std::map<int, double>> pDirichletNew;
 
-  std::vector<int>              controlBoundaryMap;
-  std::vector<int>              controlCellMap;
+  std::vector<int> controlBoundaryMap;
+  std::vector<int> controlCellMap;
   std::vector<std::vector<int>> controlNodeInCell;
 
   std::vector<bool> isBoundaryEdge;

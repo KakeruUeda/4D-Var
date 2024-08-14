@@ -34,6 +34,7 @@ public:
 
   int dim;
   int extractFluid;
+  int nodeStart, nodeEnd;
   int rowStart, rowEnd;
 
   int nNodesGlobal, nCellsGlobal, nDofsGlobal;
@@ -41,11 +42,17 @@ public:
 
   std::vector<int> vecFluidUniqueNodes;
 
-  void prepareMatrix(PetscSolver &petsc, std::string outputDir, const int timeMax);
-  void setForSerial();
-  void distributeToLocal(const int timeMax);
+  void prepareMatrix(Dirichlet &dirichletBC, PetscSolver &petsc, std::string outputDir, const int timeMax);
+  void initialSetting(Dirichlet &dirichletBC);
+  void serialSetting();
+  void parallelSetting(Dirichlet &dirichletBC);
+  void collectNodeMap();
+  void distributeToLocalDofs();
+  void getNodeNewMap(Dirichlet &dirichletBC);
+  void getCellNewMap();
+  void petscMatrixSetting(PetscSolver &petsc);
 
 private:
 };
 
-#endif
+#endif // GRID_H

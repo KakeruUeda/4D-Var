@@ -7,27 +7,33 @@
 #ifndef NODE_H
 #define NODE_H
 
-#include <iostream>
-#include <vector>
-#include <cassert>
 #include "Array.h"
 #include "Config.h"
+#include <cassert>
+#include <iostream>
+#include <vector>
 
 class Node
 {
 public:
   Node() {};
-  Node(Config &conf) : nNodesGlobal(conf.nNodesGlobal),
-                       nNodesLocal(0) {}
-  virtual ~Node() {}
+  Node(Config &conf) : nNodesGlobal(conf.nNodesGlobal), nNodesLocal(0)
+  {
+    if(conf.gridType == GridType::STRUCTURED) {
+      nStrNodesGlobal = conf.nStrNodesGlobal;
+    }
+  }
+  virtual ~Node()
+  {
+  }
 
   int nNodesGlobal, nNodesLocal;
+  int nStrNodesGlobal;
 
   std::vector<int> sortNode;
   std::vector<int> map, mapNew;
   std::vector<int> subId;
   std::vector<int> nDofsOnNode, nDofsOnNodeNew;
-  std::vector<int> dofsMapNew1D, dofsBCsMapNew1D;
   std::vector<std::vector<int>> dofsMap, dofsBCsMap;
   std::vector<std::vector<int>> dofsMapNew, dofsBCsMapNew;
   std::vector<std::vector<bool>> isDirichlet, isDirichletNew;
@@ -70,25 +76,28 @@ public:
   }
 
   void initialize(Config &conf);
-  void initializeNew();
+  void newMapping();
   void initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap);
 };
 
 class SnapShot
 {
 public:
-  SnapShot() {}
-  SnapShot(Config &conf) : nSnapShot(conf.nSnapShot),
-                           snapInterval(conf.snapInterval),
-                           snapTimeBeginItr(conf.snapTimeBeginItr) {}
+  SnapShot()
+  {
+  }
+  SnapShot(Config &conf)
+      : nSnapShot(conf.nSnapShot), snapInterval(conf.snapInterval), snapTimeBeginItr(conf.snapTimeBeginItr)
+  {
+  }
 
   int nSnapShot;
   int snapInterval;
   int snapTimeBeginItr;
 
   std::vector<std::vector<std::vector<double>>> v;
-  void takeSnapShot(std::vector<std::vector<double>> &_v,
-                    const int &snapCount, const int &nNodesGlobal, const int &dim);
+  void takeSnapShot(std::vector<std::vector<double>> &_v, const int &snapCount, const int &nNodesGlobal,
+                    const int &dim);
 };
 
 #endif

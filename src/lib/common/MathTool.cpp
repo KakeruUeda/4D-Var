@@ -153,4 +153,3 @@ double MathTools2D::comp_tau(std::vector<double> &vel, const double &he, const d
 
   return tau = pow(term1 + term2 + term3, -5e-1);
 }
-

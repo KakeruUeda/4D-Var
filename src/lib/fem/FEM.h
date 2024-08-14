@@ -13,6 +13,7 @@
 #include <algorithm>
 #include "Array.h"
 #include "Grid.h"
+#include "MathTool.h"
 
 // FEM Interface
 class FEM
@@ -39,7 +40,6 @@ public:
   // Stabilization parameter
   double tau;
 
-
   // Pysical parameter
   double Re, rho, mu, nu;
 
@@ -53,6 +53,8 @@ public:
   Array1D<double> p;
   Array3D<double> vt;
   Array2D<double> pt;
+
+  Array2D<double> vrt;
 
   // Adjoint variable
   Array2D<double> w;
@@ -71,9 +73,9 @@ public:
   Array1D<double> qvti;
   Array2D<double> lvti;
 
-  double vgp[3];
-  double advgp[3];
-  double dvgpdx[3][3];
+  double v_gp[3];
+  double adv_gp[3];
+  double dvdx_gp[3][3];
 
   double vk[3], vk1[3], vk2[3];
   double dvkdx[3][3], dvk1dx[3][3], dvk2dx[3][3];
@@ -86,8 +88,14 @@ public:
   double comp_he(Array2D<double> &x);
   double comp_f(const double phi);
   double comp_tau(std::vector<double> &vel, const double he);
+  double comp_tau(double vel[3], const double he);
   double comp_pulse(const int t);
 
+  void compValueOnGaussPoint(Grid &grid, MathTools3D &tools,  double (&arr)[3], Array2D<double> &value, const int ic);
+  void compDerivOnGaussPoint(Grid &grid, MathTools3D &tools, double (&arr)[3][3], Array2D<double> &value, const int ic);
+  void compVelOnGaussPoint(Grid &grid, MathTools3D &tools,  double (&arr)[3], const int ic);
+  void compAdVelOnGaussPoint(Grid &grid, MathTools3D &tools,  double (&arr)[3], const int ic);
+  void compVelDerivOnGaussPoint(Grid &grid, MathTools3D &tools, double (&arr)[3][3], const int ic);
   void updateRowIndex(Grid &grid, const int ii, const int ic);
   void updateColumnIndex(Grid &grid, const int jj, const int ic);
   void updateRowIndexPlane(Grid &grid, const int ii, const int ic);

@@ -249,6 +249,14 @@ void Dirichlet::getNewArray(std::vector<int> mapNew)
   }
 }
 
+void Dirichlet::setValuesZero(int n)
+{
+  values.resize(n);
+  initialValues.resize(n);
+  values.fillZero();
+  initialValues.fillZero();
+}
+
 void Dirichlet::assignBCs(Node &node, const int t)
 {
   for(const auto &[idx, vec] : velocitySetNew) {

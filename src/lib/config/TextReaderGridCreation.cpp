@@ -118,7 +118,6 @@ void Config::TextReaderGridCreation::readStructuredBoundaryInfo()
       }
       ptr->setBoundaryPoiseuilleValue(face);
     } else if(bdTypeTmp == "free") {
-      // "free" type specific logic here, if any
     } else {
       throw std::runtime_error("label " + bdTypeTmp + " undefined");
     }

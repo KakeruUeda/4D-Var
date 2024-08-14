@@ -18,6 +18,7 @@ struct CellInfo
 {
 public:
   VTKCellType cellType;
+
   int subId;
   double phi;
 
@@ -66,6 +67,8 @@ public:
   int nCellsLocal;
   int nNodesInCell;
   int nCellsStrGlobal;
+
+  int nStrCellsGlobal;
 
 private:
   std::vector<CellInfo> data;

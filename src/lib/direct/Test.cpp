@@ -21,6 +21,8 @@ void DirectProblem::solveNavierStokes()
   petsc.setMatAndVecZero(grid.cell);
   petsc.initialAssembly();
 
+  dirichlet.setValuesZero(grid.nDofsGlobal);
+
   for(int t = 0; t < timeMax; t++) {
     petsc.setValueZero();
     dirichlet.assignBCs(grid.node, t);
@@ -43,16 +45,17 @@ void DirectProblem::solveNavierStokes()
         MatrixXd Klocal(nDofs, nDofs);
         VectorXd Flocal(nDofs);
         matrixAssemblyUSNS(Klocal, Flocal, ic, t);
-        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
+        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, 
                        grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
     }
     timer1 = MPI_Wtime() - timer1;
 
     MPI_Barrier(MPI_COMM_WORLD);
-
     double timer2 = MPI_Wtime();
+
     petsc.solve();
+
     timer2 = MPI_Wtime() - timer2;
 
     VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
@@ -65,7 +68,7 @@ void DirectProblem::solveNavierStokes()
     }
 
     VecRestoreArray(vecSEQ, &arraySolution);
-    
+
     updateSolutions();
     outputSolutions(t);
 
@@ -105,6 +108,7 @@ void DirectProblem::solveFowardNavierStokes(Array2D<double> &X0, Array3D<double>
 
     dirichlet.updateValues(X, t);
     dirichlet.getNewArray(grid.node.mapNew);
+
     dirichlet.assignBCs(grid.node, t);
     dirichlet.applyBCs(grid.cell, petsc);
 
@@ -115,8 +119,7 @@ void DirectProblem::solveFowardNavierStokes(Array2D<double> &X0, Array3D<double>
         MatrixXd Klocal(nDofs, nDofs);
         VectorXd Flocal(nDofs);
         matrixAssemblyUSNS(Klocal, Flocal, ic, t);
-        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap,
-                       grid.cell(ic).dofsBCsMap, Klocal, Flocal);
+        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
     }
     petsc.solve();
@@ -177,4 +180,47 @@ void DirectProblem::outputSolutions(const int t)
     exit(1);
     break;
   }
+}
+
+void DirectProblem::compVorticity(const int t)
+{
+  if(mpi.myId > 0) {
+    return;
+  }
+
+  std::function<double(int, int, int)> u_func = [this](int i, int j, int k) {
+    int in = i + j * (grid.nx + 1) + k * (grid.nx + 1) * (grid.ny + 1);
+    return vvti(in, 0);
+  };
+  std::function<double(int, int, int)> v_func = [this](int i, int j, int k) {
+    int in = i + j * (grid.nx + 1) + k * (grid.nx + 1) * (grid.ny + 1);
+    return vvti(in, 1);
+  };
+  std::function<double(int, int, int)> w_func = [this](int i, int j, int k) {
+    int in = i + j * (grid.nx + 1) + k * (grid.nx + 1) * (grid.ny + 1);
+    return vvti(in, 2);
+  };
+
+  for(int k = 1; k < grid.nz; k++) {
+    for(int j = 1; j < grid.ny; j++) {
+      for(int i = 1; i < grid.nx; i++) {
+        double dvdz = CDM::zDerivative(v_func, i, j, k, grid.dz);
+        double dwdy = CDM::yDerivative(w_func, i, j, k, grid.dy);
+        double dudz = CDM::zDerivative(u_func, i, j, k, grid.dz);
+        double dwdx = CDM::xDerivative(w_func, i, j, k, grid.dx);
+        double dvdx = CDM::xDerivative(v_func, i, j, k, grid.dx);
+        double dudy = CDM::yDerivative(u_func, i, j, k, grid.dy);
+
+        int in = i + j * (grid.nx + 1) + k * (grid.nx + 1) * (grid.ny + 1);
+
+        vrt(in, 0) = dwdy - dvdz;
+        vrt(in, 1) = dudz - dwdx;
+        vrt(in, 2) = dvdx - dudy;
+      }
+    }
+  }
+
+  std::string vtiFile = outputDir + "/solution/vorticity" + std::to_string(t) + ".vti";
+  EXPORT::exportVectorPointDataVTI<double>(vtiFile, "vorticity", vrt, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy,
+                                           grid.dz);
 }

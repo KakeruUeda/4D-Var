@@ -6,11 +6,12 @@
 #ifndef MATHTOOL_H
 #define MATHTOOL_H
 
-#include <iostream>
-#include <vector>
-#include <string>
-#include <cmath>
 #include "Array.h"
+#include <cmath>
+#include <iostream>
+#include <string>
+#include <vector>
+#include <functional>
 
 using namespace std;
 
@@ -33,7 +34,8 @@ public:
   static double compDeterminant(const double (&a)[2][2]);
 
   static void comp_dxdr(double (&dxdr)[2][2], Array2D<double> &dNdr, Array2D<double> &x1, const int &nNodesInCell);
-  static void comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const double (&dxdr)[2][2], const int &nNodesInCell);
+  static void comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const double (&dxdr)[2][2],
+                        const int &nNodesInCell);
   static double comp_tau(std::vector<double> &vel, const double &he, const double &Re, const double &dt);
 };
 
@@ -56,7 +58,12 @@ public:
   static double compDeterminant(const double (&a)[3][3]);
 
   static void comp_dxdr(double (&dxdr)[3][3], Array2D<double> &dNdr, Array2D<double> &x1, const int &nNodesInCell);
-  static void comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const double (&dxdr)[3][3], const int &nNodesInCell);
+  static void comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const double (&dxdr)[3][3],
+                        const int &nNodesInCell);
+
+  static double xDerivative(const std::function<double(int, int, int)> &f, int i, int j, int k, double dx);
+  static double yDerivative(const std::function<double(int, int, int)> &f, int i, int j, int k, double dy);
+  static double zDerivative(const std::function<double(int, int, int)> &f, int i, int j, int k, double dz);
 };
 
 #endif

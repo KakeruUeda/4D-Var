@@ -15,6 +15,7 @@
 #include "PetscSolver.h"
 #include "ShapeFunction.h"
 #include "Tool.h"
+#include "MySolver.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -84,7 +85,7 @@ public:
   void compInitialCondition(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
                             std::vector<std::map<int, double>> &pDirichletTmp);
   void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, const int ic, const int t);
-  void assembleLocalMatrixAndVector(MatrixXd &Klocal, VectorXd &Flocal, MathTools3D &tools, double f,
+  void setLocalValuesInGauss(MatrixXd &Klocal, VectorXd &Flocal, MathTools3D &tools, double f,
                                     const int ic);
   void updateSolutionsVTI();
   void updateSolutionsVTI(const int t);
@@ -96,7 +97,7 @@ public:
   void outputSolutionsBIN(const std::string &dir, const int t);
 
 private:
-  void setValuesInGaussIntegral(MathTools3D &tools, Gauss &g2, const double he, const int i1, const int i2,
+  void settingInGauss(MathTools3D &tools, Gauss &g2, const double he, const int i1, const int i2,
                                 const int i3, const int ic, const int t);
   void usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, const double f, const int ii, const int jj);
   void usnsGaussIntegralRHS(VectorXd &Flocal, MathTools3D &tools, const double f, const int ii);
