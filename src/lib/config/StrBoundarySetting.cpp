@@ -129,13 +129,13 @@ void Config::setControlBoundary()
   auto collectBoundaryNodes = [&](int i, int j, int k)
   {
     int in = i + j * (nx+1) + k * (nx+1) * (ny+1);
-    mapCB.push_back(in);
+    CBNodeMap.push_back(in);
   };
 
   auto collectBoundaryCells = [&](int i, int j, int k)
   {
     int ic = i + j * nx + k * nx * ny;
-    mapCBCell.push_back(ic);
+    CBCellMap.push_back(ic);
   };
 
   auto collectBoundaryCellNodes = [&](int i, int j, int k, const std::vector<int> &nodeIndices)
@@ -145,7 +145,7 @@ void Config::setControlBoundary()
     for (int p : nodeIndices){
       vecTmp.push_back(cell[ic][p]);
     }
-    mapCBInCell.push_back(vecTmp);
+    CBNodeMapInCell.push_back(vecTmp);
   };
 
   auto collectBoundary = [&](auto conditionNodes, auto conditionCells, const std::vector<int> &nodeIndices)

@@ -329,9 +329,9 @@ void DirectProblem::updateSolutionsVTI(const int t)
  */
 void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t)
 {
-  if(mpi.myId > 0)
-    return;
-
+  if(mpi.myId > 0) {
+    return; 
+  }
   std::string vtiFile;
   vtiFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".vti";
   EXPORT::exportVectorPointDataVTI(vtiFile, "velocity", vvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
@@ -393,20 +393,33 @@ void DirectProblem::outputSolutionsBIN(const std::string &dir, const int t)
   }
   std::string binFile;
   binFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".bin";
-  EXPORT::exportVectorDataBIN<double>(binFile, grid.node.vvti);
+  vvti.exportBIN(binFile);
   binFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".bin";
-  EXPORT::exportScalarDataBIN<double>(binFile, grid.node.pvti);
+  pvti.exportBIN(binFile);
 }
 
 /********************************************
  * @brief Take snapshots for error functions.
  */
-void SnapShot::takeSnapShot(std::vector<std::vector<double>> &_v, const int &snapCount, const int &nNodesGlobal,
+void SnapShot::takeSnapShot(std::vector<std::vector<double>> &vel, const int &snapCount, const int &nNodesGlobal,
                             const int &dim)
 {
   for(int in = 0; in < nNodesGlobal; in++) {
     for(int d = 0; d < dim; d++) {
-      v[snapCount][in][d] = _v[in][d];
+      v[snapCount][in][d] = vel[in][d];
+      vSnap(snapCount, in, d) = vel[in][d];
+    }
+  }
+}
+
+/********************************************
+ * @brief Take snapshots for error functions.
+ */
+void SnapShot::takeSnapShot(Array3D<double> &v, const int nNodesGlobal, const int snapCount, const int step)
+{
+  for(int in = 0; in < nNodesGlobal; in++) {
+    for(int d = 0; d < 3; d++) {
+      vSnap(snapCount, in, d) = v(step, in, d);
     }
   }
 }

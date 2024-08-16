@@ -25,8 +25,8 @@ void Config::setApplication(std::string appName)
     app = Application::SNS;
   } else if(appName == "USNS") {
     app = Application::USNS;
-  } else if(appName == "VOXELDATA") {
-    app = Application::VOXELDATA;
+  } else if(appName == "VOXELDATACREATION") {
+    app = Application::VOXELDATACREATION;
   } else if(appName == "FDVAR") {
     app = Application::FDVAR;
   } else if(appName == "FLOWRATE") {
@@ -78,43 +78,44 @@ void Config::tryReadConfigFile()
  */
 void Config::readConfigFile()
 {
-switch(app) {
-  case Application::GRIDCREATION:
-  {
-    TextReaderGridCreation reader(this);
-    reader.readBasicInfo();
-    reader.readGridInfo();
-    reader.readStructuredBoundaryInfo();
+  switch(app) {
+  case Application::GRIDCREATION: {
+    TextReaderGridCreation reader;
+    reader.readBasicInfo(*this);
+    reader.readGridInfo(*this);
+    reader.readStructuredBoundaryInfo(*this);
     break;
   }
-  case Application::USNS:
-	{
-		TextReaderUSNS reader(this);
-		reader.readBasicInfo();
-		reader.readGridInfo();
-		reader.readBoundaryInfo();
-		reader.readPhysicalInfo();
-		reader.readDarcyInfo();
-		reader.readTimeInfo();
+  case Application::USNS: {
+    TextReaderUSNS reader;
+    reader.readBasicInfo(*this);
+    reader.readGridInfo(*this);
+    reader.readBoundaryInfo(*this);
+    reader.readPhysicalInfo(*this);
+    reader.readDarcyInfo(*this);
+    reader.readTimeInfo(*this);
     break;
-	}
-
-  case Application::VOXELDATA:
-    readBasicParameter();
-    readGridParameter();
-    readVoxelCreationParameter();
+  }
+  case Application::VOXELDATACREATION: {
+    TextReaderVoxelDataCreation reader;
+    reader.readBasicInfo(*this);
+    reader.readGridInfo(*this);
+    reader.readSnapInfo(*this);
+    reader.readOriginalInfo(*this);
     break;
-
-  case Application::FDVAR:
-    readBasicParameter();
-    readGridParameter();
-    readBoundaryParameter();
-    readTimeParameter();
-    readPysicalParameter();
-    readDarcyParameter();
-    readInverseParameter();
-    readDataParameter();
+  }
+  case Application::FDVAR: {
+    TextReader4DVar reader;
+    reader.readBasicInfo(*this);
+    reader.readGridInfo(*this);
+    reader.readBoundaryInfo(*this);
+    reader.readPhysicalInfo(*this);
+    reader.readDarcyInfo(*this);
+    reader.readTimeInfo(*this);
+    reader.readInverseInfo(*this);
+    reader.readDataInfo(*this);
     break;
+  }
 
   case Application::FLOWRATE:
     readBasicParameter();
@@ -126,7 +127,7 @@ switch(app) {
   default:
     throw std::runtime_error("Unknown Application");
     break;
-}
+  }
 }
 
 /*****************************************

@@ -300,31 +300,33 @@ void Config::readStrGridParameter()
 
   IMPORT::importScalarDataDAT<double>(imageFile, phi);
 
-  label = sub_label + "/isOnlyFluidGrid";
+  label = sub_label + "/fluidExtraction";
   if(!tp.getInspectedValue(label, str)) {
     throw std::runtime_error(label + " is not set");
   }
 
   if(app == Application::GRIDCREATION) {
-    str = "NO";
+    str = "OFF";
   }
 
-  if(str == "YES") {
-    isOnlyFluidGrid = true;
-  } else if(str == "NO") {
-    isOnlyFluidGrid = false;
+  if(str == "ON") {
+    fluidExtraction = ON;
+  } else if(str == "OFF") {
+    fluidExtraction = OFF;
   } else {
-    throw std::runtime_error("Yes or No is not set");
+    throw std::runtime_error("ON or OFF is not set");
   }
 
-  if(isOnlyFluidGrid) {
+  if(fluidExtraction) {
     label = sub_label + "/fluidUniqueNodes";
     std::string fluidGridFile;
     if(!tp.getInspectedValue(label, fluidGridFile)) {
       throw std::runtime_error(label + " is not set");
     }
     IMPORT::importScalarDataDAT<int>(fluidGridFile, vecFluidUniqueNodes);
-  }
+  }else{
+		vecFluidUniqueNodes.resize(0);
+	}
 
   if(app == Application::GRIDCREATION) {
     setStrGrid(); // define str grid
@@ -510,16 +512,16 @@ void Config::readControlBoundaryParameter()
   std::string str, base_label, label;
   base_label = "/StructuredBoundary";
 
-  label = base_label + "/extractControlBoundary";
+  label = base_label + "/controlBoundaryExtraction";
 
   if(!tp.getInspectedValue(label, str)) {
     throw std::runtime_error(label + " is not set");
   }
 
   if(str == "ON") {
-    extractCB = ON;
+    CBExtraction = ON;
   } else if(str == "OFF") {
-    extractCB = OFF;
+    CBExtraction = OFF;
     return;
   } else {
     throw std::runtime_error("ON or OFF is not set");
@@ -552,6 +554,7 @@ void Config::readControlBoundaryParameter()
 
   setControlBoundary();
 }
+
 
 /*****************************
  * @brief Read text parameter.
@@ -697,7 +700,7 @@ void Config::readDataParameter()
   dyData = lyData / (double)nyData;
   dzData = lzData / (double)nzData;
 
-  nCellsDataGlobal = nxData * nxData * nzData;
+  nDataCellsGlobal = nxData * nyData * nzData;
 
   std::string controlBoundaryFile;
   label = base_label + "/controlBoundary";
@@ -960,8 +963,8 @@ void Config::readVoxelCreationParameter()
     throw std::runtime_error(label + " is not set");
   }
 
-  label = base_label + "/stepMax";
-  if(!tp.getInspectedValue(label, stepMax)) {
+  label = base_label + "/timeMax";
+  if(!tp.getInspectedValue(label, timeMax)) {
     throw std::runtime_error(label + " is not set");
   }
 
@@ -1016,7 +1019,7 @@ void Config::readVoxelCreationParameter()
   dyData = lyData / (double)nyData;
   dzData = lzData / (double)nzData;
 
-  nCellsDataGlobal = nxData * nxData * nzData;
+  nDataCellsGlobal = nxData * nyData * nzData;
 
   label = base_label + "/nxOpt";
   if(!tp.getInspectedVector(label, tmpInt, dim)) {

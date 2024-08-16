@@ -22,6 +22,9 @@ public:
   int subId;
   double phi;
 
+  double minX, minY, minZ;
+  double maxX, maxY, maxZ;
+
   std::vector<int> node, nodeNew;
   std::vector<int> dofsMap, dofsBCsMap;
   std::vector<int> dofStart;
@@ -62,6 +65,8 @@ public:
   void assignPhi(Config &conf);
   void assignSubId(Config &conf);
   void assignCellType(Config &conf);
+
+  void getBoundaries();
 
   int nCellsGlobal;
   int nCellsLocal;

@@ -29,11 +29,11 @@
 #include <string>
 #include <sys/stat.h>
 
-class Adjoint
+class Adjoint : public virtual FEM
 {
 public:
   Adjoint(Config &conf)
-      : grid(conf), dim(conf.dim), planeDir(conf.planeDir), timeMax(conf.timeMax),
+      : FEM(conf), grid(conf), dim(conf.dim), planeDir(conf.planeDir), timeMax(conf.timeMax),
         rho(conf.rho), mu(conf.mu), dt(conf.dt), alpha(conf.alpha), resistance(conf.resistance)
   {
   }

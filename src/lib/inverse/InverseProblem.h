@@ -7,29 +7,29 @@
 #ifndef INVERSEPROBLEM_H
 #define INVERSEPROBLEM_H
 
-#include <iostream>
-#include <fstream>
-#include <string>
-#include <cstdio>
-#include <set>
-#include <cmath>
-#include <cstdlib>
-#include <cstring>
-#include <sys/stat.h>
-#include <mpi.h>
-#include <algorithm>
-#include "Grid.h"
+#include "Adjoint.h"
 #include "Boundary.h"
-#include "PetscSolver.h"
 #include "Config.h"
-#include "Gauss.h"
-#include "Tool.h"
-#include "Spline.h"
-#include "ShapeFunction.h"
 #include "DirectProblem.h"
 #include "Function.h"
-#include "Adjoint.h"
+#include "Gauss.h"
+#include "Grid.h"
 #include "Import.h"
+#include "PetscSolver.h"
+#include "ShapeFunction.h"
+#include "Spline.h"
+#include "Tool.h"
+#include <algorithm>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <fstream>
+#include <iostream>
+#include <mpi.h>
+#include <set>
+#include <string>
+#include <sys/stat.h>
 
 extern MyMPI mpi;
 
@@ -41,8 +41,8 @@ public:
 
 struct CostFunction
 {
-  double term1, term2, term3, term4, term5; // Reg for X
-  double term6, term7;                      // Reg for X0
+  double term1, term2, term3, term4, term5;  // Reg for X
+  double term6, term7;                       // Reg for X0
   double total;
   std::vector<double> history;
   void sum()
@@ -55,13 +55,16 @@ class InverseProblem
 {
 public:
   InverseProblem(Config &conf);
-  ~InverseProblem() {}
+  ~InverseProblem()
+  {
+  }
 
   int dim, nOMP;
   std::string outputDir;
 
   Application app;
   DataGrid data;
+  DataGridX datax;
 
   DirectProblem main;
   Adjoint adjoint;
@@ -103,11 +106,16 @@ public:
   void compTimeInterpolatedFeedbackForce();
   void feedbackGaussIntegral(Function &func, double (&feedback)[3], const int ic, const int t);
   void compOptimalCondition();
-  void GaussIntegralOptimalConditionXTerm1(Function &func, std::vector<std::vector<double>> &value, const int ic, const int t);
-  void GaussIntegralOptimalConditionXTerm2(Function &func, std::vector<std::vector<double>> &value, const int ic, const int t);
-  void GaussIntegralOptimalConditionXTerm3(Function &func, std::vector<std::vector<double>> &value, const int ic, const int t);
-  void GaussIntegralOptimalConditionXTerm4(Function &func, std::vector<std::vector<double>> &value, const int ic, const int t);
-  void GaussIntegralOptimalConditionXTerm5(Function &func, std::vector<std::vector<double>> &value, const int ic, const int t);
+  void GaussIntegralOptimalConditionXTerm1(Function &func, std::vector<std::vector<double>> &value, const int ic,
+                                           const int t);
+  void GaussIntegralOptimalConditionXTerm2(Function &func, std::vector<std::vector<double>> &value, const int ic,
+                                           const int t);
+  void GaussIntegralOptimalConditionXTerm3(Function &func, std::vector<std::vector<double>> &value, const int ic,
+                                           const int t);
+  void GaussIntegralOptimalConditionXTerm4(Function &func, std::vector<std::vector<double>> &value, const int ic,
+                                           const int t);
+  void GaussIntegralOptimalConditionXTerm5(Function &func, std::vector<std::vector<double>> &value, const int ic,
+                                           const int t);
   void GaussIntegralOptimalConditionX0Term1(Function &func, std::vector<std::vector<double>> &value, const int ic);
   void GaussIntegralOptimalConditionX0Term2(Function &func, std::vector<std::vector<double>> &value, const int ic);
   void GaussIntegralOptimalConditionX0Term3(Function &func, std::vector<std::vector<double>> &value, const int ic);

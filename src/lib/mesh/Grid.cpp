@@ -7,9 +7,8 @@
 #include "Grid.h"
 
 Grid::Grid(Config &conf)
-    : gridType(conf.gridType), cell(conf), node(conf), dirichlet(conf), nNodesGlobal(conf.nNodesGlobal),
-      nCellsGlobal(conf.nCellsGlobal), nDofsGlobal(0), nDofsLocal(0), dim(conf.dim),
-      vecFluidUniqueNodes(conf.vecFluidUniqueNodes)
+    : gridType(conf.gridType), cell(conf), node(conf), nNodesGlobal(conf.nNodesGlobal), nCellsGlobal(conf.nCellsGlobal),
+      nDofsGlobal(0), nDofsLocal(0), dim(conf.dim), vecFluidUniqueNodes(conf.vecFluidUniqueNodes)
 {
   if(gridType == GridType::STRUCTURED) {
     nx = conf.nx;
@@ -159,10 +158,11 @@ void Grid::collectNodeMap()
   nodeEnd = 0;
 
   std::vector<int> nodeListLocal(nNodesLocal);
-
-  for(int in = 0; in < nNodesGlobal; in++)
-    if(node.subId[in] == mpi.myId)
+  for(int in = 0; in < nNodesGlobal; in++) {
+    if(node.subId[in] == mpi.myId) {
       nodeListLocal[kk++] = in;
+    }
+  }
 
   std::vector<int> nNodesLocalVector(mpi.nId);
   std::vector<int> nNodesLocalSum(mpi.nId);
@@ -170,7 +170,6 @@ void Grid::collectNodeMap()
   MPI_Allgather(&nNodesLocal, 1, MPI_INT, &nNodesLocalVector[0], 1, MPI_INT, MPI_COMM_WORLD);
 
   nNodesLocalSum = nNodesLocalVector;
-
   for(int i = 1; i < mpi.nId; i++) {
     nNodesLocalSum[i] += nNodesLocalSum[i - 1];
   }
@@ -188,8 +187,6 @@ void Grid::collectNodeMap()
   for(int i = 0; i < mpi.nId - 1; i++) {
     displs[i + 1] = displs[i] + nNodesLocalVector[i];
   }
-
-  std::vector<int> tmp(nNodesGlobal);
 
   MPI_Allgatherv(&nodeListLocal[0], nNodesLocal, MPI_INT, &node.map[0], &nNodesLocalVector[0], &displs[0], MPI_INT,
                  MPI_COMM_WORLD);

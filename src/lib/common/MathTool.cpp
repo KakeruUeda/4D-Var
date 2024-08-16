@@ -7,20 +7,22 @@
 
 MathTools2D::MathTools2D(const int nNodesInCell)
 {
-  N.resize(nNodesInCell);
-  xCurrent.resize(nNodesInCell, 2);
-  dNdr.resize(nNodesInCell, 2);
-  dNdx.resize(nNodesInCell, 2);
-  K.resize(nNodesInCell, nNodesInCell);
+  this->nNodesInCell = nNodesInCell;
+  N.allocate(nNodesInCell);
+  xCurrent.allocate(nNodesInCell, 2);
+  dNdr.allocate(nNodesInCell, 2);
+  dNdx.allocate(nNodesInCell, 2);
+  K.allocate(nNodesInCell, nNodesInCell);
 }
 
 MathTools3D::MathTools3D(const int nNodesInCell)
 {
-  N.resize(nNodesInCell);
-  xCurrent.resize(nNodesInCell, 3);
-  dNdr.resize(nNodesInCell, 3);
-  dNdx.resize(nNodesInCell, 3);
-  K.resize(nNodesInCell, nNodesInCell);
+  this->nNodesInCell = nNodesInCell;
+  N.allocate(nNodesInCell);
+  xCurrent.allocate(nNodesInCell, 3);
+  dNdr.allocate(nNodesInCell, 3);
+  dNdx.allocate(nNodesInCell, 3);
+  K.allocate(nNodesInCell, nNodesInCell);
 }
 
 void MathTools2D::setZero()
@@ -142,14 +144,36 @@ void MathTools3D::comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const 
   }
 }
 
-double MathTools2D::comp_tau(std::vector<double> &vel, const double &he, const double &Re, const double &dt)
+void MathTools3D::setShapesInGauss(Gauss &gauss, const int i1, const int i2, const int i3)
 {
-  double tau = 0e0;
-  double velMag = sqrt(vel[0] * vel[0] + vel[1] * vel[1] + vel[2] * vel[2]);
+  ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
+  ShapeFunction3D::C3D8_dNdr(dNdr, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
+}
 
-  double term1 = (2e0 / dt) * (2e0 / dt);
-  double term2 = (2e0 * velMag / he) * (2e0 * velMag / he);
-  double term3 = (4e0 / (Re * he * he)) * (4e0 / (Re * he * he));
+void MathTools3D::setFactorsInGauss(Gauss &gauss, const int i1, const int i2, const int i3)
+{
+  MathTools3D::comp_dxdr(dxdr, dNdr, xCurrent, nNodesInCell);
+  detJ = MathTools3D::compDeterminant(dxdr);
+  weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
+  vol = detJ * weight; 
+}
 
-  return tau = pow(term1 + term2 + term3, -5e-1);
+double MathTools3D::getScalarValueGP(Array1D<double> &nodeValues)
+{
+  double value;
+  for(int p = 0; p < nNodesInCell; p++) {
+    value += N(p) * nodeValues(p);
+  }
+  return value;
+}
+
+std::vector<double> MathTools3D::getVectorValuesGP(Array2D<double> &nodeValues)
+{
+  std::vector<double> values(3, 0e0);
+  for(int d = 0; d < 3; d++) {
+    for(int p = 0; p < nNodesInCell; p++) {
+      values[d] += N(p) * nodeValues(p, d);
+    }
+  }
+  return values;
 }

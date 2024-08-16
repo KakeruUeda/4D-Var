@@ -31,7 +31,7 @@ public:
 private:
   Grid grid;
   std::string outputDir;
-  int extractCB;
+  int CBExtraction;
 
   std::vector<int> cellId;
   std::vector<int> nodeId;
@@ -40,9 +40,9 @@ private:
   std::map<int, std::vector<double>> vDirichlet;
   std::map<int, double> pDirichlet;
 
-  std::vector<int> mapCB;
-  std::vector<int> mapCBCell;
-  std::vector<std::vector<int>> mapCBInCell;
+  std::vector<int> CBNodeMap;
+  std::vector<int> CBCellMap;
+  std::vector<std::vector<int>> CBNodeMapInCell;
 
   std::set<int> fluidUniqueNodes;
 

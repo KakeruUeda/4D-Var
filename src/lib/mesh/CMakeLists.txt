@@ -6,6 +6,7 @@ target_sources(mesh
 PRIVATE
   Grid.cpp
   DataGrid.cpp
+  DataGridX.cpp
   Cell.cpp
   Node.cpp
 )

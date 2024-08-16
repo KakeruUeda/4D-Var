@@ -21,6 +21,8 @@ class FEM
 public:
   FEM(Config &conf);
 
+  MathTools3D tools;
+
   int dim, nOMP;
 
   // Index

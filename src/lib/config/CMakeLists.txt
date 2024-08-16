@@ -12,6 +12,8 @@ target_sources(config
     TextReaderInterface.cpp
     TextReaderGridCreation.cpp
     TextReaderUSNS.cpp
+    TextReaderVoxelDataCreation.cpp
+    TextReader4DVar.cpp
 )
 
 target_include_directories(config 

@@ -13,8 +13,7 @@
 #include <sstream>
 #include <stdexcept>
 
-template <typename T> 
-void EXPORT::exportScalarDataDAT(const std::string &file, const std::vector<T> &vec)
+template <typename T> void EXPORT::exportScalarDataDAT(const std::string &file, const std::vector<T> &vec)
 {
   std::ofstream ofs(file);
   if(!ofs) {
@@ -32,8 +31,7 @@ void EXPORT::exportScalarDataDAT(const std::string &file, const std::vector<T> &
   }
 }
 
-template <typename T> 
-void EXPORT::exportScalarDataDAT(const std::string &file, const std::set<T> &set)
+template <typename T> void EXPORT::exportScalarDataDAT(const std::string &file, const std::set<T> &set)
 {
   std::ofstream ofs(file);
   if(!ofs) {
@@ -51,8 +49,7 @@ void EXPORT::exportScalarDataDAT(const std::string &file, const std::set<T> &set
   }
 }
 
-template <typename T> 
-void EXPORT::exportVectorDataDAT(const std::string &file, const std::vector<std::vector<T>> &vec)
+template <typename T> void EXPORT::exportVectorDataDAT(const std::string &file, const std::vector<std::vector<T>> &vec)
 {
   std::ofstream ofs(file);
   if(!ofs) {
@@ -60,7 +57,6 @@ void EXPORT::exportVectorDataDAT(const std::string &file, const std::vector<std:
     return;
   }
 
-  ofs << vec.size() << "\n";
   for(const auto &row : vec) {
     for(const T &val : row) {
       ofs << val << " ";
@@ -74,8 +70,9 @@ void EXPORT::exportVectorDataDAT(const std::string &file, const std::vector<std:
   }
 }
 
+
 template <typename T>
-void EXPORT::exportMapDataDAT(const std::string &file, const std::map<int, std::vector<T>> &dataMap)
+void EXPORT::exportMapVectorDataDAT(const std::string &file, const std::map<int, std::vector<T>> &dataMap)
 {
   std::ofstream ofs(file);
   if(!ofs) {
@@ -98,7 +95,7 @@ void EXPORT::exportMapDataDAT(const std::string &file, const std::map<int, std::
 }
 
 template <typename T> 
-void EXPORT::exportMapDataDAT(const std::string &file, const std::map<int, T> &dataMap)
+void EXPORT::exportMapScalarDataDAT(const std::string &file, const std::map<int, T> &dataMap)
 {
   std::ofstream ofs(file);
   if(!ofs) {
@@ -115,5 +112,6 @@ void EXPORT::exportMapDataDAT(const std::string &file, const std::map<int, T> &d
     std::cerr << "Error occurred at writing time." << std::endl;
   }
 }
+
 
 #endif  // DAT_INL_H

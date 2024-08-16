@@ -50,7 +50,7 @@ void Config::getUniqueNodes()
  */
 void Config::getUniqueCBCells()
 {
-  for(int cb : mapCBCell) {
+  for(int cb : CBCellMap) {
     if(phi[cb] > 1e-12) {
       fluidUniqueCBCells.insert(cb);
     }
@@ -62,8 +62,8 @@ void Config::getUniqueCBCells()
  */
 void Config::getUniqueCBCellsIdx()
 {
-  for(int icb = 0; icb < mapCBCell.size(); icb++) {
-    int cb = mapCBCell[icb];
+  for(int icb = 0; icb < CBCellMap.size(); icb++) {
+    int cb = CBCellMap[icb];
     if(phi[cb] > 1e-12) {
       fluidUniqueCBCellsIdx.insert(icb);
     }
@@ -75,10 +75,10 @@ void Config::getUniqueCBCellsIdx()
  */
 void Config::getUniqueCBNodes()
 {
-  for(int icb = 0; icb < mapCBCell.size(); icb++) {
-    int cb = mapCBCell[icb];
+  for(int icb = 0; icb < CBCellMap.size(); icb++) {
+    int cb = CBCellMap[icb];
     if(phi[cb] > 1e-12) {
-      for(int node : mapCBInCell[icb]) {
+      for(int node : CBNodeMapInCell[icb]) {
         fluidUniqueCBNodes.insert(node);
       }
     }
@@ -154,7 +154,7 @@ void Config::filterMapCB()
     filteredValues.push_back(in);
   }
 
-  mapCB = std::move(filteredValues);
+  CBNodeMap = std::move(filteredValues);
 }
 
 /***************************************
@@ -168,7 +168,7 @@ void Config::filterMapCBCell()
     filteredValues.push_back(cb);
   }
 
-  mapCBCell = std::move(filteredValues);
+  CBCellMap = std::move(filteredValues);
 }
 
 /************************************************
@@ -178,10 +178,10 @@ void Config::filterMapCBInCell()
 {
   std::vector<std::vector<int>> filteredValues;
   for(int cb : fluidUniqueCBCellsIdx) {
-    filteredValues.push_back(mapCBInCell[cb]);
+    filteredValues.push_back(CBNodeMapInCell[cb]);
   }
 
-  mapCBInCell = std::move(filteredValues);
+  CBNodeMapInCell = std::move(filteredValues);
 }
 
 /********************************************************
@@ -225,17 +225,17 @@ void Config::applyMapping()
     }
   }
 
-  for(auto &value : mapCBCell) {
+  for(auto &value : CBCellMap) {
     value = cellMapping[value];
   }
 
-  for(auto &vec : mapCBInCell) {
+  for(auto &vec : CBNodeMapInCell) {
     for(auto &value : vec) {
       value = nodeMapping[value];
     }
   }
 
-  for(auto &value : mapCB) {
+  for(auto &value : CBNodeMap) {
     value = nodeMapping[value];
   }
 
@@ -257,14 +257,14 @@ void Config::applyMapping()
  */
 void Config::filterFluidGrid()
 {
-  if(!((gridType == GridType::STRUCTURED) && (extractFluid == ON))) {
+  if(!((gridType == GridType::STRUCTURED) && (fluidExtraction == ON))) {
     return;
   }
   // Get unique cells and nodes
   getUniqueCells();
   getUniqueNodes();
 
-  if(extractCB == ON) {
+  if(CBExtraction == ON) {
     getUniqueCBCells();
     getUniqueCBNodes();
     getUniqueCBCellsIdx();
@@ -280,7 +280,7 @@ void Config::filterFluidGrid()
   filterPhi();
   filterNode();
 
-  if(extractCB == ON) {
+  if(CBExtraction == ON) {
     filterMapCB();
     filterMapCBCell();
     filterMapCBInCell();

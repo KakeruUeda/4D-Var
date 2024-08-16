@@ -10,9 +10,10 @@
  * @brief construct inverse object from config param
  */
 InverseProblem::InverseProblem(Config &conf)
-    : main(conf), adjoint(conf), data(conf), app(conf.app), vvox(conf.vvox), dim(conf.dim), outputDir(conf.outputDir),
-      outputItr(conf.outputItr), nOMP(conf.nOMP), aCF(conf.aCF), bCF(conf.bCF), gCF(conf.gCF), alphaX0(conf.alphaX0),
-      alphaX(conf.alphaX), loopMax(conf.loopMax), planeDir(conf.planeDir)
+    : main(conf), adjoint(conf), data(conf), datax(conf, main.grid, main.snap), app(conf.app), vvox(conf.vvox),
+      dim(conf.dim), outputDir(conf.outputDir), outputItr(conf.outputItr), nOMP(conf.nOMP), aCF(conf.aCF),
+      bCF(conf.bCF), gCF(conf.gCF), alphaX0(conf.alphaX0), alphaX(conf.alphaX), loopMax(conf.loopMax),
+      planeDir(conf.planeDir)
 {
   std::string dir;
   std::string output = "output";
@@ -56,10 +57,9 @@ void InverseProblem::runSimulation()
 
     costFunction.history.push_back(costFunction.total);
     if(mpi.myId == 0) {
-      cf << costFunction.term1 << " " << costFunction.term2 << " " 
-         << costFunction.term3 << " " << costFunction.term4 << " " 
-         << costFunction.term5 << " " << costFunction.term6 << " " 
-         << costFunction.term7 << " " << costFunction.total;
+      cf << costFunction.term1 << " " << costFunction.term2 << " " << costFunction.term3 << " " << costFunction.term4
+         << " " << costFunction.term5 << " " << costFunction.term6 << " " << costFunction.term7 << " "
+         << costFunction.total;
       cf << std::endl;
     }
     bool isConverged = checkConvergence(cf, loop);
@@ -128,7 +128,6 @@ void InverseProblem::guessInitialCondition()
       }
     }
     if((t - main.snap.snapTimeBeginItr) % main.snap.snapInterval == 0) {
-      ;
       main.snap.takeSnapShot(main.grid.node.vt[t], snapCount, main.grid.node.nNodesGlobal, dim);
       snapCount++;
     }

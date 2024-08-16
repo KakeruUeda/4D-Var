@@ -107,3 +107,38 @@ void Cell::assignCellType(Config &conf)
     }
   }
 }
+
+void Cell::getBoundaries()
+{
+  auto getMin = [](const std::vector<std::vector<double>> &x, const int dim) -> double {
+    double min = std::numeric_limits<double>::max();
+    for(const auto &node : x) {
+      if(node[dim] < min) {
+        min = node[dim];
+      }
+    }
+    return min;
+  };
+
+  auto getMax = [](const std::vector<std::vector<double>> &x, const int dim) -> double {
+    double max = std::numeric_limits<double>::lowest();
+    for(const auto &node : x) {
+      if(node[dim] > max) {
+        max = node[dim];
+      }
+    }
+    return max;
+  };
+
+  for(int ic = 0; ic < nCellsGlobal; ic++) {
+    data[ic].minX = getMin(data[ic].x, 0);
+    data[ic].minY = getMin(data[ic].x, 1);
+    data[ic].minZ = getMin(data[ic].x, 2);
+  }
+
+  for(int ic = 0; ic < nCellsGlobal; ic++) {
+    data[ic].maxX = getMax(data[ic].x, 0);
+    data[ic].maxY = getMax(data[ic].x, 1);
+    data[ic].maxZ = getMax(data[ic].x, 2);
+  }
+}

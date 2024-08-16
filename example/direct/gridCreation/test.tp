@@ -2,8 +2,8 @@ Base
 {
   dim = 3
   outputDir = "test"
+  numOfOMP = 1
 }
-
 
 Grid
 {
@@ -15,7 +15,8 @@ Grid
   StructuredGrid{
     nx = (96, 32, 32) 
     lx = (6.0, 2.0, 2.0)
-    image = "input/image.dat"
+    image = "input/stenosis/image_direct.dat"
+    fluidExtraction = "ON"
   }
 }
 
@@ -48,7 +49,6 @@ StructuredBoundary
     value = (0,0,0)
   }
 
-  extractControlBoundary = "OFF"
+  controlBoundaryExtraction = "OFF"
   inletControlBoundary = "left"
-
 }

@@ -27,7 +27,7 @@ enum class Application
 {
   SNS = 0,
   USNS = 1,
-  VOXELDATA = 2,
+  VOXELDATACREATION = 2,
   FDVAR = 3,
   FLOWRATE = 4,
   MAE = 5,
@@ -105,7 +105,7 @@ public:
   double alpha, resistance;
 
   // Grid parameter
-  bool isOnlyFluidGrid;
+  bool fluidExtraction;
   int extractFluid;
   int nx, ny, nz;
   double lx, ly, lz;
@@ -130,7 +130,7 @@ public:
   double lxData, lyData, lzData;
   double dxData, dyData, dzData;
   int nNodesInCellData;
-  int nCellsDataGlobal;
+  int nDataCellsGlobal;
 
   // Voxel creation
   int nxOpt, nyOpt, nzOpt;
@@ -138,7 +138,6 @@ public:
   double dxOpt, dyOpt, dzOpt;
   int nCellsOptGlobal;
   int nNodesOptGlobal;
-  int stepMax;
   std::string inputDir;
 
   // Boundary parameter for stgrid
@@ -167,10 +166,10 @@ public:
   double center[3];
   double R, Q, maxVelocity;
 
-  std::vector<int> mapCB;
-  std::vector<int> mapCBCell;
-  std::vector<std::vector<int>> mapCBInCell;
-  int extractCB;
+  std::vector<int> CBNodeMap;
+  std::vector<int> CBCellMap;
+  std::vector<std::vector<int>> CBNodeMapInCell;
+  int CBExtraction;
 
   // For cell and node data
   std::vector<std::vector<double>> node;
@@ -188,6 +187,8 @@ public:
   std::vector<std::vector<int>> controlNodeInCell;
   std::vector<int> controlCellMap;
 
+  std::string dataDir;
+  
   // post inverse parameter
   int nRef;
   int crossPoint;
@@ -197,41 +198,6 @@ public:
 
   void setSolidBoundary();
   void setFluidDomain();
-
-  class TextReaderInterface
-  {
-  protected:
-    Config *ptr;
-
-  public:
-    TextReaderInterface(Config *conf) : ptr(conf)
-    {
-    }
-    void readBasicInfo();
-    void readPhysicalInfo();
-    void readDarcyInfo();
-    void readTimeInfo();
-  };
-
-  class TextReaderGridCreation : public TextReaderInterface
-  {
-  public:
-    TextReaderGridCreation(Config *conf) : TextReaderInterface(conf)
-    {
-    }
-    void readGridInfo();
-    void readStructuredBoundaryInfo();
-  };
-
-  class TextReaderUSNS : public TextReaderInterface
-  {
-  public:
-    TextReaderUSNS(Config *conf) : TextReaderInterface(conf)
-    {
-    }
-    void readGridInfo();
-    void readBoundaryInfo();
-  };
 
 private:
   void setApplication(std::string appName);
@@ -259,6 +225,8 @@ private:
   void readPostInverseFlowRateParameter();
   void readVoxelCreationParameter();
   void readStrBoundaryValue(std::string face, std::string labelFace, std::string labelType, std::string labelValue);
+
+public:
   void setBoundaryVelocityValue(std::string face, double value[3]);
   void setBoundaryPressureValue(std::string face, const double value);
   void setBoundaryPoiseuilleValue(std::string face);
@@ -298,6 +266,79 @@ public:
   void filterVelocityDirichlet();
   void filterPressureDirichlet();
   void applyMapping();
+};
+
+
+class TextReaderInterface
+{
+protected:
+  std::shared_ptr<Config> ptr;
+
+public:
+  TextReaderInterface()
+  {
+  }
+  virtual ~TextReaderInterface() = default;
+
+  virtual void readBasicInfo(Config &conf);
+  virtual void readGridInfo(Config &conf);
+  virtual void readBoundaryInfo(Config &conf);
+  virtual void readPhysicalInfo(Config &conf);
+  virtual void readDarcyInfo(Config &conf);
+  virtual void readTimeInfo(Config &conf);
+};
+
+class TextReaderGridCreation : public TextReaderInterface
+{
+public:
+  TextReaderGridCreation()
+  {
+  }
+  void readStructuredBoundaryInfo(Config &conf);
+  void readBasicInfo(Config &conf) override;
+  void readGridInfo(Config &conf) override;
+};
+
+class TextReaderUSNS : public TextReaderInterface
+{
+public:
+  TextReaderUSNS()
+  {
+  }
+  void readBasicInfo(Config &conf) override;
+  void readGridInfo(Config &conf) override;
+  void readBoundaryInfo(Config &conf) override;
+  void readPhysicalInfo(Config &conf) override;
+  void readDarcyInfo(Config &conf) override;
+  void readTimeInfo(Config &conf) override;
+};
+
+class TextReaderVoxelDataCreation : public TextReaderInterface
+{
+public:
+  TextReaderVoxelDataCreation()
+  {
+  }
+  void readSnapInfo(Config &conf);
+  void readOriginalInfo(Config &conf);
+  void readBasicInfo(Config &conf) override;
+  void readGridInfo(Config &conf) override;
+};
+
+class TextReader4DVar : public TextReaderInterface
+{
+public:
+  TextReader4DVar()
+  {
+  }
+  void readBasicInfo(Config &conf) override;
+  void readGridInfo(Config &conf) override;
+  void readBoundaryInfo(Config &conf) override;
+  void readPhysicalInfo(Config &conf) override;
+  void readDarcyInfo(Config &conf) override;
+  void readTimeInfo(Config &conf) override;
+  void readInverseInfo(Config &conf);
+  void readDataInfo(Config &conf);
 };
 
 #endif

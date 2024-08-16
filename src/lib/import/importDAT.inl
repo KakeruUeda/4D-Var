@@ -13,7 +13,8 @@
 #include <sstream>
 #include <stdexcept>
 
-template <typename T> void IMPORT::importScalarDataDAT(const std::string &file, std::vector<T> &vec)
+template <typename T> 
+void IMPORT::importScalarDataDAT(const std::string &file, std::vector<T> &vec)
 {
   std::ifstream ifs(file);
   if(!ifs) {
@@ -33,27 +34,8 @@ template <typename T> void IMPORT::importScalarDataDAT(const std::string &file, 
   ifs.close();
 }
 
-template <typename T> void IMPORT::importScalarDataDAT(const std::string &file, std::set<T> &set)
-{
-  std::ifstream ifs(file);
-  if(!ifs) {
-    throw std::runtime_error("Couldn't open file: " + file);
-  }
-
-  set.clear();
-  T value;
-  while(ifs >> value) {
-    set.insert(value);
-  }
-
-  if(ifs.bad()) {
-    throw std::runtime_error("Error occurred while reading file: " + file);
-  }
-
-  ifs.close();
-}
-
-template <typename T> void IMPORT::importVectorDataDAT(const std::string &file, std::vector<std::vector<T>> &vec)
+template <typename T> 
+void IMPORT::importVectorDataDAT(const std::string &file, std::vector<std::vector<T>> &vec)
 {
   std::ifstream ifs(file);
   if(!ifs) {

@@ -76,6 +76,15 @@ void Node::initialize(Config &conf)
   }
 }
 
+void Node::assignCoordinates(Config &conf)
+{
+  for(int in = 0; in < conf.nNodesGlobal; in++) {
+    for(int d = 0; d < conf.dim; d++) {
+      x[in][d] = conf.node[in][d];
+    }
+  }
+}
+
 void Node::newMapping()
 {
   // initialize variables

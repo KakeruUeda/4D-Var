@@ -6,9 +6,9 @@
 
 #include "GridCreation.h"
 
-/**********************
- * @brief Constructor.
- */
+/// @brief Constructor.
+/// @param conf Config object
+/// @return void
 GridCreation::GridCreation(Config &conf)
 {
   outputDir = conf.outputDir;
@@ -24,9 +24,9 @@ GridCreation::GridCreation(Config &conf)
   mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 }
 
-/*****************************
- * @brief Initialize the grid.
- */
+/// @brief Initialize grid.
+/// @param conf Config object.
+/// @return void.
 void GridCreation::initialize(Config &conf)
 {
   grid.gridType = conf.gridType;
@@ -39,14 +39,17 @@ void GridCreation::initialize(Config &conf)
 	fluidUniqueNodes = conf.fluidUniqueNodes;
 	phi = conf.phi;
 
-  extractCB = conf.extractCB;
-  if(extractCB == ON) {
-    mapCB = conf.mapCB;
-    mapCBCell = conf.mapCBCell;
-    mapCBInCell = conf.mapCBInCell;
+  CBExtraction = conf.CBExtraction;
+  if(CBExtraction == ON) {
+    CBNodeMap = conf.CBNodeMap;
+    CBCellMap = conf.CBCellMap;
+    CBNodeMapInCell = conf.CBNodeMapInCell;
   }
 }
 
+/// @brief Initialize CFD grid cells.
+/// @param conf Config object.
+/// @return void.
 void GridCreation::initializeCells(Config &conf)
 {
   grid.cell.nNodesInCell = conf.nNodesInCell;
@@ -67,17 +70,15 @@ void GridCreation::initializeNodes(Config &conf)
   grid.node.nNodesGlobal = conf.nNodesGlobal;
   grid.node.x.resize(conf.nNodesGlobal, std::vector<double>(conf.dim));
   grid.node.sortNode.resize(conf.nNodesGlobal);
-
-  for(int in = 0; in < conf.nNodesGlobal; in++) {
-    for(int d = 0; d < conf.dim; d++) {
-      grid.node.x[in][d] = conf.node[in][d];
-    }
-  }
+	grid.node.assignCoordinates(conf);
 
   cellId.resize(grid.cell.nCellsGlobal, 0);
   nodeId.resize(grid.node.nNodesGlobal, 0);
 }
 
+/// @brief Set cell type.
+/// @param nNodesInCell Number of nodes in a cell.
+/// @return void.
 void GridCreation::setCellType(int nNodesInCell)
 {
   if(nNodesInCell == 4) {
@@ -91,9 +92,8 @@ void GridCreation::setCellType(int nNodesInCell)
   }
 }
 
-/**********************
- * @brief Divide the whole grid.
- */
+/// @brief Divide whole grid.
+/// @return void.
 void GridCreation::divideWholeGrid()
 {
   if(mpi.myId != 0) {
@@ -117,6 +117,11 @@ void GridCreation::divideWholeGrid()
   partitionMesh(eptr.data(), eind.data(), nparts);
 }
 
+/// @brief Partition mesh.
+/// @param eptr tmp.
+/// @param eind tmp.
+/// @param nparts tmp.
+/// @return void.
 void GridCreation::partitionMesh(int *eptr, int *eind, int nparts)
 {
   int ncommon_nodes = 4;
@@ -138,9 +143,8 @@ void GridCreation::partitionMesh(int *eptr, int *eind, int nparts)
   }
 }
 
-/*****************************
- * @brief Collect local grid.
- */
+/// @brief Collect local grid.
+/// @return void.
 void GridCreation::collectLocalGrid()
 {
   MPI_Bcast(cellId.data(), grid.cell.nCellsGlobal, MPI_INT, 0, MPI_COMM_WORLD);
@@ -154,9 +158,8 @@ void GridCreation::collectLocalGrid()
   printf("nNodesLocal =  %5d \t numOfId = %5d \t myId = %5d \n", grid.nNodesLocal, mpi.nId, mpi.myId);
 }
 
-/***************************
- * @brief Output dat files.
- */
+/// @brief Extract control boundary.
+/// @return void.
 void GridCreation::outputDat()
 {
   if(mpi.myId != 0) {
@@ -171,9 +174,9 @@ void GridCreation::outputDat()
   datFile = outputDir + "/dat/image.dat";
   EXPORT::exportScalarDataDAT<double>(datFile, phi);
   datFile = outputDir + "/dat/velocityDirichlet.dat";
-  EXPORT::exportMapDataDAT(datFile, vDirichlet);
+  EXPORT::exportMapVectorDataDAT<double>(datFile, vDirichlet);
   datFile = outputDir + "/dat/pressureDirichlet.dat";
-  EXPORT::exportMapDataDAT(datFile, pDirichlet);
+  EXPORT::exportMapScalarDataDAT<double>(datFile, pDirichlet);
 	datFile = outputDir + "/dat/fluidUniqueNodes.dat";
 	EXPORT::exportScalarDataDAT<int>(datFile, fluidUniqueNodes);
 
@@ -182,19 +185,18 @@ void GridCreation::outputDat()
   datFile = outputDir + "/dat/node.dat";
   EXPORT::exportNodeDataDAT(datFile, grid.node);
 
-  if(extractCB == ON) {
-    datFile = outputDir + "/dat/controlBoundaryNode.dat";
-    EXPORT::exportScalarDataDAT<int>(datFile, mapCB);
-    datFile = outputDir + "/dat/controlCell.dat";
-    EXPORT::exportScalarDataDAT<int>(datFile, mapCBCell);
-    datFile = outputDir + "/dat/controlBoundaryNodeInCell.dat";
-    EXPORT::exportVectorDataDAT<int>(datFile, mapCBInCell);
+  if(CBExtraction == ON) {
+    datFile = outputDir + "/dat/controlBoundaryNodeMap.dat";
+    EXPORT::exportScalarDataDAT<int>(datFile, CBNodeMap);
+    datFile = outputDir + "/dat/controlBoundaryCellMap.dat";
+    EXPORT::exportScalarDataDAT<int>(datFile, CBCellMap);
+    datFile = outputDir + "/dat/controlBoundaryNodeMapInCell.dat";
+    EXPORT::exportVectorDataDAT<int>(datFile, CBNodeMapInCell);
   }
 }
 
-/********************
- * @brief Output VTU files for visualization.
- */
+/// @brief Output VTU file.
+/// @return void.
 void GridCreation::outputVTU()
 {
   if(mpi.myId != 0) {

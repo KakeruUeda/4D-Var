@@ -251,8 +251,8 @@ void Dirichlet::getNewArray(std::vector<int> mapNew)
 
 void Dirichlet::setValuesZero(int n)
 {
-  values.resize(n);
-  initialValues.resize(n);
+  values.allocate(n);
+  initialValues.allocate(n);
   values.fillZero();
   initialValues.fillZero();
 }

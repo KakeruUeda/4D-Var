@@ -28,14 +28,14 @@ void DirectProblem::resize()
   VecTool::resize(grid.node.vPrev, grid.node.nNodesGlobal, dim);
   VecTool::resize(grid.node.p, grid.node.nNodesGlobal);
 
-  v.resize(grid.node.nNodesGlobal, dim);
-  vPrev.resize(grid.node.nNodesGlobal, dim);
-  p.resize(grid.node.nNodesGlobal);
+  v.allocate(grid.node.nNodesGlobal, dim);
+  vPrev.allocate(grid.node.nNodesGlobal, dim);
+  p.allocate(grid.node.nNodesGlobal);
 
-	vrt.resize(grid.node.nStrNodesGlobal, dim);
+	vrt.allocate(grid.node.nStrNodesGlobal, dim);
 
-  dirichlet.values.resize(grid.nDofsGlobal);
-  dirichlet.initialValues.resize(grid.nDofsGlobal);
+  dirichlet.values.allocate(grid.nDofsGlobal);
+  dirichlet.initialValues.allocate(grid.nDofsGlobal);
 
   v.fillZero();
   vPrev.fillZero();
@@ -46,8 +46,8 @@ void DirectProblem::resize()
   dirichlet.initialValues.fillZero();
 
   if(grid.gridType == GridType::STRUCTURED) {
-    vvti.resize(grid.node.nNodesStrGlobal, dim);
-    pvti.resize(grid.node.nNodesStrGlobal);
+    vvti.allocate(grid.node.nNodesStrGlobal, dim);
+    pvti.allocate(grid.node.nNodesStrGlobal);
   }
 
   VecTool::resize(petsc.solution, grid.nDofsGlobal);

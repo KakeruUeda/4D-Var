@@ -1,78 +1,90 @@
 Base
 {
-    dim = 3
-    outputDir = "test"
-    numOfOMP = 1
+  dim = 3
+  outputDir = "test"
+  numOfOMP = 1
 }
 
 Grid
 {
+  GridType{
     type = "Structured"
-    nx = (88, 32, 32) 
-    lx = (5.5, 2.0, 2.0)
-    extractFluid = "ON"
     nNodesInCell = 8
+  }
+
+  BaseGrid{
     node = "input/stenosis/44x16x16/dat/node.dat"
     cell = "input/stenosis/44x16x16/dat/cell.dat"
+  }
+
+  SubGrid{
+    nodeId = input/stenosis/44x16x16/dat/nodeId.dat"
+    cellId = input/stenosis/44x16x16/dat/cellId.dat"
+  }
+
+  StructuredGrid{
+    nx = (96, 32, 32) 
+    lx = (6.0, 2.0, 2.0)
+    fluidExtraction = "ON"
+    fluidUniqueNodes = "input/stenosis/44x16x16/dat/fluidUniqueNodes.dat"
     image = "input/stenosis/44x16x16/dat/image.dat"
+  }
 }
 
 Boundary
 {
-    velocityDirichlet = "input/stenosis/44x16x16/dat/velocityDirichletPoiseuille.dat"
-    pressureDirichlet = "input/stenosis/44x16x16/dat/pressureDirichlet.dat"
-}
-
-Inverse
-{
-    controlBoundary = "left"
-    voxelVelocity = "average"
-    aCF = 1e1
-    bCF = 0e0
-    gCF = 0e0
-    alphaX =  1e0
-    alphaX0 = 1e0
-    loopMAX = 400
-    outputItr = 5
-}
-
-Data
-{
-    nSnapShot = 11
-    snapInterval = 5
-    snapTimeBeginItr = 0
-    nNodesInDataCell = 8
-    nxData = (44, 16, 16)
-    lxData = (5.5, 2.0, 2.0)
-    nControlNodesInCell = 4
-    controlBoundary = "input/stenosis/44x16x16/dat/controlBoundary.dat"
-    controlCellMap = "input/stenosis/44x16x16/dat/controlCellMap.dat"
-    controlNodeInCell = "input/stenosis/44x16x16/dat/controlNodeInCell.dat"
-    inputDir = "input/stenosis/44x16x16/bin"
+  velocityDirichlet = "input/stenosis/44x16x16/dat/velocityDirichletPoiseuille.dat"
+  pressureDirichlet = "input/stenosis/44x16x16/dat/pressureDirichlet.dat"
 }
 
 PysicalParameter
-{
-    rho = 1000
-    mu = 1   
-}
-
-NRParameter
-{
-    NRtolerance = 1e-5
+{   
+  rho = 100
+  mu = 1   
 }
 
 TimeParameter
 {
-    dt = 0.01
-    timeMax = 51
-    pulsatileFlow = "OFF"
-    pulseBeginItr = 100
-    T = 0.5
+  dt = 0.02
+  timeMax = 400
+  pulsatileFlow = "ON"
+  pulseBeginItr = 250
+  T = 0.5
 }
 
 DarcyParameter
 {
-    alpha = 1e-3
-    resistance = 1e2
+  alpha = 1e-3
+  resistance = 1e2
+}
+
+Inverse
+{
+  aCF = 1e1 
+  bCF = 0e0 
+  gCF = 0e0
+  alphaX = 1e0 
+  alphaX0 = 1e0 
+  loopMAX = 400 
+  outputItr = 5
+
+  controlBoundary = "left" 
+  nControlNodesInCell = 4 
+  controlBoundaryNodeMap = "input/stenosis/44x16x16/dat/controlBoundaryNodeMap.dat" 
+  controlBoundaryCellMap = "input/stenosis/44x16x16/dat/controlBoundaryCellMap.dat" 
+  controlBoundaryNodeMapInCell = "input/stenosis/44x16x16/dat/controlBoundaryNodeMapInCell.dat"
+}
+
+Data
+{
+  timeMax = 400 
+  nSnapShot = 11 
+  snapInterval = 5
+
+  nNodesInDataCell = 8 
+  nxData = (44, 16, 16)
+  lxData = (5.5, 2.0, 2.0)
+  voxelVelocity = "average"
+
+  dataFile = "input/stenosis/44x16x16/bin"
 }

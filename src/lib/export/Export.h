@@ -9,7 +9,7 @@
 
 #include "Array.h"
 #include "Cell.h"
-#include "DataGrid.h"
+#include "DataGridX.h"
 #include "MyMPI.h"
 #include "Node.h"
 #include <iostream>
@@ -27,18 +27,15 @@ public:
   template <typename T>
   static void exportVectorDataDAT(const std::string &file, const std::vector<std::vector<T>> &vec);
   template <typename T>
-  static void exportMapDataDAT(const std::string &file, const std::map<int, std::vector<T>> &dataMap);
+  static void exportMapScalarDataDAT(const std::string &file, const std::map<int, T> &dataMap);
   template <typename T>
-  static void exportMapDataDAT(const std::string &file, const std::map<int, T> &dataMap);
-
-  static void exportCellDataDAT(const std::string &file, Cell &cell);
-  static void exportNodeDataDAT(const std::string &file, Node &node);
+  static void exportMapVectorDataDAT(const std::string &file, const std::map<int, std::vector<T>> &dataMap);
 
   // BIN
   template <typename T>
-  static void exportScalarDataBIN(const std::string &file, std::vector<T> &vec);
+  static void exportScalarDataBIN(const std::string &file, const std::vector<T> &vec);
   template <typename T>
-  static void exportVectorDataBIN(const std::string &file, std::vector<std::vector<T>> &vec);
+  static void exportVectorDataBIN(const std::string &file, const std::vector<std::vector<T>> &vec);
 
   // VTI
   // takes std::vector argument
@@ -60,8 +57,15 @@ public:
   static void exportScalarCellDataVTI(const std::string &file, const char *dataName, Array1D<T> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
   template <typename T>
   static void exportVectorCellDataVTI(const std::string &file, const char *dataName, Array2D<T> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
-
-  static void exportVelocityDataVTI(const std::string &file, DataGrid &data, const int t);
+  // and takes time argument
+  template <typename T>
+  static void exportScalarPointDataVTI(const std::string &file, const char *dataName, Array2D<T> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz, const int t);
+  template <typename T>
+  static void exportVectorPointDataVTI(const std::string &file, const char *dataName, Array3D<T> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz, const int t);
+  template <typename T>
+  static void exportScalarCellDataVTI(const std::string &file, const char *dataName, Array2D<T> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz, const int t);
+  template <typename T>
+  static void exportVectorCellDataVTI(const std::string &file, const char *dataName, Array3D<T> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz, const int t);
 
   // VTU
   // takes std::vector argument
@@ -83,7 +87,20 @@ public:
   static void exportScalarCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array1D<T> &c);
   template <typename T>
   static void exportVectorCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array2D<T> &c);
-
+  // and takes time argument
+  template <typename T>
+  static void exportScalarPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array2D<T> &p, const int t);
+  template <typename T>
+  static void exportVectorPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array3D<T> &p, const int t);
+  template <typename T>
+  static void exportScalarCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array2D<T> &c, const int t);
+  template <typename T>
+  static void exportVectorCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array3D<T> &c, const int t);
+  
+  // These are ramdom export functions
+  static void exportCellDataDAT(const std::string &file, Cell &cell);
+  static void exportNodeDataDAT(const std::string &file, Node &node);
+  static void exportVelocityDataVTI(const std::string &file, DataGridX &data, const int t);
   static void exportMeshPartitionVTU(const std::string &file, Node &node, Cell &cell);
   static void exportPhiVTU(const std::string &file, Node &node, Cell &cell);
 };

@@ -26,7 +26,7 @@ Grid
     nx = (96, 32, 32) 
     lx = (6.0, 2.0, 2.0)
     image = "input/image.dat"
-    isOnlyFluidGrid = "YES"
+    fluidExtraction = "ON"
     fluidUniqueNodes = "input/fluidUniqueNodes.dat"
   }
 }

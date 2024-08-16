@@ -74,10 +74,10 @@ public:
   {
     return dofsMapNew[in][id];
   }
-
+  void assignCoordinates(Config &conf);
   void initialize(Config &conf);
-  void newMapping();
   void initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap);
+  void newMapping();
 };
 
 class SnapShot
@@ -96,8 +96,10 @@ public:
   int snapTimeBeginItr;
 
   std::vector<std::vector<std::vector<double>>> v;
-  void takeSnapShot(std::vector<std::vector<double>> &_v, const int &snapCount, const int &nNodesGlobal,
+  Array3D<double> vSnap;
+  void takeSnapShot(std::vector<std::vector<double>> &vel, const int &snapCount, const int &nNodesGlobal,
                     const int &dim);
+  void takeSnapShot(Array3D<double> &v, const int nNodesGlobal, const int snapCount, const int step);
 };
 
 #endif

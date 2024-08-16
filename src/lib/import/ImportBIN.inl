@@ -16,55 +16,58 @@
 template <typename T> 
 void IMPORT::importScalarDataBIN(const std::string &file, std::vector<T> &vec)
 {
-  std::ifstream ifs(file, std::ios::binary);
-  if(!ifs) {
-    throw std::runtime_error("Couldn't open file: " + file);
+  std::ifstream inFile(file, std::ios::binary);
+
+  if(!inFile) {
+    std::cerr << "Error opening file: " << file << std::endl;
+    return;
   }
 
-  ifs.seekg(0, std::ios::end);
-  std::streamsize size = ifs.tellg();
-  ifs.seekg(0, std::ios::beg);
+  size_t dataSize;
+  inFile.read(reinterpret_cast<char *>(&dataSize), sizeof(size_t));
 
-  if(size % sizeof(T) != 0) {
-    throw std::runtime_error("File size error: " + file);
+  vec.resize(dataSize);
+  inFile.read(reinterpret_cast<char *>(vec.data()), dataSize * sizeof(T));
+
+  if(!inFile.good()) {
+    std::cerr << "Error occurred while reading from file: " << file << std::endl;
+    vec.clear();
   }
 
-  vec.resize(size / sizeof(T));
-
-  if(!ifs.read(reinterpret_cast<char *>(vec.data()), size)) {
-    throw std::runtime_error("Couldn't read file: " + file);
-  }
-
-  ifs.close();
+  inFile.close();
 }
 
-template <typename T>
+template <typename T> 
 void IMPORT::importVectorDataBIN(const std::string &file, std::vector<std::vector<T>> &vec)
 {
-  std::ifstream ifs(file, std::ios::binary);
-  if(!ifs) {
-    throw std::runtime_error("Couldn't open file: " + file);
+  std::ifstream inFile(file, std::ios::binary);
+
+  if(!inFile) {
+    std::cerr << "Error opening file: " << file << std::endl;
+    return;
   }
 
-  int rows;
-  if(!ifs.read(reinterpret_cast<char *>(&rows), sizeof(rows))) {
-    throw std::runtime_error("Failed to read rows: " + file);
-  }
+  size_t outerSize;
+  inFile.read(reinterpret_cast<char *>(&outerSize), sizeof(size_t));
 
-  vec.resize(rows);
+  vec.resize(outerSize);
 
-  for(int j = 0; j < rows; j++) {
-    int cols;
-    if(!ifs.read(reinterpret_cast<char *>(&cols), sizeof(cols))) {
-      throw std::runtime_error("Failed to read cols: " + file);
+  for(size_t i = 0; i < outerSize; ++i) {
+    size_t innerSize;
+    inFile.read(reinterpret_cast<char *>(&innerSize), sizeof(size_t));
+
+    if(innerSize > 0) {
+      vec[i].resize(innerSize);
+      inFile.read(reinterpret_cast<char *>(vec[i].data()), innerSize * sizeof(T));
     }
-    vec[j].resize(cols);
-    if(!ifs.read(reinterpret_cast<char *>(vec[j].data()), cols * sizeof(T))) {
-      throw std::runtime_error("Couldn't read file: " + file);
-    }
   }
 
-  ifs.close();
+  if(!inFile.good()) {
+    std::cerr << "Error occurred while reading from file: " << file << std::endl;
+    vec.clear();
+  }
+
+  inFile.close();
 }
 
 #endif  // IMPORT_BIN_INL_H

@@ -8,6 +8,9 @@
 
 /*********************************
  * @brief Solve adjoint equation.
+ * @param main Direct problem.
+ * @param outputDir Output directory.
+ * @param feedbackForceT Feedback force.
  */
 void Adjoint::solveAdjoint(DirectProblem &main, std::string outputDir,
                            std::vector<std::vector<std::vector<double>>> &feedbackForceT)
