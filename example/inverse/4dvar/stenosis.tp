@@ -18,8 +18,8 @@ Grid
   }
 
   SubGrid{
-    nodeId = input/stenosis/44x16x16/dat/nodeId.dat"
-    cellId = input/stenosis/44x16x16/dat/cellId.dat"
+    nodeId = "input/stenosis/44x16x16/dat/nodeId.dat"
+    cellId = "input/stenosis/44x16x16/dat/cellId.dat"
   }
 
   StructuredGrid{
@@ -33,7 +33,7 @@ Grid
 
 Boundary
 {
-  velocityDirichlet = "input/stenosis/44x16x16/dat/velocityDirichletPoiseuille.dat"
+  velocityDirichlet = "input/stenosis/44x16x16/dat/velocityDirichlet.dat"
   pressureDirichlet = "input/stenosis/44x16x16/dat/pressureDirichlet.dat"
 }
 
@@ -46,9 +46,9 @@ PysicalParameter
 TimeParameter
 {
   dt = 0.02
-  timeMax = 400
-  pulsatileFlow = "ON"
-  pulseBeginItr = 250
+  timeMax = 51
+  pulsatileFlow = "OFF"
+  pulseBeginItr = 100
   T = 0.5
 }
 
@@ -63,6 +63,7 @@ Inverse
   aCF = 1e1 
   bCF = 0e0 
   gCF = 0e0
+
   alphaX = 1e0 
   alphaX0 = 1e0 
   loopMAX = 400 
@@ -77,14 +78,14 @@ Inverse
 
 Data
 {
-  timeMax = 400 
   nSnapShot = 11 
   snapInterval = 5
+  snapTimeBeginItr = 0
 
   nNodesInDataCell = 8 
   nxData = (44, 16, 16)
   lxData = (5.5, 2.0, 2.0)
   voxelVelocity = "average"
 
-  dataFile = "input/stenosis/44x16x16/bin"
+  dataDir = "input/stenosis/44x16x16/dat/data"
 }
