@@ -23,8 +23,8 @@ Grid
   }
 
   StructuredGrid{
-    nx = (96, 32, 32) 
-    lx = (6.0, 2.0, 2.0)
+    nx = (88, 32, 32) 
+    lx = (5.5, 2.0, 2.0)
     fluidExtraction = "ON"
     fluidUniqueNodes = "input/stenosis/44x16x16/dat/fluidUniqueNodes.dat"
     image = "input/stenosis/44x16x16/dat/image.dat"
