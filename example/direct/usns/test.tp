@@ -1,0 +1,60 @@
+Base
+{
+  dim = 3
+  outputDir = "test"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  BaseGrid{
+    node = "input/test/node.dat"
+    cell = "input/test/cell.dat"
+  }
+
+  SubGrid{
+    nodeId = "input/test/nodeId.dat"
+    cellId = "input/test/cellId.dat"
+  }
+
+  StructuredGrid{
+    nx = (96, 32, 32) 
+    lx = (6.0, 2.0, 2.0)
+    image = "input/image.dat"
+    fluidExtraction = "ON"
+    fluidUniqueNodes = "input/fluidUniqueNodes.dat"
+  }
+}
+
+Boundary
+{
+  velocityDirichlet = "input/test/velocityDirichlet.dat"
+  pressureDirichlet = "input/test/pressureDirichlet.dat"
+}
+
+PysicalParameter
+{   
+  rho = 100
+  mu = 1   
+}
+
+TimeParameter
+{
+  dt = 0.02
+  timeMax = 5
+  pulsatileFlow = "ON"
+  pulseBeginItr = 250
+  T = 0.5
+}
+
+DarcyParameter
+{
+  alpha = 1e-3
+  resistance = 1e2
+}
+

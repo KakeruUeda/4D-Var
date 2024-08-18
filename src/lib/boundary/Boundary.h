@@ -1,91 +1,85 @@
 /**
  * @file Boundary.h
  * @author K.Ueda
- * @date May, 2024
-*/
+ * @date August, 2024
+ */
 
 #ifndef BOUNDARY_H
 #define BOUNDARY_H
 
-#include <iostream>
-#include <vector>
-#include <memory>
 #include "Array.h"
-#include "Node.h"
 #include "Cell.h"
-#include "PetscSolver.h"
 #include "Config.h"
+#include "Node.h"
+#include "PetscSolver.h"
+#include <iostream>
+#include <memory>
+#include <vector>
+#include <set>
 
-class DirichletBoundary
+class ControlBoundary
 {
 public:
-    DirichletBoundary(){}
-    DirichletBoundary(Config &conf){}
-    virtual ~DirichletBoundary(){}
+  ControlBoundary() 
+  {
+  }
+  ControlBoundaryFace inletFace;
+  std::vector<bool> isBoundaryEdge;
+  std::vector<int> CBNodeMap;
+  std::vector<int> CBCellMap;
+  std::vector<std::vector<int>> CBNodeMapInCell;
 
-    int nNodesVelocity, nNodesPressure, nControlNodesInCell;
-    int nControlCellsGlobal, nControlNodesGlobal;
-    
-    std::vector<double> dirichletBCsValue;
-    std::vector<double> dirichletBCsValueNew;
-    std::vector<double> dirichletBCsValueInit;
-    std::vector<double> dirichletBCsValueNewInit;
-
-    std::vector<std::map<int, std::vector<double>>> vDirichlet;
-    std::vector<std::map<int, std::vector<double>>> vDirichletWall;
-    std::vector<std::map<int, double>> pDirichlet;
-    std::vector<std::map<int, std::vector<double>>> vDirichletNew;
-    std::vector<std::map<int, std::vector<double>>> vDirichletWallNew;
-    std::vector<std::map<int, double>> pDirichletNew;
-
-    std::vector<int> controlBoundaryMap;
-    std::vector<int> controlCellMap;
-    std::vector<std::vector<int>> controlNodeInCell;
-
-    std::vector<bool> isBoundaryEdge;
-    
-    void initialize(Config &conf);
-    void initializeAdjoint(Config &conf);
-
-    void assignDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
-                            std::vector<std::map<int, double>> &pDirichletNew, Node &node, 
-                            int &dim, const int t);
-    void assignConstantDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
-                                    std::vector<std::map<int, double>> &pDirichletNew, Node &node, 
-                                    int &dim, const int t);
-    void assignPulsatileBCs(const int t, const double dt, const double T, 
-                            const int pulseBeginItr, const int nDofsGlobal);
-    void applyDirichletBCs(Cell &cell, PetscSolver &petsc);
-    void applyDirichletBCsAdjoint(Cell &cell, PetscSolver &petsc);
-
+  void initialize(Config &conf);
 private:
 };
 
-class StructuredBoundaryFace
+
+class Boundary
 {
 public:
-    int size;
-    StructuredBoundaryFace(std::string face) : bdFaceStr(face) {};
-    ~StructuredBoundaryFace(){};
+  virtual void assignBCs(Node &node) = 0;
+  virtual ~Boundary()
+  {
+  }
+};
 
-    std::vector<int> node;
-    std::vector<std::string> dirichletType;
-    std::vector<std::vector<double>> dirichletValue;
+class Dirichlet : public Boundary
+{
+public:
+  Dirichlet()
+  {
+  }
 
-    int getNodeSize()
-    { return node.size(); };
+  Array1D<double> initialValues;
+  Array1D<double> values;
 
-    void setSize(int n)
-    { size = n; };
+  void initialize(Config &conf);
+  void getNewArray(std::vector<int> mapNew);
+  void setValuesZero(int n);
+  void assignBCs(Node &node) override;
+  void assignPulsatileBCs(const double pulse, const int nDofsGlobal);
+  void applyBCs(Cell &cell, PetscSolver &petsc);
 
-    std::string bdFaceStr;
-    void setNodesOnBoundaryFace(int nxNodes, int nyNodes, int nzNodes);
+  void updateValues(Array3D<double> &X, const int t);
+  void eraseControlNodes(Cell &cell, ControlBoundary &cb);
 
-    void setDirichletInfo(std::vector<std::string> bdType, 
-                          std::vector<std::vector<double>> bdValue, 
-                          int dim, int bdIndex);
+public:
+  std::map<int, std::vector<double>> velocitySet;
+  std::map<int, double> pressureSet;
+
+  std::map<int, std::vector<double>> velocitySetNew;
+  std::map<int, double> pressureSetNew;
+};
+
+class Neumann : public Boundary
+{
+public:
+  Neumann(double gradient) : gradient(gradient)
+  {
+  }
 
 private:
+  double gradient;
 };
 
 #endif

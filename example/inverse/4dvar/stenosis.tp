@@ -1,0 +1,91 @@
+Base
+{
+  dim = 3
+  outputDir = "test"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  BaseGrid{
+    node = "input/stenosis/44x16x16/dat/node.dat"
+    cell = "input/stenosis/44x16x16/dat/cell.dat"
+  }
+
+  SubGrid{
+    nodeId = "input/stenosis/44x16x16/dat/nodeId.dat"
+    cellId = "input/stenosis/44x16x16/dat/cellId.dat"
+  }
+
+  StructuredGrid{
+    nx = (88, 32, 32) 
+    lx = (5.5, 2.0, 2.0)
+    fluidExtraction = "ON"
+    fluidUniqueNodes = "input/stenosis/44x16x16/dat/fluidUniqueNodes.dat"
+    image = "input/stenosis/44x16x16/dat/image.dat"
+  }
+}
+
+Boundary
+{
+  velocityDirichlet = "input/stenosis/44x16x16/dat/velocityDirichlet.dat"
+  pressureDirichlet = "input/stenosis/44x16x16/dat/pressureDirichlet.dat"
+}
+
+PysicalParameter
+{   
+  rho = 100
+  mu = 1   
+}
+
+TimeParameter
+{
+  dt = 0.02
+  timeMax = 51
+  pulsatileFlow = "OFF"
+  pulseBeginItr = 100
+  T = 0.5
+}
+
+DarcyParameter
+{
+  alpha = 1e-3
+  resistance = 1e2
+}
+
+Inverse
+{
+  aCF = 1e1 
+  bCF = 1e-5
+  gCF = 1e-5
+
+  alphaX = 1e0 
+  alphaX0 = 1e0 
+  loopMAX = 400 
+  outputItr = 5
+
+  controlBoundary = "left" 
+  nControlNodesInCell = 4 
+  controlBoundaryNodeMap = "input/stenosis/44x16x16/dat/controlBoundaryNodeMap.dat" 
+  controlBoundaryCellMap = "input/stenosis/44x16x16/dat/controlBoundaryCellMap.dat" 
+  controlBoundaryNodeMapInCell = "input/stenosis/44x16x16/dat/controlBoundaryNodeMapInCell.dat"
+}
+
+Data
+{
+  nSnapShot = 11 
+  snapInterval = 5
+  snapTimeBeginItr = 0
+
+  nNodesInDataCell = 8 
+  nxData = (44, 16, 16)
+  lxData = (5.5, 2.0, 2.0)
+  voxelVelocity = "average"
+
+  dataDir = "input/stenosis/44x16x16/dat/data"
+}

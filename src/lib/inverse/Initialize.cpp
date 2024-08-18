@@ -11,112 +11,159 @@
  */
 void InverseProblem::initialize(Config &conf)
 {
-    PetscPrintf(MPI_COMM_WORLD, "\n*** Main initialize ***\n\n");
+  PetscPrintf(MPI_COMM_WORLD, "\n*** Main initialize ***\n\n");
 
-    main.nu = main.mu / main.rho;
-    main.Re = 1e0 / main.nu; 
+  main.nu = main.mu / main.rho;
+  main.Re = 1e0 / main.nu;
 
-    VecTool::resize(main.grid.node.v0, main.grid.node.nNodesGlobal, dim);
-    VecTool::resize(main.grid.node.v, main.grid.node.nNodesGlobal, dim);
-    VecTool::resize(main.grid.node.vPrev, main.grid.node.nNodesGlobal, dim);
-    VecTool::resize(main.grid.node.vt, main.timeMax, main.grid.node.nNodesGlobal, dim);
-    VecTool::resize(main.grid.node.p, main.grid.node.nNodesGlobal);
-    VecTool::resize(main.grid.node.pt, main.timeMax, main.grid.node.nNodesGlobal);
-    VecTool::resize(main.snap.v, main.snap.nSnapShot, main.grid.nNodesGlobal, dim);
+  // Main intialize
+  main.dirichlet.initialize(conf);
+  main.grid.cell.initialize(conf);
+  main.grid.node.initialize(conf);
+  main.grid.prepareMatrix(main.dirichlet, main.petsc, main.outputDir, main.timeMax);
+  main.dirichlet.getNewArray(main.grid.node.mapNew);
 
-    VecTool::resize(main.vgp, dim);
-    VecTool::resize(main.advgp, dim);
-    VecTool::resize(main.dvgpdx, dim, dim);
 
-    main.grid.dirichlet.initialize(conf);
-    main.grid.cell.initialize(conf);
-    main.grid.node.initialize(conf);
-    main.grid.prepareMatrix(main.petsc, main.outputDir, main.timeMax);
+  PetscPrintf(MPI_COMM_WORLD, "\n*** Adjoint initialize ***\n\n");
 
-    VecTool::resize(main.petsc.solution, main.grid.nDofsGlobal);
-    VecTool::resize(main.grid.dirichlet.dirichletBCsValue, main.grid.nDofsGlobal);
-    VecTool::resize(main.grid.dirichlet.dirichletBCsValueNew, main.grid.nDofsGlobal);
-    VecTool::resize(main.grid.dirichlet.dirichletBCsValueInit, main.grid.nDofsGlobal);
-    VecTool::resize(main.grid.dirichlet.dirichletBCsValueNewInit, main.grid.nDofsGlobal);
+  adjoint.nu = adjoint.mu / adjoint.rho;
+  adjoint.Re = 1e0 / adjoint.nu;
 
-    PetscPrintf(MPI_COMM_WORLD, "\n*** Adjoint initialize ***\n\n");
+  adjoint.grid.cell.initializeAdjoint(conf);
+  adjoint.dirichlet.initialize(conf);
+  inletCB.initialize(conf);
+  adjoint.dirichlet.eraseControlNodes(adjoint.grid.cell, inletCB);
+  adjoint.grid.node.initializeAdjoint(conf, inletCB.CBNodeMap);
+  adjoint.grid.prepareMatrix(adjoint.dirichlet, adjoint.petsc, outputDir, adjoint.timeMax);
+  adjoint.dirichlet.getNewArray(adjoint.grid.node.mapNew);
 
-    adjoint.nu = adjoint.mu / adjoint.rho;
-    adjoint.Re = 1e0 / adjoint.nu; 
-
-    isConverged_X = false;
-    isConverged_X0 = false;
-
-    VecTool::resize(adjoint.grid.node.w, adjoint.grid.node.nNodesGlobal, dim);
-    VecTool::resize(adjoint.grid.node.wPrev, adjoint.grid.node.nNodesGlobal, dim);
-    VecTool::resize(adjoint.grid.node.q, adjoint.grid.node.nNodesGlobal);
-    VecTool::resize(adjoint.grid.node.qPrev, adjoint.grid.node.nNodesGlobal);
-    VecTool::resize(adjoint.grid.node.l, main.grid.nNodesGlobal, dim);
-    VecTool::resize(adjoint.grid.node.lt, adjoint.timeMax, adjoint.grid.nNodesGlobal, dim);
-    VecTool::resize(adjoint.grid.node.wt, adjoint.timeMax, adjoint.grid.nNodesGlobal, dim);
-    VecTool::resize(adjoint.grid.node.qt, adjoint.timeMax, adjoint.grid.nNodesGlobal);
-
-    VecTool::resize(adjoint.vk, dim);
-    VecTool::resize(adjoint.vk1, dim);
-    VecTool::resize(adjoint.vk2, dim);
-    VecTool::resize(adjoint.advk1, dim);
-    VecTool::resize(adjoint.advk2, dim);
-    VecTool::resize(adjoint.advk3, dim);
-    VecTool::resize(adjoint.dvkdx, dim, dim);
-    VecTool::resize(adjoint.dvk1dx, dim, dim);
-    VecTool::resize(adjoint.dvk2dx, dim, dim);
-    VecTool::resize(adjoint.dpkdx, dim);
-    VecTool::resize(adjoint.dpk1dx, dim);
-    VecTool::resize(adjoint.dpk2dx, dim);
-    VecTool::resize(adjoint.wk, dim);
-    VecTool::resize(adjoint.wk1, dim);
-    VecTool::resize(adjoint.wk2, dim);
-    VecTool::resize(adjoint.dwkdx, dim, dim);
-    VecTool::resize(adjoint.dwk1dx, dim, dim);
-    VecTool::resize(adjoint.dwk2dx, dim, dim);
-    VecTool::resize(adjoint.dqkdx, dim);
-    VecTool::resize(adjoint.dqk1dx, dim);
-    VecTool::resize(adjoint.dqk2dx, dim);
-    
-    adjoint.grid.dirichlet.initializeAdjoint(conf);
-    adjoint.grid.cell.initializeAdjoint(conf);
-    adjoint.grid.node.initializeAdjoint(conf, adjoint.grid.dirichlet.controlBoundaryMap);
-    adjoint.grid.prepareMatrix(adjoint.petsc, outputDir, adjoint.timeMax);
-    
-    for(int ic=0; ic<adjoint.grid.cell.nCellsGlobal; ic++){
-        int count = 0;
-        VecTool::resize(adjoint.grid.cell(ic).dofStartPlane, adjoint.grid.dirichlet.nControlNodesInCell);
-        for(int p=0; p<adjoint.grid.cell.nNodesInCell; p++){
-            if(adjoint.grid.node.nDofsOnNode[adjoint.grid.cell(ic).node[p]] > dim+1){
-                adjoint.grid.cell(ic).dofStartPlane[count] = adjoint.grid.cell(ic).dofStart[p];
-                count++;
-            }
-        }
-        int tmp = adjoint.grid.cell(ic).dofStartPlane[2];
-        adjoint.grid.cell(ic).dofStartPlane[2] = adjoint.grid.cell(ic).dofStartPlane[3];
-        adjoint.grid.cell(ic).dofStartPlane[3] = tmp;
-    }   
-
-    VecTool::resize(adjoint.petsc.solution, adjoint.grid.nDofsGlobal);
-    VecTool::resize(adjoint.grid.dirichlet.dirichletBCsValue, adjoint.grid.nDofsGlobal);
-    VecTool::resize(adjoint.grid.dirichlet.dirichletBCsValueNew, adjoint.grid.nDofsGlobal);
-    VecTool::resize(adjoint.grid.dirichlet.dirichletBCsValueInit, adjoint.grid.nDofsGlobal);
-    VecTool::resize(adjoint.grid.dirichlet.dirichletBCsValueNewInit, adjoint.grid.nDofsGlobal);
-    VecTool::resize(feedbackForce, main.snap.nSnapShot, main.grid.node.nNodesGlobal, dim);
-    VecTool::resize(feedbackForceT, main.timeMax, main.grid.node.nNodesGlobal, dim);
-    VecTool::resize(gradWholeNode, main.timeMax, main.grid.node.nNodesGlobal, dim);
-    VecTool::resize(grad, main.timeMax, adjoint.grid.dirichlet.controlBoundaryMap.size(), dim);
-    VecTool::resize(X, main.timeMax, adjoint.grid.dirichlet.controlBoundaryMap.size(), dim);
-    VecTool::resize(X0, main.grid.node.nNodesGlobal, dim);
-    VecTool::resize(gradInitVel, main.grid.node.nNodesGlobal, dim);
-
-    VecTool::resize(adjoint.vgp, dim);
-    VecTool::resize(adjoint.advgp, dim);
-    VecTool::resize(adjoint.dvgpdx, dim, dim);
-
-    if(main.grid.gridType == GridType::STRUCTURED){
-        VecTool::resize(X0vti, main.grid.node.nNodesStructuredGlobal, conf.dim);
+  for(int ic = 0; ic < adjoint.grid.cell.nCellsGlobal; ic++) {
+    int count = 0;
+    VecTool::resize(adjoint.grid.cell(ic).dofStartPlane, 4);
+    for(int p = 0; p < adjoint.grid.cell.nNodesInCell; p++) {
+      if(adjoint.grid.node.nDofsOnNode[adjoint.grid.cell(ic).node[p]] > dim + 1) {
+        adjoint.grid.cell(ic).dofStartPlane[count] = adjoint.grid.cell(ic).dofStart[p];
+        count++;
+      }
     }
+    int tmp = adjoint.grid.cell(ic).dofStartPlane[2];
+    adjoint.grid.cell(ic).dofStartPlane[2] = adjoint.grid.cell(ic).dofStartPlane[3];
+    adjoint.grid.cell(ic).dofStartPlane[3] = tmp;
+  }
 
-    data.initialize(conf, main.grid.node, main.grid.cell, dim);
+  data.initialize(conf);
+
+  resize();
+  initializeVarZero();
 }
+
+void InverseProblem::resize()
+{
+  // main params
+  main.v0.allocate(main.grid.node.nNodesGlobal, 3);
+  main.v.allocate(main.grid.node.nNodesGlobal, 3);
+  main.vPrev.allocate(main.grid.node.nNodesGlobal, 3);
+  main.p.allocate(main.grid.node.nNodesGlobal);
+
+  main.vt.allocate(main.timeMax, main.grid.node.nNodesGlobal, 3);
+  main.pt.allocate(main.timeMax, main.grid.node.nNodesGlobal);
+
+  main.dirichlet.values.allocate(main.grid.nDofsGlobal);
+  main.dirichlet.initialValues.allocate(main.grid.nDofsGlobal);
+
+  if(main.grid.gridType == GridType::STRUCTURED) {
+    main.vvti.allocate(main.grid.node.nNodesStrGlobal, 3);
+    main.pvti.allocate(main.grid.node.nNodesStrGlobal);
+  }
+
+  VecTool::resize(main.petsc.solution, main.grid.nDofsGlobal);
+
+  // adjoint params
+  adjoint.w.allocate(adjoint.grid.node.nNodesGlobal, dim);
+  adjoint.wPrev.allocate(adjoint.grid.node.nNodesGlobal, dim);
+  adjoint.q.allocate(adjoint.grid.node.nNodesGlobal);
+  adjoint.qPrev.allocate(adjoint.grid.node.nNodesGlobal);
+  adjoint.l.allocate(main.grid.nNodesGlobal, dim);
+
+  adjoint.lt.allocate(adjoint.timeMax, adjoint.grid.nNodesGlobal, dim);
+  adjoint.wt.allocate(adjoint.timeMax, adjoint.grid.nNodesGlobal, dim);
+  adjoint.qt.allocate(adjoint.timeMax, adjoint.grid.nNodesGlobal);
+  
+  adjoint.dirichlet.values.allocate(adjoint.grid.nDofsGlobal);
+  adjoint.dirichlet.initialValues.allocate(adjoint.grid.nDofsGlobal);
+
+  if(adjoint.grid.gridType == GridType::STRUCTURED) {
+    adjoint.wvti.allocate(main.grid.node.nNodesStrGlobal, 3);
+    adjoint.qvti.allocate(main.grid.node.nNodesStrGlobal);
+    adjoint.lvti.allocate(main.grid.node.nNodesStrGlobal, 3);
+  }
+
+  adjoint.feedbackForce.allocate(main.snap.nSnapShot, main.grid.node.nNodesGlobal, dim);
+  adjoint.feedbackForceT.allocate(main.timeMax, main.grid.node.nNodesGlobal, dim);
+  
+  // inverse params
+  gradX0.allocate(main.grid.node.nNodesGlobal, dim);
+  gradX.allocate(main.timeMax, main.grid.node.nNodesGlobal, dim);
+  XArr.allocate(main.timeMax, main.grid.node.nNodesGlobal, dim);
+  X0Arr.allocate(main.grid.node.nNodesGlobal, dim);
+
+  if(main.grid.gridType == GridType::STRUCTURED) {
+    X0vtiArr.allocate(main.grid.node.nNodesStrGlobal, 3);
+    XvtiArr.allocate(main.timeMax, main.grid.node.nNodesStrGlobal, 3);
+  }
+
+  VecTool::resize(adjoint.petsc.solution, adjoint.grid.nDofsGlobal);
+
+  // snap
+  main.snap.vSnap.allocate(main.snap.nSnapShot, main.grid.nNodesGlobal, 3);
+
+}
+
+void InverseProblem::initializeVarZero()
+{
+  // main params
+  main.v0.fillZero();
+  main.v.fillZero();
+  main.vPrev.fillZero();
+  main.p.fillZero();
+
+  main.vt.fillZero();
+  main.pt.fillZero();
+
+  main.dirichlet.values.fillZero();
+  main.dirichlet.initialValues.fillZero();
+
+  if(main.grid.gridType == GridType::STRUCTURED) {
+    main.vvti.fillZero();
+    main.pvti.fillZero();
+  }
+
+  // adjoint params
+  adjoint.w.fillZero();
+  adjoint.wPrev.fillZero();
+  adjoint.q.fillZero();
+  adjoint.qPrev.fillZero();
+  adjoint.l.fillZero();
+
+  adjoint.lt.fillZero();
+  adjoint.wt.fillZero();
+  adjoint.qt.fillZero();
+
+  adjoint.dirichlet.values.fillZero();
+  adjoint.dirichlet.initialValues.fillZero();
+
+  if(adjoint.grid.gridType == GridType::STRUCTURED) {
+    adjoint.vvti.fillZero();
+    adjoint.pvti.fillZero();
+  }
+
+  adjoint.feedbackForce.fillZero();
+  adjoint.feedbackForceT.fillZero();
+
+  // inverse prams
+  gradX0.fillZero();
+  gradX.fillZero();
+  XArr.fillZero();
+  X0Arr.fillZero();
+}
+

@@ -11,28 +11,55 @@
  */
 void DirectProblem::initialize(Config &conf)
 {
-    nu = mu / rho;
-    Re = 1e0 / nu; 
-    
-    VecTool::resize(grid.node.v, grid.node.nNodesGlobal, dim);
-    VecTool::resize(grid.node.vPrev, grid.node.nNodesGlobal, dim);
-    VecTool::resize(grid.node.p, grid.node.nNodesGlobal);
-    VecTool::resize(snap.v, snap.nSnapShot, grid.nNodesGlobal, dim);
+  nu = mu / rho;
+  Re = 1e0 / nu;
 
-    grid.dirichlet.initialize(conf);
-    grid.cell.initialize(conf);
-    grid.node.initialize(conf);
-   
-    grid.prepareMatrix(petsc, outputDir, timeMax);
+  grid.cell.initialize(conf);
+  grid.node.initialize(conf);
+  dirichlet.initialize(conf);
 
-    VecTool::resize(petsc.solution, grid.nDofsGlobal);
-    VecTool::resize(grid.dirichlet.dirichletBCsValue, grid.nDofsGlobal);
-    VecTool::resize(grid.dirichlet.dirichletBCsValueNew, grid.nDofsGlobal);
-    VecTool::resize(grid.dirichlet.dirichletBCsValueInit, grid.nDofsGlobal);
-    VecTool::resize(grid.dirichlet.dirichletBCsValueNewInit, grid.nDofsGlobal);
+  grid.prepareMatrix(dirichlet, petsc, outputDir, timeMax);
+  dirichlet.getNewArray(grid.node.mapNew);
 
-    VecTool::resize(vgp, dim);
-    VecTool::resize(advgp, dim);
-    VecTool::resize(dvgpdx, dim, dim);
+	resizeVar();
+	initializeVarZero();
+}
 
+void DirectProblem::resizeVar()
+{
+  VecTool::resize(grid.node.v, grid.node.nNodesGlobal, dim);
+  VecTool::resize(grid.node.vPrev, grid.node.nNodesGlobal, dim);
+  VecTool::resize(grid.node.p, grid.node.nNodesGlobal);
+
+  v.allocate(grid.node.nNodesGlobal, 3);
+  vPrev.allocate(grid.node.nNodesGlobal, 3);
+  p.allocate(grid.node.nNodesGlobal);
+
+	vrt.allocate(grid.node.nStrNodesGlobal, dim);
+
+  dirichlet.values.allocate(grid.nDofsGlobal);
+  dirichlet.initialValues.allocate(grid.nDofsGlobal);
+
+  if(grid.gridType == GridType::STRUCTURED) {
+    vvti.allocate(grid.node.nNodesStrGlobal, dim);
+    pvti.allocate(grid.node.nNodesStrGlobal);
+  }
+
+  VecTool::resize(petsc.solution, grid.nDofsGlobal);
+}
+
+void DirectProblem::initializeVarZero()
+{
+  v.fillZero();
+  vPrev.fillZero();
+  p.fillZero();
+	vrt.fillZero();
+
+	dirichlet.values.fillZero();
+  dirichlet.initialValues.fillZero();
+
+	if(grid.gridType == GridType::STRUCTURED) {
+    vvti.fillZero();
+    pvti.fillZero();
+  }
 }

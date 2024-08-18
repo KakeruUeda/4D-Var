@@ -2,307 +2,125 @@
  * @file Boundary.cpp
  * @author K.Ueda
  * @date May, 2024
-*/
+ */
 
 #include "Boundary.h"
 
 /***************************************
  * @brief Initialize dirichlet boundary.
  */
-void DirichletBoundary::initialize(Config &conf)
+void Dirichlet::initialize(Config &conf)
 {
-    vDirichlet.resize(conf.timeMax);
-    vDirichletWall.resize(conf.timeMax);
-    pDirichlet.resize(conf.timeMax);
-    for(int t=0; t<conf.timeMax; t++){
-        vDirichlet[t] = conf.vDirichlet;
-        vDirichletWall[t] = conf.vDirichletWall;
-        pDirichlet[t] = conf.pDirichlet;
-    }
+  velocitySet = conf.vDirichlet;
+  pressureSet = conf.pDirichlet;
+}
+
+/*************************************************
+ * @brief Erase control nodes from velocitySet.
+ *        This is used for solving adjoint matrix.
+ */
+void Dirichlet::eraseControlNodes(Cell &cell, ControlBoundary &cb)
+{
+  for(int in=0; in<cb.CBNodeMap.size(); in++){
+    velocitySet.erase(cb.CBNodeMap[in]);
+  }
 }
 
 /***************************************
- * @brief Initialize dirichlet boundary 
- *        for adjoint equation.
+ * @brief Initialize dirichlet boundary.
  */
-void DirichletBoundary::initializeAdjoint(Config &conf)
+void Dirichlet::getNewArray(std::vector<int> mapNew)
 {
-    vDirichlet.resize(conf.timeMax);
-    vDirichletWall.resize(conf.timeMax);
-    pDirichlet.resize(conf.timeMax);
-    for(int t=0; t<conf.timeMax; t++){
-        vDirichlet[t] = conf.vDirichlet;
-        vDirichletWall[t] = conf.vDirichletWall;
-        pDirichlet[t] = conf.pDirichlet;
-    }
-
-    controlBoundaryMap = conf.controlBoundaryMap;
-    controlCellMap = conf.controlCellMap;
-    controlNodeInCell = conf.controlNodeInCell;
-    nControlNodesInCell = conf.controlNodeInCell[0].size();
-    nControlCellsGlobal = controlCellMap.size();
-    nControlNodesGlobal = controlBoundaryMap.size();
-    isBoundaryEdge = conf.isBoundaryEdge;
+  for(const auto &[idx, values] : velocitySet) {
+    int newIdx = mapNew[idx];
+    velocitySetNew[newIdx] = values;
+  }
+  for(const auto &[idx, value] : pressureSet) {
+    int newIdx = mapNew[idx];
+    pressureSetNew[newIdx] = value;
+  }
 }
 
-/***************************************************
- * @brief Assign dirichlet Boundary condition's 
- *        value and dof location to vector variable.
- */
-void DirichletBoundary::assignDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
-                                           std::vector<std::map<int, double>> &pDirichletNew, Node &node, 
-                                           int &dim, const int t)
-{         
-    int dofCurrentTmp, dofCurrent;
-    int count;
-
-    for(auto &pair : vDirichletNew[0]){
-        dofCurrentTmp = 0;
-        dofCurrent = 0; 
-        count = 0;
-        for(int i=0; i<pair.first; i++)
-            dofCurrentTmp += node.nDofsOnNodeNew[i];
-        for(auto &value : pair.second){
-            dofCurrent = dofCurrentTmp + count;
-            dirichletBCsValueNewInit[dofCurrent] = value;
-            count++;
-        }
-    }
-
-    for(auto &pair : vDirichletNew[t]){
-        dofCurrentTmp = 0;
-        dofCurrent = 0; 
-        count = 0;
-        for(int i=0; i<pair.first; i++)
-            dofCurrentTmp += node.nDofsOnNodeNew[i];
-        for(auto &value : pair.second){
-            dofCurrent = dofCurrentTmp + count;
-            dirichletBCsValueNew[dofCurrent] = value;
-            count++;
-        }
-    }
-
-    for(auto &pair : pDirichletNew[0]){
-        dofCurrentTmp = 0;
-        dofCurrent = 0; 
-        count = 0;
-        for(int i=0; i<pair.first; i++)
-            dofCurrentTmp += node.nDofsOnNodeNew[i];
-        dofCurrent = dofCurrentTmp + dim;
-        dirichletBCsValueNewInit[dofCurrent] = pair.second;
-    }
-
-    for(auto &pair : pDirichletNew[t]){
-        dofCurrentTmp = 0;
-        dofCurrent = 0; 
-        count = 0;
-        for(int i=0; i<pair.first; i++)
-            dofCurrentTmp += node.nDofsOnNodeNew[i];
-        dofCurrent = dofCurrentTmp + dim;
-        dirichletBCsValueNew[dofCurrent] = pair.second;
-    }
+void Dirichlet::setValuesZero(int n)
+{
+  values.allocate(n);
+  initialValues.allocate(n);
+  values.fillZero();
+  initialValues.fillZero();
 }
 
-/******************************************************
- * @brief Assign constant dirichlet boundary conditions
- *        over all simulation time steps.
- */
-void DirichletBoundary::assignConstantDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
-                                                   std::vector<std::map<int, double>> &pDirichletNew, Node &node, 
-                                                   int &dim, const int t)
-{         
-    int dofCurrentTmp, dofCurrent;
-    int count;
-
-    for(auto &pair : vDirichletNew[0]){
-        dofCurrentTmp = 0;
-        dofCurrent = 0; 
-        count = 0;
-        for(int i=0; i<pair.first; i++)
-            dofCurrentTmp += node.nDofsOnNodeNew[i];
-        for(auto &value : pair.second){
-            dofCurrent = dofCurrentTmp + count;
-            dirichletBCsValueNew[dofCurrent] = value;
-            count++;
-        }
+void Dirichlet::assignBCs(Node &node)
+{
+  for(const auto &[idx, vec] : velocitySetNew) {
+    for(int d = 0; d < 3; d++) {
+      int dof = node.getDof(idx, d);
+      values(dof) = vec[d];
+      initialValues(dof) = vec[d];
     }
-
-    for(auto &pair : pDirichletNew[0]){
-        dofCurrentTmp = 0;
-        dofCurrent = 0; 
-        count = 0;
-        for(int i=0; i<pair.first; i++)
-            dofCurrentTmp += node.nDofsOnNodeNew[i];
-        dofCurrent = dofCurrentTmp + dim;
-        dirichletBCsValueNew[dofCurrent] = pair.second;
-    }
+  }
+  for(const auto &[idx, value] : pressureSetNew) {
+    int dof = node.getDof(idx, 4);
+    values(dof) = value;
+    initialValues(dof) = value;
+  }
 }
 
 /*******************************************************
  * @brief Assign pulsatile dirichlet boundary condition.
  */
-void DirichletBoundary::assignPulsatileBCs(const int t, const double dt, const double T, 
-                                           const int pulseBeginItr, const int nDofsGlobal)
+void Dirichlet::assignPulsatileBCs(const double pulse, const int nDofsGlobal)
 {
-    double timePhase = (t - pulseBeginItr) * dt;
-    double pulse = 0.25 * sin((2e0 * PI / T) * timePhase) + 1.0;
-    for(int id=0; id<nDofsGlobal; id++){
-        if(dirichletBCsValueNew[id] > 0)
-            dirichletBCsValueNew[id] = dirichletBCsValueNewInit[id] * pulse;
+  for(int id = 0; id < nDofsGlobal; id++) {
+    if(values(id) > 0) {
+      values(id) = initialValues(id) * pulse;
     }
+  }
 }
 
 /*******************************************
  * @brief Set dirichlet boundary conditions.
  */
-void DirichletBoundary::applyDirichletBCs(Cell &cell, PetscSolver &petsc)
+void Dirichlet::applyBCs(Cell &cell, PetscSolver &petsc)
 {
-    std::vector<int> vecTmp;
+  for(int ic = 0; ic < cell.nCellsGlobal; ic++) {
+    if(cell(ic).subId == mpi.myId) {
+      std::vector<int> vec = cell(ic).dofsMap;
+      int nDofs = vec.size();
 
-    for(int ic=0; ic<cell.nCellsGlobal; ic++){
-        if(cell(ic).subId == mpi.myId){
-            int nDofsInCell = cell(ic).dofsMap.size();
-            PetscScalar  FlocalTmp[nDofsInCell];
-            PetscScalar  KlocalTmp[nDofsInCell * nDofsInCell];
+      MatrixXd Klocal(nDofs, nDofs);
+      VectorXd Flocal(nDofs);
 
-            for(int i=0; i<nDofsInCell; i++)  FlocalTmp[i] = 0e0;
-            for(int i=0; i<nDofsInCell*nDofsInCell; i++)  KlocalTmp[i] = 0e0;
+      Klocal.setZero();
+      Flocal.setZero();
 
-            vecTmp = cell(ic).dofsMap;
-            for(int i=0; i<nDofsInCell; i++){
-                if(cell(ic).dofsBCsMap[i] == -1){
-                    KlocalTmp[i + i * nDofsInCell] = 1;
-                    FlocalTmp[i] = dirichletBCsValueNew[cell(ic).dofsMap[i]];
-                }
-            }
-            MatSetValues(petsc.mtx, nDofsInCell, &vecTmp[0], nDofsInCell, &vecTmp[0], KlocalTmp, INSERT_VALUES);
-            VecSetValues(petsc.rhsVec, nDofsInCell, &vecTmp[0], FlocalTmp, INSERT_VALUES);
+      for(int i = 0; i < nDofs; i++) {
+        int dof = cell(ic).dofsMap[i];
+        if(cell(ic).dofsBCsMap[i] == -1) {
+          Klocal(i, i) = 1;
+          Flocal(i) = values(dof);
         }
+      }
+      petsc.setMatValue(vec, vec, Klocal);
+      petsc.setVecValue(vec, Flocal);
     }
+  }
 
-    MatAssemblyBegin(petsc.mtx, MAT_FLUSH_ASSEMBLY);
-    MatAssemblyEnd(petsc.mtx, MAT_FLUSH_ASSEMBLY);
-
-    VecAssemblyBegin(petsc.rhsVec);
-    VecAssemblyEnd(petsc.rhsVec);
+  petsc.flashAssembly();
 }
 
-/*******************************************************
- * @brief Set dirichlet boundary conditions for adjoint.
- */
-void DirichletBoundary::applyDirichletBCsAdjoint(Cell &cell, PetscSolver &petsc)
+void Dirichlet::updateValues(Array3D<double> &X, const int t)
 {
-    std::vector<int> vecTmp;
-
-    for(int ic=0; ic<cell.nCellsGlobal; ic++){
-        if(cell(ic).subId == mpi.myId){
-            int nDofsInCell = cell(ic).dofsMapWall.size();
-            PetscScalar  FlocalTmp[nDofsInCell];
-            PetscScalar  KlocalTmp[nDofsInCell * nDofsInCell];
-
-            for(int i=0; i<nDofsInCell; i++)  FlocalTmp[i] = 0e0;
-            for(int i=0; i<nDofsInCell*nDofsInCell; i++)  KlocalTmp[i] = 0e0;
-
-            vecTmp = cell(ic).dofsMapWall;
-            for(int i=0; i<nDofsInCell; i++){
-                if(cell(ic).dofsBCsMapWall[i] == -1){
-                    KlocalTmp[i + i * nDofsInCell] = 1;
-                    FlocalTmp[i] = dirichletBCsValueNew[cell(ic).dofsMapWall[i]];
-                }
-            }
-            MatSetValues(petsc.mtx, nDofsInCell, &vecTmp[0], nDofsInCell, &vecTmp[0], KlocalTmp, INSERT_VALUES);
-            VecSetValues(petsc.rhsVec, nDofsInCell, &vecTmp[0], FlocalTmp, INSERT_VALUES);
-        }
+  for(auto &[idx, vec] : velocitySet) {
+    for(int d = 0; d < 3; d++) {
+      vec[d] = X(t, idx, d);
     }
-
-    MatAssemblyBegin(petsc.mtx, MAT_FLUSH_ASSEMBLY);
-    MatAssemblyEnd(petsc.mtx, MAT_FLUSH_ASSEMBLY);
-
-    VecAssemblyBegin(petsc.rhsVec);
-    VecAssemblyEnd(petsc.rhsVec);
+  }
 }
 
-void StructuredBoundaryFace::setNodesOnBoundaryFace(int nxNodes, int nyNodes, int nzNodes)
+void ControlBoundary::initialize(Config &conf)
 {
-    if(bdFaceStr == "top"){
-        for(int k=0; k<nzNodes; k++){
-            for(int j=0; j<nyNodes; j++){
-                for(int i=0; i<nxNodes; i++){
-                    if(j == nyNodes-1){
-                        node.push_back(k * nxNodes * nyNodes + j * nxNodes + i);
-                    }
-                }
-            }
-        }
-    }
-    if(bdFaceStr == "bottom"){
-        for(int k=0; k<nzNodes; k++){
-            for(int j=0; j<nyNodes; j++){
-                for(int i=0; i<nxNodes; i++){
-                    if(j == 0){
-                        node.push_back(k * nxNodes * nyNodes + j * nxNodes + i);
-                    }
-                }
-            }
-        }
-    }
-    if(bdFaceStr == "left"){
-        for(int k=0; k<nzNodes; k++){
-            for(int j=0; j<nyNodes; j++){
-                for(int i=0; i<nxNodes; i++){
-                    if(i == 0){
-                        node.push_back(k * nxNodes * nyNodes + j * nxNodes + i);
-                    }
-                }
-            }
-        }
-    }
-    if(bdFaceStr == "right"){
-        for(int k=0; k<nzNodes; k++){
-            for(int j=0; j<nyNodes; j++){
-                for(int i=0; i<nxNodes; i++){
-                    if(i == nxNodes-1){
-                        node.push_back(k * nxNodes * nyNodes + j * nxNodes + i);
-                    }
-                }
-            }
-        }
-    }
-    if(bdFaceStr == "front"){
-        for(int k=0; k<nzNodes; k++){
-            for(int j=0; j<nyNodes; j++){
-                for(int i=0; i<nxNodes; i++){
-                    if(k == 0){
-                        node.push_back(k * nxNodes * nyNodes + j * nxNodes + i);
-                    }
-                }
-            }
-        }
-    }
-    if(bdFaceStr == "back"){
-        for(int k=0; k<nzNodes; k++){
-            for(int j=0; j<nyNodes; j++){
-                for(int i=0; i<nxNodes; i++){
-                    if(k == nzNodes-1){
-                        node.push_back(k * nxNodes * nyNodes + j * nxNodes + i);
-                    }
-                }
-            }
-        }
-    }
-}
-
-void StructuredBoundaryFace::setDirichletInfo(std::vector<std::string> bdType, 
-                                              std::vector<std::vector<double>> bdValue, 
-                                              int dim, int bdIndex)
-{
-    dirichletType.resize(node.size());
-    dirichletValue.resize(node.size());
-
-    for(int i=0; i<dirichletType.size(); i++)
-        dirichletType[i] = bdType[bdIndex];
-
-    for(int i=0; i<dirichletValue.size(); i++)
-        for(int d=0; d<bdValue[bdIndex].size(); d++)
-            dirichletValue[i].push_back(bdValue[bdIndex][d]);
+  // Using move is fine here
+  CBNodeMap = std::move(conf.CBNodeMap);
+  CBCellMap = std::move(conf.CBCellMap);
+  CBNodeMapInCell = std::move(conf.CBNodeMapInCell);
 }

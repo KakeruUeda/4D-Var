@@ -9,58 +9,74 @@
 
 #include <iostream>
 #include <cassert>
+#include <vector>
 #include "Array.h"
-#include "Config.h"
 #include "VTKCellType.h"
+#include "Config.h"
 
 struct CellInfo
 {
 public:
-    VTKCellType cellType;
-    int subId;
-    double phi;
+  VTKCellType cellType;
 
-    std::vector<int> node, nodeNew;
-    std::vector<int> dofsMap, dofsBCsMap;
-    std::vector<int> dofStart;
-    std::vector<int> dofStartPlane;
-    std::vector<std::vector<double>> x;
+  int subId;
+  double phi;
 
-    /// add ///
-    std::vector<int> dofsMapWall, dofsBCsMapWall;
+  double minX, minY, minZ;
+  double maxX, maxY, maxZ;
 
-    inline void setArrayZero(int n);
+  std::vector<int> node, nodeNew;
+  std::vector<int> dofsMap, dofsBCsMap;
+  std::vector<int> dofStart;
+  std::vector<int> dofStartPlane;
+  std::vector<std::vector<double>> x;
+
+  std::vector<int> dofsMapWall, dofsBCsMapWall;
 };
 
 class Cell
 {
 public:
-    Cell(){}
-    Cell(Config &conf) :
-    nNodesInCell(conf.nNodesInCell),
-    nCellsGlobal(conf.nCellsGlobal), data(conf.nCellsGlobal){}
-    virtual ~Cell(){}
-        
-    inline CellInfo& operator()(int n)
-    { return data[n]; }
+  Cell();
+  Cell(Config &conf);
+  virtual ~Cell();
 
-    inline int size()
-    { return data.size(); }
+  inline CellInfo &operator()(int n)
+  {
+    return data[n];
+  }
 
-    inline void resize(int n)
-    { data.resize(n); }
+  inline int size() const
+  {
+    return data.size();
+  }
 
-    int nCellsGlobal;
-    int nNodesInCell;
-    int nCellsStructuredGlobal;
+  inline void resize(int n)
+  {
+    data.resize(n);
+  }
 
-    void initialize(Config &conf);
-    void initializeAdjoint(Config &conf);
+  void initialize(Config &conf);
+  void initializeAdjoint(Config &conf);
+
+  void initializeDataStructures(Config &conf);
+  void assignNodes(Config &conf);
+  void assignCoordinates(Config &conf);
+  void assignPhi(Config &conf);
+  void assignSubId(Config &conf);
+  void assignCellType(Config &conf);
+
+  void getBoundaries();
+
+  int nCellsGlobal;
+  int nCellsLocal;
+  int nNodesInCell;
+  int nCellsStrGlobal;
+
+  int nStrCellsGlobal;
 
 private:
-	std::vector<CellInfo> data;
+  std::vector<CellInfo> data;
 };
 
-
-
-#endif
+#endif // CELL_H

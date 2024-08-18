@@ -10,62 +10,49 @@
 #include <iostream>
 #include <set>
 #include "metis.h"
-#include "Config.h"
-#include "Cell.h"
-#include "Node.h"
-#include "Array.h"
-#include "PetscSolver.h"
-#include "Boundary.h"
-#include "VTK.h"
-#include "Config.h"
 #include "Gauss.h"
 #include "ShapeFunction.h"
-#include "MathFEM.h"
- 
+#include "Array.h"
+#include "Boundary.h"
+#include "Config.h"
+#include "Export.h"
+
 class Grid
 {
 public:
-    Grid(){}
-    Grid(Config &conf);
-    virtual ~Grid(){}
+  Grid() {}
+  Grid(Config &conf);
+  virtual ~Grid() {}
 
-    GridType gridType;
-    Cell cell; 
-    Node node;
-    DirichletBoundary dirichlet;
-    VTK vtk;
-    
-    int nx, ny, nz;
-    double lx, ly, lz;
-    double dx, dy, dz;
+  GridType gridType;
+  Cell cell;
+  Node node;
 
-    int dim;
-    int extractFluid;
-    int rowStart, rowEnd;
+  int nx, ny, nz;
+  double lx, ly, lz;
+  double dx, dy, dz;
 
-    int nNodesGlobal, nCellsGlobal, nDofsGlobal;
-    int nNodesLocal, nCellsLocal, nDofsLocal;
+  int dim;
+  int extractFluid;
+  int nodeStart, nodeEnd;
+  int rowStart, rowEnd;
 
-    void setStructuredGrid(
-        const int nxCells, const int nyCells, const int nzCells, 
-        const int nxNodes, const int nyNodes, const int nzNodes, 
-        const double dx, const double dy, const double dz,
-        const int nNodesInCell, const int dim, 
-        Cell &cell, Node &node);
+  int nNodesGlobal, nCellsGlobal, nDofsGlobal;
+  int nNodesLocal, nCellsLocal, nDofsLocal;
 
-    void prepareMatrix(PetscSolver &petsc, std::string outputDir, const int timeMax);
-    void setForSerial();
-    void divideWholeGrid();
-    void distributeToLocal(const int timeMax);
+  std::vector<int> vecFluidUniqueNodes;
+
+  void prepareMatrix(Dirichlet &dirichletBC, PetscSolver &petsc, std::string outputDir, const int timeMax);
+  void initialSetting(Dirichlet &dirichletBC);
+  void serialSetting();
+  void parallelSetting(Dirichlet &dirichletBC);
+  void collectNodeMap();
+  void distributeToLocalDofs();
+  void getNodeNewMap(Dirichlet &dirichletBC);
+  void getCellNewMap();
+  void petscMatrixSetting(PetscSolver &petsc);
 
 private:
-    int structuredGridNodeSet(
-        const int nxNodes, const int nyNodes, const int nzNodes,
-        const int i, const int j, const int k, const int p);
-    double structuredGridCoordinateSet(
-        const double dx, const double dy, const double dz,
-        const int i, const int j, const int k, const int d);
-        
 };
 
-#endif
+#endif // GRID_H
