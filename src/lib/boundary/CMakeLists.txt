@@ -14,7 +14,6 @@ target_include_directories(boundary
     ${PROJECT_SOURCE_DIR}/src/lib/common
     ${PROJECT_SOURCE_DIR}/src/lib/solver
     ${PROJECT_SOURCE_DIR}/src/lib/import
-    ${PROJECT_SOURCE_DIR}/src/lib/fileIO
 )
 
 target_compile_options(boundary PUBLIC ${compile_options_tmp})

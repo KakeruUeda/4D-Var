@@ -130,22 +130,22 @@ void TextReaderGridCreation::readStructuredBoundaryInfo(Config &conf)
   }
 
   if(str == "left") {
-    conf.inletCB = ControlBoundary::left;
+    conf.inletCB = ControlBoundaryFace::left;
   }
   if(str == "right") {
-    conf.inletCB = ControlBoundary::right;
+    conf.inletCB = ControlBoundaryFace::right;
   }
   if(str == "top") {
-    conf.inletCB = ControlBoundary::top;
+    conf.inletCB = ControlBoundaryFace::top;
   }
   if(str == "bottom") {
-    conf.inletCB = ControlBoundary::bottom;
+    conf.inletCB = ControlBoundaryFace::bottom;
   }
   if(str == "front") {
-    conf.inletCB = ControlBoundary::front;
+    conf.inletCB = ControlBoundaryFace::front;
   }
   if(str == "back") {
-    conf.inletCB = ControlBoundary::back;
+    conf.inletCB = ControlBoundaryFace::back;
   }
 
   conf.setControlBoundary();

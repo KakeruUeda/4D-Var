@@ -1,5 +1,5 @@
 /**
- * @file MathCommon.cpp
+ * @file MathTool.cpp
  * @ref  git@github.com:oubiomechlab/voxelFEMfluid.git
  */
 
@@ -88,7 +88,7 @@ double MathTools3D::compDeterminant(const double (&a)[3][3])
   return det;
 }
 
-void MathTools2D::comp_dxdr(double (&dxdr)[2][2], Array2D<double> &dNdr, Array2D<double> &x1, const int &numOfNodeInElm)
+void MathTools2D::comp_dxdr(double (&dxdr)[2][2], Array2D<double> &dNdr, Array2D<double> &x1, const int numOfNodeInElm)
 {
   for(int i = 0; i < 2; i++) {
     for(int j = 0; j < 2; j++) {
@@ -101,7 +101,7 @@ void MathTools2D::comp_dxdr(double (&dxdr)[2][2], Array2D<double> &dNdr, Array2D
 }
 
 void MathTools2D::comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const double (&dxdr)[2][2],
-                            const int &numOfNodeInElm)
+                            const int numOfNodeInElm)
 {
   double drdx[2][2];
   MathTools2D::compInverseMatrix(drdx, dxdr);
@@ -144,6 +144,21 @@ void MathTools3D::comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const 
   }
 }
 
+void MathTools2D::setShapesInGauss(Gauss &gauss, const int i1, const int i2)
+{
+  ShapeFunction2D::C2D4_N(N, gauss.point[i1], gauss.point[i2]);
+  ShapeFunction2D::C2D4_dNdr(dNdr, gauss.point[i1], gauss.point[i2]);
+}
+
+void MathTools2D::setFactorsInGauss(Gauss &gauss, const int i1, const int i2)
+{
+  MathTools2D::comp_dxdr(dxdr, dNdr, xCurrent, nNodesInCell);
+  MathTools2D::comp_dNdx(dNdx, dNdr, dxdr, nNodesInCell);
+  detJ = MathTools2D::compDeterminant(dxdr);
+  weight = gauss.weight[i1] * gauss.weight[i2];
+  vol = detJ * weight;
+}
+
 void MathTools3D::setShapesInGauss(Gauss &gauss, const int i1, const int i2, const int i3)
 {
   ShapeFunction3D::C3D8_N(N, gauss.point[i1], gauss.point[i2], gauss.point[i3]);
@@ -153,9 +168,10 @@ void MathTools3D::setShapesInGauss(Gauss &gauss, const int i1, const int i2, con
 void MathTools3D::setFactorsInGauss(Gauss &gauss, const int i1, const int i2, const int i3)
 {
   MathTools3D::comp_dxdr(dxdr, dNdr, xCurrent, nNodesInCell);
+  MathTools3D::comp_dNdx(dNdx, dNdr, dxdr, nNodesInCell);
   detJ = MathTools3D::compDeterminant(dxdr);
   weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
-  vol = detJ * weight; 
+  vol = detJ * weight;
 }
 
 double MathTools3D::getScalarValueGP(Array1D<double> &nodeValues)

@@ -5,7 +5,6 @@ add_library(config STATIC)
 target_sources(config
   PRIVATE
     Config.cpp
-    ReadTP.cpp
     StrBoundarySetting.cpp
     StrGridSetting.cpp
     GridFiltering.cpp

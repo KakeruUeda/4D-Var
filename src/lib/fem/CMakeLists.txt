@@ -13,8 +13,8 @@ target_include_directories(fem
     ${PROJECT_SOURCE_DIR}/src/lib/config
     ${PROJECT_SOURCE_DIR}/src/lib/boundary
     ${PROJECT_SOURCE_DIR}/src/lib/mesh
-    ${PROJECT_SOURCE_DIR}/src/lib/fileIO
     ${PROJECT_SOURCE_DIR}/src/lib/import
+    ${PROJECT_SOURCE_DIR}/src/lib/export
     ${PROJECT_SOURCE_DIR}/src/lib/solver
     ${PROJECT_SOURCE_DIR}/src/lib/preprocess
     ${PROJECT_SOURCE_DIR}/src/lib/postprocess

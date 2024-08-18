@@ -125,7 +125,6 @@ void TextReader4DVar::readGridInfo(Config &conf)
   if(!conf.tp.getInspectedValue(label, nodeIdFile)) {
     throw std::runtime_error(label + " is not set");
   }
-
   IMPORT::importScalarDataDAT<int>(nodeIdFile, conf.nodeId);
 
   label = sub_label + "/cellId";
@@ -187,22 +186,22 @@ void TextReader4DVar::readInverseInfo(Config &conf)
   conf.planeDir.resize(2, 0);
 
   if(str == "left") {
-    conf.controlBoundary = ControlBoundary::left;
+    conf.controlBoundary = ControlBoundaryFace::left;
     conf.planeDir[0] = 1, conf.planeDir[1] = 2;
   } else if(str == "right") {
-    conf.controlBoundary = ControlBoundary::right;
+    conf.controlBoundary = ControlBoundaryFace::right;
     conf.planeDir[0] = 1, conf.planeDir[1] = 2;
   } else if(str == "top") {
-    conf.controlBoundary = ControlBoundary::top;
+    conf.controlBoundary = ControlBoundaryFace::top;
     conf.planeDir[0] = 0, conf.planeDir[1] = 2;
   } else if(str == "bottom") {
-    conf.controlBoundary = ControlBoundary::bottom;
+    conf.controlBoundary = ControlBoundaryFace::bottom;
     conf.planeDir[0] = 0, conf.planeDir[1] = 2;
   } else if(str == "front") {
-    conf.controlBoundary = ControlBoundary::front;
+    conf.controlBoundary = ControlBoundaryFace::front;
     conf.planeDir[0] = 0, conf.planeDir[1] = 1;
   } else if(str == "back") {
-    conf.controlBoundary = ControlBoundary::back;
+    conf.controlBoundary = ControlBoundaryFace::back;
     conf.planeDir[0] = 0, conf.planeDir[1] = 1;
   }
 
@@ -217,7 +216,7 @@ void TextReader4DVar::readInverseInfo(Config &conf)
   if(!conf.tp.getInspectedValue(label, controlBoundaryNodeMap)) {
     throw std::runtime_error(label + " is not set");
   }
-  IMPORT::importScalarDataBIN<int>(controlBoundaryNodeMap, conf.CBNodeMap);
+  IMPORT::importScalarDataDAT<int>(controlBoundaryNodeMap, conf.CBNodeMap);
 
   std::string controlBoundaryCellMap;
   label = base_label + "/controlBoundaryCellMap";
@@ -225,7 +224,7 @@ void TextReader4DVar::readInverseInfo(Config &conf)
   if(!conf.tp.getInspectedValue(label, controlBoundaryCellMap)) {
     throw std::runtime_error(label + " is not set");
   }
-  IMPORT::importScalarDataBIN<int>(controlBoundaryCellMap, conf.CBCellMap);
+  IMPORT::importScalarDataDAT<int>(controlBoundaryCellMap, conf.CBCellMap);
 
   std::string controlBoundaryNodeMapInCell;
   label = base_label + "/controlBoundaryNodeMapInCell";
@@ -233,7 +232,7 @@ void TextReader4DVar::readInverseInfo(Config &conf)
   if(!conf.tp.getInspectedValue(label, controlBoundaryNodeMapInCell)) {
     throw std::runtime_error(label + " is not set");
   }
-  IMPORT::importVectorDataBIN<int>(controlBoundaryNodeMapInCell, conf.CBNodeMapInCell);
+  IMPORT::importVectorDataDAT<int>(controlBoundaryNodeMapInCell, conf.CBNodeMapInCell);
 }
 
 void TextReader4DVar::readDataInfo(Config &conf)
@@ -241,8 +240,8 @@ void TextReader4DVar::readDataInfo(Config &conf)
   std::string str, base_label, label;
   base_label = "/Data";
 
-  int tmpInt[3];
-  double tmpDouble[3];
+  int tmpInt[3] = {0, 0, 0};
+  double tmpDouble[3] = {0.0, 0.0, 0.0};
 
   label = base_label + "/nSnapShot";
   if(!conf.tp.getInspectedValue(label, conf.nSnapShot)) {
@@ -305,12 +304,5 @@ void TextReader4DVar::readDataInfo(Config &conf)
   label = base_label + "/dataDir";
   if(!conf.tp.getInspectedValue(label, conf.dataDir)) {
     throw std::runtime_error(label + " is not set");
-  }
-
-  conf.velocityData.resize(conf.nSnapShot);
-
-  for(int step = 0; step < conf.nSnapShot; step++) {
-    std::string velFile = conf.dataDir + "/data_" + std::to_string(step) + ".bin";
-    IMPORT::importVectorDataBIN<double>(velFile, conf.velocityData[step]);
   }
 }

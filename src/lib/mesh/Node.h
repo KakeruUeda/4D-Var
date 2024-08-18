@@ -97,8 +97,7 @@ public:
 
   std::vector<std::vector<std::vector<double>>> v;
   Array3D<double> vSnap;
-  void takeSnapShot(std::vector<std::vector<double>> &vel, const int &snapCount, const int &nNodesGlobal,
-                    const int &dim);
+  void takeSnapShot(Array2D<double> &v, const int nNodesGlobal, const int snapCount);
   void takeSnapShot(Array3D<double> &v, const int nNodesGlobal, const int snapCount, const int step);
 };
 

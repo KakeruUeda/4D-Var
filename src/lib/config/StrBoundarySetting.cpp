@@ -174,37 +174,37 @@ void Config::setControlBoundary()
 
   switch (inletCB)
   {
-  case ControlBoundary::left:
+  case ControlBoundaryFace::left:
     collectBoundary(
         [&](int i, int, int){ return i == 0; },
         [&](int i, int, int){ return i == 0; },
         {0, 3, 7, 4});
     break;
-  case ControlBoundary::right:
+  case ControlBoundaryFace::right:
     collectBoundary(
         [&](int i, int, int){ return i == nx; },
         [&](int i, int, int){ return i == nx-1; },
         {1, 5, 6, 2});
     break;
-  case ControlBoundary::top:
+  case ControlBoundaryFace::top:
     collectBoundary(
         [&](int, int j, int){ return j == ny; },
         [&](int, int j, int){ return j == ny-1; },
         {2, 6, 7, 3});
     break;
-  case ControlBoundary::bottom:
+  case ControlBoundaryFace::bottom:
     collectBoundary(
         [&](int, int j, int){ return j == 0; },
         [&](int, int j, int){ return j == 0; },
         {0, 4, 5, 1});
     break;
-  case ControlBoundary::front:
+  case ControlBoundaryFace::front:
     collectBoundary(
         [&](int, int, int k){ return k == 0; },
         [&](int, int, int k){ return k == 0; },
         {0, 1, 2, 3});
     break;
-  case ControlBoundary::back:
+  case ControlBoundaryFace::back:
     collectBoundary(
         [&](int, int, int k){ return k == nz; },
         [&](int, int, int k){ return k == nz-1; },

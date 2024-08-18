@@ -9,10 +9,10 @@
 
 #include "Array.h"
 #include "Cell.h"
-#include "DataGridX.h"
 #include "MyMPI.h"
 #include "Node.h"
 #include <iostream>
+#include <fstream>
 
 extern MyMPI mpi;
 
@@ -57,6 +57,7 @@ public:
   static void exportScalarCellDataVTI(const std::string &file, const char *dataName, Array1D<T> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
   template <typename T>
   static void exportVectorCellDataVTI(const std::string &file, const char *dataName, Array2D<T> &c, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz);
+  
   // and takes time argument
   template <typename T>
   static void exportScalarPointDataVTI(const std::string &file, const char *dataName, Array2D<T> &p, const int nx, const int ny, const int nz, const double dx, const double dy, const double dz, const int t);
@@ -87,6 +88,7 @@ public:
   static void exportScalarCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array1D<T> &c);
   template <typename T>
   static void exportVectorCellDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array2D<T> &c);
+  
   // and takes time argument
   template <typename T>
   static void exportScalarPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array2D<T> &p, const int t);
@@ -100,7 +102,6 @@ public:
   // These are ramdom export functions
   static void exportCellDataDAT(const std::string &file, Cell &cell);
   static void exportNodeDataDAT(const std::string &file, Node &node);
-  static void exportVelocityDataVTI(const std::string &file, DataGridX &data, const int t);
   static void exportMeshPartitionVTU(const std::string &file, Node &node, Cell &cell);
   static void exportPhiVTU(const std::string &file, Node &node, Cell &cell);
 };

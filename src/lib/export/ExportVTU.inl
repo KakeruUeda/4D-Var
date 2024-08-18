@@ -875,7 +875,8 @@ template <typename T>
 void EXPORT::exportVectorPointDataVTU(const std::string &file, const char *dataName, Node &node, Cell &cell, Array3D<T> &p, const int t)
 {
   FILE *fp;
-  if((fp = fopen(file.c_str(), "w")) == NULL) {
+  if ((fp = fopen(file.c_str(), "w")) == NULL)
+  {
     std::cerr << file << " open error" << std::endl;
     exit(1);
   }
@@ -891,21 +892,23 @@ void EXPORT::exportVectorPointDataVTU(const std::string &file, const char *dataN
 
   fprintf(fp, "<Cells>\n");
   fprintf(fp, "<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n");
-  for(int ic = 0; ic < cell.nCellsGlobal; ic++) {
-    for(int p = 0; p < cell(ic).node.size(); p++)
+  for (int ic = 0; ic < cell.nCellsGlobal; ic++)
+  {
+    for (int p = 0; p < cell(ic).node.size(); p++)
       fprintf(fp, "%d ", cell(ic).node[p]);
     fprintf(fp, "\n");
   }
   fprintf(fp, "</DataArray>\n");
   fprintf(fp, "<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n");
   int num = 0;
-  for(int ic = 0; ic < cell.nCellsGlobal; ic++) {
+  for (int ic = 0; ic < cell.nCellsGlobal; ic++)
+  {
     num += cell(ic).node.size();
     fprintf(fp, "%d\n", num);
   }
   fprintf(fp, "</DataArray>\n");
   fprintf(fp, "<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n");
-  for(int ic = 0; ic < cell.nCellsGlobal; ic++)
+  for (int ic = 0; ic < cell.nCellsGlobal; ic++)
     fprintf(fp, "%d\n", cell(ic).cellType);
   fprintf(fp, "</DataArray>\n");
   fprintf(fp, "</Cells>\n");
@@ -930,7 +933,8 @@ void EXPORT::exportVectorPointDataVTU(const std::string &file, const char *dataN
 
   int size = 0;
   num = 0;
-  for(int in = 0; in < node.nNodesGlobal; in++) {
+  for (int in = 0; in < node.nNodesGlobal; in++)
+  {
     data_point_d3[num] = (float)node.x[in][0];
     num++;
     data_point_d3[num] = (float)node.x[in][1];
@@ -943,7 +947,8 @@ void EXPORT::exportVectorPointDataVTU(const std::string &file, const char *dataN
   ofs.write((char *)data_point_d3, size);
 
   num = 0;
-  for(int in = 0; in < node.nNodesGlobal; in++) {
+  for (int in = 0; in < node.nNodesGlobal; in++)
+  {
     data_point_d3[num] = (float)p(t, in, 0);
     num++;
     data_point_d3[num] = (float)p(t, in, 1);
@@ -959,7 +964,8 @@ void EXPORT::exportVectorPointDataVTU(const std::string &file, const char *dataN
 
   ofs.close();
 
-  if((fp = fopen(file.c_str(), "a")) == NULL) {
+  if ((fp = fopen(file.c_str(), "a")) == NULL)
+  {
     std::cerr << file << " open error" << std::endl;
     exit(1);
   }

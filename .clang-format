@@ -64,6 +64,3 @@ SpaceBeforeParens: Never
 
 # コメントの前にスペース入れる
 SpacesBeforeTrailingComments: 2
-
-
-

@@ -8,7 +8,6 @@
 
 #include "Config.h"
 #include "DataGrid.h"
-#include "DataGridX.h"
 #include "Export.h"
 #include "Grid.h"
 #include "Import.h"
@@ -24,7 +23,7 @@ public:
 
   Grid grid;
   SnapShot snap;
-  DataGridX data;
+  DataGrid data;
 
   int dim;
   int timeMax;

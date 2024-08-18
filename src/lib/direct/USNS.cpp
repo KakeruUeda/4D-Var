@@ -9,11 +9,11 @@
 /**************************************
  * @brief Solve Unsteady Navier Stokes.
  */
-void DirectProblem::solveUSNS(Application &app)
+void DirectProblem::solveNavierStokes()
 {
-  PetscPrintf(MPI_COMM_WORLD, "\nMain solver\n");
+  PetscPrintf(MPI_COMM_WORLD, "\nMain Solver\n");
 
-  PetscScalar *arraySolnTmp;
+  PetscScalar *arraySolution;
   Vec vecSEQ;
   VecScatter ctx;
   VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ);
@@ -21,72 +21,55 @@ void DirectProblem::solveUSNS(Application &app)
   petsc.setMatAndVecZero(grid.cell);
   petsc.initialAssembly();
 
-  for(int id = 0; id < grid.nDofsGlobal; id++) {
-    grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
-    grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
-  }
+  dirichlet.setValuesZero(grid.nDofsGlobal);
 
   for(int t = 0; t < timeMax; t++) {
     petsc.setValueZero();
-    grid.dirichlet.assignDirichletBCs(grid.dirichlet.vDirichletNew, grid.dirichlet.pDirichletNew, grid.node, dim, t);
+    dirichlet.assignBCs(grid.node);
+
     if(pulsatileFlow == ON) {
       if(t >= pulseBeginItr) {
-        grid.dirichlet.assignPulsatileBCs(t, dt, T, pulseBeginItr, grid.nDofsGlobal);
+        double pulse = comp_pulse(t);
+        dirichlet.assignPulsatileBCs(pulse, grid.nDofsGlobal);
       }
     }
-    grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
+    dirichlet.applyBCs(grid.cell, petsc);
 
     MPI_Barrier(MPI_COMM_WORLD);
     double timer1 = MPI_Wtime();
 
     for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
+      int nDofs = grid.cell(ic).dofsMap.size();
+
       if(grid.cell(ic).subId == mpi.myId) {
-        int nDofsInCell = grid.cell(ic).dofsMap.size();
-        MathTools3D tools(grid.cell.nNodesInCell);
-        MatrixXd Klocal(nDofsInCell, nDofsInCell);
-        VectorXd Flocal(nDofsInCell);
-        Klocal.setZero();
-        Flocal.setZero();
-        //matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
+        MatrixXd Klocal(nDofs, nDofs);
+        VectorXd Flocal(nDofs);
+        matrixAssemblyUSNS(Klocal, Flocal, ic, t);
         petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
     }
-    petsc.currentStatus = ASSEMBLY_OK;
     timer1 = MPI_Wtime() - timer1;
 
     MPI_Barrier(MPI_COMM_WORLD);
-
     double timer2 = MPI_Wtime();
+
     petsc.solve();
+
     timer2 = MPI_Wtime() - timer2;
 
     VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
     VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
-    VecGetArray(vecSEQ, &arraySolnTmp);
+    VecGetArray(vecSEQ, &arraySolution);
 
     // update solution vector
-    for(int id = 0; id < grid.nDofsGlobal; id++)
-      petsc.solution[id] = arraySolnTmp[id];
-
-    VecRestoreArray(vecSEQ, &arraySolnTmp);
-    updateSolutions();
-
-    // visualize
-    switch(grid.gridType) {
-    case GridType::STRUCTURED:
-      updateSolutionsVTI();
-      outputSolutionsVTI("solution", t);
-      outputSolutionsBIN("input", t);
-      compVorticity(t);
-      break;
-    case GridType::UNSTRUCTURED:
-      outputSolutionsVTU("solution", t);
-      break;
-    default:
-      PetscPrintf(MPI_COMM_WORLD, "\nUndifined gridType\n");
-      exit(1);
-      break;
+    for(int id = 0; id < grid.nDofsGlobal; id++) {
+      petsc.solution[id] = arraySolution[id];
     }
+
+    VecRestoreArray(vecSEQ, &arraySolution);
+
+    updateSolutions();
+    outputSolutions(t);
 
     if(mpi.myId == 0) {
       double timeNow = t * dt;
@@ -99,14 +82,83 @@ void DirectProblem::solveUSNS(Application &app)
   VecDestroy(&vecSEQ);
 }
 
-/******************************************************
- * @brief Solve Unsteady Navier Stokes.
- *        This function takes boundary arguments
- *        for the purpose of armijo criteria.
+/*******************************************************************
+ * @brief Compute fully developed flow field.
+ *        Usually used to get initial condition for inverse problem.
  */
-void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
-                              std::vector<std::map<int, double>> &pDirichletTmp,
-                              std::vector<std::vector<double>> &v0Tmp)
+void DirectProblem::solveNaveirStokes(const int stepMax)
+{
+  PetscPrintf(MPI_COMM_WORLD, "\nMain Solver Opt Initial\n");
+
+  PetscScalar *arraySolution;
+  Vec vecSEQ;
+  VecScatter ctx;
+  VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ);
+
+  petsc.setMatAndVecZero(grid.cell);
+  petsc.initialAssembly();
+
+  dirichlet.setValuesZero(grid.nDofsGlobal);
+  dirichlet.assignBCs(grid.node);
+
+  for(int t = 0; t < stepMax; t++) {
+    petsc.setValueZero();
+    dirichlet.applyBCs(grid.cell, petsc);
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    double timer1 = MPI_Wtime();
+
+    for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
+      int nDofs = grid.cell(ic).dofsMap.size();
+      if(grid.cell(ic).subId == mpi.myId) {
+        MatrixXd Klocal(nDofs, nDofs);
+        VectorXd Flocal(nDofs);
+        matrixAssemblyUSNS(Klocal, Flocal, ic, t);
+        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, grid.cell(ic).dofsBCsMap, Klocal, Flocal);
+      }
+    }
+    timer1 = MPI_Wtime() - timer1;
+
+    MPI_Barrier(MPI_COMM_WORLD);
+    double timer2 = MPI_Wtime();
+
+    petsc.solve();
+
+    timer2 = MPI_Wtime() - timer2;
+
+    VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
+    VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
+    VecGetArray(vecSEQ, &arraySolution);
+
+    // update solution vector
+    for(int id = 0; id < grid.nDofsGlobal; id++) {
+      petsc.solution[id] = arraySolution[id];
+    }
+    VecRestoreArray(vecSEQ, &arraySolution);
+    updateSolutions();
+
+    if(mpi.myId == 0) {
+      double timeNow = t * dt;
+      printf("Initial : Step: %d/%d | Time: %.2fs \n", t, timeMax, timeNow);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
+
+  VecScatterDestroy(&ctx);
+  VecDestroy(&vecSEQ);
+
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+    for(int d = 0; d < 3; d++) {
+      v0(in, d) = v(in, d);
+    }
+  }
+}
+
+/******************************************************
+ * @brief Solve Unsteady Navier Stokes
+ *        for the purpose of checking armijo criteria.
+ */
+void DirectProblem::solveNavierStokes(Array2D<double> &X0, Array3D<double> &X)
 {
   PetscPrintf(MPI_COMM_WORLD, "\nMain Solver\n");
 
@@ -119,33 +171,25 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
   petsc.initialAssembly();
   setVariablesZero();
 
-  for(int id = 0; id < grid.nDofsGlobal; id++) {
-    grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
-    grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
-  }
-
-  // Give initial velocity value
-  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
-    for(int d = 0; d < dim; d++) {
-      grid.node.v[in][d] = v0Tmp[in][d];
-    }
-  }
+  updateInitialVelocity(X0);
 
   int snapCount = 0;
   for(int t = 0; t < timeMax; t++) {
     petsc.setValueZero();
-    grid.dirichlet.assignDirichletBCs(vDirichletTmp, pDirichletTmp, grid.node, dim, t);
-    grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
+
+    dirichlet.updateValues(X, t);
+    dirichlet.getNewArray(grid.node.mapNew);
+
+    dirichlet.assignBCs(grid.node);
+    dirichlet.applyBCs(grid.cell, petsc);
 
     for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
+      int nDofs = grid.cell(ic).dofsMap.size();
+
       if(grid.cell(ic).subId == mpi.myId) {
-        int nDofsInCell = grid.cell(ic).dofsMap.size();
-        MathTools3D tools(grid.cell.nNodesInCell);
-        MatrixXd Klocal(nDofsInCell, nDofsInCell);
-        VectorXd Flocal(nDofsInCell);
-        Klocal.setZero();
-        Flocal.setZero();
-        //matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
+        MatrixXd Klocal(nDofs, nDofs);
+        VectorXd Flocal(nDofs);
+        matrixAssemblyUSNS(Klocal, Flocal, ic, t);
         petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
     }
@@ -156,21 +200,22 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
     VecGetArray(vecSEQ, &arraySolnTmp);
 
     // update solution vector
-    for(int id = 0; id < grid.nDofsGlobal; id++)
+    for(int id = 0; id < grid.nDofsGlobal; id++) {
       petsc.solution[id] = arraySolnTmp[id];
+    }
 
     VecRestoreArray(vecSEQ, &arraySolnTmp);
     updateSolutions();
     updateTimeSolutions(t);
 
     if((t - snap.snapTimeBeginItr) % snap.snapInterval == 0) {
-      snap.takeSnapShot(grid.node.v, snapCount, grid.node.nNodesGlobal, dim);
+      snap.takeSnapShot(v, grid.node.nNodesGlobal, snapCount);
       snapCount++;
     }
 
     if(mpi.myId == 0) {
       double timeNow = t * dt;
-      printf("Main Solver : Time = %f \n", timeNow);
+      printf("Main: Step: %d/%d | Time: %.2fs \n", t, timeMax, timeNow);
     }
     MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -179,79 +224,78 @@ void DirectProblem::solveUSNS(std::vector<std::map<int, std::vector<double>>> &v
   VecDestroy(&vecSEQ);
 }
 
-/*******************************************************************
- * @brief Compute fully developed flow field.
- *        Usually used to get initial condition for inverse problem.
- */
-void DirectProblem::compInitialCondition(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
-                                         std::vector<std::map<int, double>> &pDirichletTmp)
+void DirectProblem::updateInitialVelocity(Array2D<double> &X0)
 {
-  PetscPrintf(MPI_COMM_WORLD, "\nCompute Initial Condition\n");
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
+    for(int d = 0; d < dim; d++) {
+      v(in, d) = X0(in, d);
+      vPrev(in, d) = X0(in, d);
+    }
+  }
+}
 
-  double norm, norm0;
-  PetscScalar *arraySolnTmp;
-  Vec vecSEQ;
-  VecScatter ctx;
-  VecScatterCreateToAll(petsc.solnVec, &ctx, &vecSEQ);
+void DirectProblem::outputSolutions(const int t)
+{
+  switch(grid.gridType) {
+  case GridType::STRUCTURED:
+    updateSolutionsVTI();
+    outputSolutionsVTI("solution", t);
+    outputSolutionsBIN("input", t);
+    compVorticity(t);
+    break;
+  case GridType::UNSTRUCTURED:
+    outputSolutionsVTU("solution", t);
+    break;
+  default:
+    PetscPrintf(MPI_COMM_WORLD, "\nUndifined gridType\n");
+    exit(1);
+    break;
+  }
+}
 
-  petsc.setMatAndVecZero(grid.cell);
-  petsc.initialAssembly();
-  setVariablesZero();
-
-  for(int id = 0; id < grid.nDofsGlobal; id++) {
-    grid.dirichlet.dirichletBCsValueNewInit[id] = 0e0;
-    grid.dirichlet.dirichletBCsValueNew[id] = 0e0;
+void DirectProblem::compVorticity(const int t)
+{
+  if(mpi.myId > 0) {
+    return;
   }
 
-  int snapCount = 0;
-  for(int t = 0; t < timeMax * 3; t++) {
-    petsc.setValueZero();
-    grid.dirichlet.assignConstantDirichletBCs(vDirichletTmp, pDirichletTmp, grid.node, dim, t);
-    grid.dirichlet.applyDirichletBCs(grid.cell, petsc);
+  std::function<double(int, int, int)> u_func = [this](int i, int j, int k) {
+    int in = i + j * (grid.nx + 1) + k * (grid.nx + 1) * (grid.ny + 1);
+    return vvti(in, 0);
+  };
 
-    for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
-      if(grid.cell(ic).subId == mpi.myId) {
-        int nDofsInCell = grid.cell(ic).dofsMap.size();
-        MathTools3D tools(grid.cell.nNodesInCell);
-        MatrixXd Klocal(nDofsInCell, nDofsInCell);
-        VectorXd Flocal(nDofsInCell);
-        Klocal.setZero();
-        Flocal.setZero();
-        //matrixAssemblyUSNS(Klocal, Flocal, tools, ic, t);
-        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, grid.cell(ic).dofsBCsMap, Klocal, Flocal);
+  std::function<double(int, int, int)> v_func = [this](int i, int j, int k) {
+    int in = i + j * (grid.nx + 1) + k * (grid.nx + 1) * (grid.ny + 1);
+    return vvti(in, 1);
+  };
+
+  std::function<double(int, int, int)> w_func = [this](int i, int j, int k) {
+    int in = i + j * (grid.nx + 1) + k * (grid.nx + 1) * (grid.ny + 1);
+    return vvti(in, 2);
+  };
+
+  for(int k = 1; k < grid.nz; k++) {
+    for(int j = 1; j < grid.ny; j++) {
+      for(int i = 1; i < grid.nx; i++) {
+        double dvdz = CDM::zDerivative(v_func, i, j, k, grid.dz);
+        double dwdy = CDM::yDerivative(w_func, i, j, k, grid.dy);
+        double dudz = CDM::zDerivative(u_func, i, j, k, grid.dz);
+        double dwdx = CDM::xDerivative(w_func, i, j, k, grid.dx);
+        double dvdx = CDM::xDerivative(v_func, i, j, k, grid.dx);
+        double dudy = CDM::yDerivative(u_func, i, j, k, grid.dy);
+
+        int in = i + j * (grid.nx + 1) + k * (grid.nx + 1) * (grid.ny + 1);
+
+        vrt(in, 0) = dwdy - dvdz;
+        vrt(in, 1) = dudz - dwdx;
+        vrt(in, 2) = dvdx - dudy;
       }
     }
-
-    petsc.solve();
-
-    VecScatterBegin(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
-    VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
-    VecGetArray(vecSEQ, &arraySolnTmp);
-
-    // update solution vector
-    for(int id = 0; id < grid.nDofsGlobal; id++)
-      petsc.solution[id] = arraySolnTmp[id];
-
-    VecRestoreArray(vecSEQ, &arraySolnTmp);
-    updateSolutions();
-
-    if(t == timeMax * 3 - 1) {
-      for(int in = 0; in < grid.node.nNodesGlobal; in++) {
-        for(int d = 0; d < dim; d++) {
-          grid.node.v0[in][d] = grid.node.v[in][d];
-        }
-      }
-    }
-
-    if(mpi.myId == 0) {
-      double timeNow = t * dt;
-      printf("Compute initial condition : Time = %f \n", timeNow);
-    }
-
-    MPI_Barrier(MPI_COMM_WORLD);
   }
-  VecScatterDestroy(&ctx);
-  VecDestroy(&vecSEQ);
+
+  std::string vtiFile = outputDir + "/solution/vorticity" + std::to_string(t) + ".vti";
+  EXPORT::exportVectorPointDataVTI<double>(vtiFile, "vorticity", vrt, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy,
+                                           grid.dz);
 }
 
 /********************************
@@ -318,9 +362,9 @@ void DirectProblem::updateSolutionsVTI(const int t)
 {
   for(int in = 0; in < grid.node.nNodesGlobal; in++) {
     for(int d = 0; d < dim; d++) {
-      vvti(grid.node.sortNode[in], d) = vt(t, in, d);
+      vvti(grid.vecFluidUniqueNodes[in], d) = vt(t, in, d);
     }
-    pvti(grid.node.sortNode[in]) = pt(t, in);
+    pvti(grid.vecFluidUniqueNodes[in]) = pt(t, in);
   }
 }
 
@@ -330,7 +374,7 @@ void DirectProblem::updateSolutionsVTI(const int t)
 void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t)
 {
   if(mpi.myId > 0) {
-    return; 
+    return;
   }
   std::string vtiFile;
   vtiFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".vti";
@@ -349,10 +393,10 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t, cons
   }
   std::string vtiFile;
   vtiFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vti";
-  EXPORT::exportVectorPointDataVTI(vtiFile, "velocity", grid.node.vvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy,
+  EXPORT::exportVectorPointDataVTI(vtiFile, "velocity", vvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy,
                                    grid.dz);
   vtiFile = outputDir + "/" + dir + "/pressure_" + to_string(loop) + "_" + to_string(t) + ".vti";
-  EXPORT::exportScalarPointDataVTI(vtiFile, "pressure", grid.node.pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy,
+  EXPORT::exportScalarPointDataVTI(vtiFile, "pressure", pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy,
                                    grid.dz);
 }
 
@@ -401,16 +445,15 @@ void DirectProblem::outputSolutionsBIN(const std::string &dir, const int t)
 /********************************************
  * @brief Take snapshots for error functions.
  */
-void SnapShot::takeSnapShot(std::vector<std::vector<double>> &vel, const int &snapCount, const int &nNodesGlobal,
-                            const int &dim)
+void SnapShot::takeSnapShot(Array2D<double> &v, const int nNodesGlobal, const int snapCount)
 {
   for(int in = 0; in < nNodesGlobal; in++) {
-    for(int d = 0; d < dim; d++) {
-      v[snapCount][in][d] = vel[in][d];
-      vSnap(snapCount, in, d) = vel[in][d];
+    for(int d = 0; d < 3; d++) {
+      vSnap(snapCount, in, d) = v(in, d);
     }
   }
 }
+
 
 /********************************************
  * @brief Take snapshots for error functions.

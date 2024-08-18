@@ -1,7 +1,7 @@
 /**
  * @file DataGrid.h
  * @author K.Ueda
- * @date July, 2024
+ * @date August, 2024
  */
 
 #ifndef DATAGRID_H
@@ -11,90 +11,68 @@
 #include "Config.h"
 #include "Function.h"
 #include "Gauss.h"
-#include "MathCommon.h"
-#include "Node.h"
+#include "Grid.h"
+#include "MathTool.h"
 #include "PetscSolver.h"
 #include "ShapeFunction.h"
 #include "Tool.h"
-#include "metis.h"
 #include <iostream>
 
 struct VoxelInfo
 {
-  int centerCell;
-  bool isIncluded;
-  int nNodesInCell;
-  double dx, dy, dz;
-
-  std::vector<std::vector<double>> vCFD;
-  std::vector<std::vector<double>> vMRI;
-  std::vector<std::vector<double>> ve;
-  std::vector<double> center;
-  std::vector<int> cellChildren;
-  std::vector<double> vEX;
-
-  void setNearCell(Node &node, Cell &cell, const double range, const int dim);
-  void setCellOnCenterPoint(Node &node, Cell &cell, const int dim);
-  void average(Cell &cell, std::vector<std::vector<double>> &_v, const int t, const int dim);
-  double compSmoothing(Function &func, const double a, const int dim, const int p);
-  void interpolate(Node &node, Cell &cell, std::vector<std::vector<double>> &_v, const int &t, const int &dim);
-  void gaussIntegral(Function &func, std::vector<std::vector<double>> &velCurrent, std::vector<double> &smoothing,
-                     double &weightIntegral, const int nNodesInCell, const int t, const int dim);
+  double center[3];
+  double minX, minY, minZ;
+  double maxX, maxY, maxZ;
+  vector<int> cells;
+  Array2D<double> v_cfd, v_mri, v_err;  // (time, dim)
 };
 
 class DataGrid
 {
 public:
-  DataGrid()
-  {
-  }
-  DataGrid(Config &conf);
+  DataGrid(Config &conf, Grid &grid, SnapShot &snap);
 
-  int dim;
-  int nx, ny, nz;
-  double dx, dy, dz;
-  double lx, ly, lz;
+  VoxelVelocity vvox;
+  MathTools3D mt3d;
+  Gauss gauss;
+  Grid &grid;
+  SnapShot &snap;
+
+  int nxData, nyData, nzData;
+  double dxData, dyData, dzData;
+  double lxData, lyData, lzData;
   double xOrigin, yOrigin, zOrigin;
-  double range;
 
-  int nData;
+  int nDataCellsGlobal;
+  int nDataNodesGlobal;
+  int nDataNodesInCell;
 
-  int nCellsGlobal;
-  int nNodesGlobal;
-  int nNodesInCell;
+  Array3D<VoxelInfo> voxel;
 
-  int nSnapShot;
-  int snapInterval;
+  void initialize(Config &conf);
 
-  std::vector<std::vector<std::vector<std::vector<double>>>> vEX;
+  void setVoxelCenters();
+  void setVoxelBoundaries();
+  void collectCellsInVoxel();
+  void collectCellsInCircle(const int radious);
+  bool isCellsIncludedInVoxel(const int iv, const int ic);
+  bool isCellsIncludedInCircle(const double radious, const int iv, const int ic);
 
-  inline VoxelInfo &operator()(int x)
-  {
-    return data[x];
-  }
-  inline VoxelInfo &operator()(int y, int x)
-  {
-    return data[y * nx + x];
-  }
-  inline VoxelInfo &operator()(int z, int y, int x)
-  {
-    return data[z * nx * ny + y * nx + x];
-  }
+  void average(const int iv, const int t);
+  void interpolate();
 
-  inline int size()
-  {
-    return data.size();
-  }
-  inline void resize(int n)
-  {
-    data.resize(n);
-  }
-
-  void initialize(Config &conf, Node &node, Cell &cell, const int &dim);
-  void compEdgeValue(const int t);
+  void importDAT(const std::string &filename, const int step);
+  void exportDAT(const std::string &filename, const int step);
+  void exportVTI(const std::string &filename, const int t);
 
 private:
-  std::vector<VoxelInfo> data;
+  double coeff;
+  double weightIntegral;
+
+  Array2D<double> velCurrent;
+  Array1D<double> smoothing;
+
+  void compSmoothing();
 };
 
 #endif

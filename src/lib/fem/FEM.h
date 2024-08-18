@@ -61,11 +61,11 @@ public:
   // Adjoint variable
   Array2D<double> w;
   Array2D<double> wPrev;
-  Array2D<double> q;
-  Array2D<double> qPrev;
+  Array1D<double> q;
+  Array1D<double> qPrev;
   Array2D<double> l;
   Array3D<double> wt;
-  Array3D<double> qt;
+  Array2D<double> qt;
   Array3D<double> lt;
 
   // for vti visualization

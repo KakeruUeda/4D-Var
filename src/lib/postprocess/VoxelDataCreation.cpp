@@ -33,6 +33,8 @@ void VoxelDataCreation::createDirectories()
   std::string dir;
   dir = outputDir + "/bin";
   mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
+  dir = outputDir + "/data";
+  mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
   dir = outputDir + "/vtk";
   mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 }
@@ -260,7 +262,7 @@ void VoxelDataCreation::outputVTK()
   }
   for(int step = 0; step < snap.nSnapShot; step++) {
     std::string vtiFile = outputDir + "/vtk/" + "data_" + std::to_string(step) + ".vti";
-    EXPORT::exportVelocityDataVTI(vtiFile, data, step);
+    data.exportVTI(vtiFile, step);
   }
   std::string vtiFile = outputDir + "/vtk/" + "velocityReference_initial.vti";
   EXPORT::exportVectorPointDataVTI<double>(vtiFile, "velocityReference_initial", vRefInit, nxOpt, nyOpt, nzOpt, dxOpt,
@@ -276,19 +278,8 @@ void VoxelDataCreation::outputBIN()
   std::string binFile = outputDir + "/bin/" + "velocityReference_initial.bin";
   vRefInit.exportBIN(binFile);
 
-  std::vector<std::vector<std::vector<double>>> dataTmp;
-  VecTool::resize(dataTmp, snap.nSnapShot, data.nDataCellsGlobal, dim);
-
-  for(int step = 0; step < data.snap.nSnapShot; step++) {
-    for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-      for(int d = 0; d < dim; d++) {
-        dataTmp[step][iv][d] = data.voxel(iv).v_cfd(step, d);
-      }
-    }
-  }
-
   for(int step = 0; step < snap.nSnapShot; step++) {
-    std::string binFile = outputDir + "/bin/" + "data_" + std::to_string(step) + ".bin";
-    EXPORT::exportVectorDataBIN<double>(binFile, dataTmp[step]);
+    std::string datFile = outputDir + "/data/" + "data_" + std::to_string(step) + ".dat";
+    data.exportDAT(datFile, step);
   }
 }

@@ -1,6 +1,2 @@
-add_subdirectory(usns)
-add_subdirectory(4dvar)
-add_subdirectory(MAE)
-add_subdirectory(flowRate)
-add_subdirectory(voxelDataCreation)
-add_subdirectory(gridCreation)
+add_subdirectory(direct)
+add_subdirectory(inverse)

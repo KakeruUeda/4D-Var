@@ -10,6 +10,7 @@
 #include "Adjoint.h"
 #include "Boundary.h"
 #include "Config.h"
+#include "DataGrid.h"
 #include "DirectProblem.h"
 #include "Function.h"
 #include "Gauss.h"
@@ -33,16 +34,10 @@
 
 extern MyMPI mpi;
 
-struct EstimatedVariable
-{
-public:
-  std::vector<double> u, v, w;
-};
-
 struct CostFunction
 {
-  double term1, term2, term3, term4, term5;  // Reg for X
-  double term6, term7;                       // Reg for X0
+  double term1, term2, term3, term4, term5;  // Reg term for X
+  double term6, term7;                       // Reg term for X0
   double total;
   std::vector<double> history;
   void sum()
@@ -63,12 +58,16 @@ public:
   std::string outputDir;
 
   Application app;
-  DataGrid data;
-  DataGridX datax;
 
+  // Do not change the order of the class declarations
   DirectProblem main;
   Adjoint adjoint;
+  DataGrid data;
+  ControlBoundary inletCB;
   CostFunction costFunction;
+
+  MathTools2D mt2d;
+  MathTools3D mt3d;
 
   VoxelVelocity vvox;
 
@@ -77,60 +76,58 @@ public:
   int outputItr;
 
   double alphaX0, alphaX;
-
   bool isConverged_X, isConverged_X0;
 
   std::vector<int> planeDir;
-  std::vector<std::vector<std::vector<double>>> feedbackForce;
-  std::vector<std::vector<std::vector<double>>> feedbackForceT;
-  std::vector<std::vector<std::vector<double>>> gradWholeNode;
-  std::vector<std::vector<double>> gradInitVel;
-  std::vector<std::vector<std::vector<double>>> grad;
-  std::vector<std::vector<std::vector<double>>> X;
-  std::vector<std::vector<double>> X0;
-  std::vector<std::vector<std::vector<double>>> Xvti;
-  std::vector<std::vector<double>> X0vti;
+
+  Array2D<double> gradX0;
+  Array3D<double> gradX;
+  Array3D<double> XArr;
+  Array2D<double> X0Arr;
+  Array3D<double> XvtiArr;
+  Array2D<double> X0vtiArr;
 
   void initialize(Config &conf);
+  void resize();
+  void initializeVarZero();
   void runSimulation();
-  void guessInitialCondition();
-  void compCostFunction();
-  void GaussIntegralRegTerm2(Function &func, double &value, const int ic, const int t);
-  void GaussIntegralRegTerm3(Function &func, double &value, const int ic, const int t);
-  void GaussIntegralRegTerm4(Function &func, double &value, const int ic, const int t);
-  void GaussIntegralRegTerm5(Function &func, double &value, const int ic, const int t);
-  void GaussIntegralRegTerm6(Function &func, double &value, const int ic);
-  void GaussIntegralRegTerm7(Function &func, double &value, const int ic);
-  void compFeedbackForce();
-  void compInterpolatedFeeback(double (&feedback)[3], double (&point)[3]);
-  void compTimeInterpolatedFeedbackForce();
-  void feedbackGaussIntegral(Function &func, double (&feedback)[3], const int ic, const int t);
-  void compOptimalCondition();
-  void GaussIntegralOptimalConditionXTerm1(Function &func, std::vector<std::vector<double>> &value, const int ic,
-                                           const int t);
-  void GaussIntegralOptimalConditionXTerm2(Function &func, std::vector<std::vector<double>> &value, const int ic,
-                                           const int t);
-  void GaussIntegralOptimalConditionXTerm3(Function &func, std::vector<std::vector<double>> &value, const int ic,
-                                           const int t);
-  void GaussIntegralOptimalConditionXTerm4(Function &func, std::vector<std::vector<double>> &value, const int ic,
-                                           const int t);
-  void GaussIntegralOptimalConditionXTerm5(Function &func, std::vector<std::vector<double>> &value, const int ic,
-                                           const int t);
-  void GaussIntegralOptimalConditionX0Term1(Function &func, std::vector<std::vector<double>> &value, const int ic);
-  void GaussIntegralOptimalConditionX0Term2(Function &func, std::vector<std::vector<double>> &value, const int ic);
-  void GaussIntegralOptimalConditionX0Term3(Function &func, std::vector<std::vector<double>> &value, const int ic);
-  double armijoCriteria(const double fk);
-  double armijoCriteriaX_tmp(const double fk);
-  double armijoCriteriaX0_tmp(const double fk);
-  void armijoCriteriaX(const double fk);
-  void armijoCriteriaX0(const double fk);
-  void updataControlVariables(DirectProblem &main);
-  void updataControlVariables(DirectProblem &main, const double alphaX, const double alphaX0);
-  void setValue(Function &func, const int ic);
 
 private:
-  void assembleFeedbackForce(Function &func, const int ic, const int t);
-  bool checkConvergence(std::ofstream &cf, const int loop);
+  void compInitialOptimalVelocityField();
+
+  // Cost function
+  void compCostFunction();
+  void RegTerm2_inGaussIntegral(double &value, const int nc, const int ic, const int t);
+  void RegTerm3_inGaussIntegral(double &value, const int nc, const int ic, const int t);
+  void RegTerm4_inGaussIntegral(double &value, const int nc, const int ic, const int t);
+  void RegTerm5_inGaussIntegral(double &value, const int nc, const int ic, const int t);
+  void RegTerm6_inGaussIntegral(double &value, const int ic);
+  void RegTerm7_inGaussIntegral(double &value, const int ic);
+
+  // Feedback force
+  void compFeedbackForce();
+  void compInterpolatedFeeback(double (&feedback)[3], double (&point)[3], const int t);
+  void compTimeInterpolatedFeedbackForce();
+  void assembleFeedbackForce(const int ic, const int t);
+  void feedbackGaussIntegral(double (&feedback)[3], const int ic, const int t);
+  
+  // Optimal condition
+  void compOptimalCondition();
+  void OptCondX_Term1_inGaussIntegral(std::vector<std::vector<double>> &value, const int nc, const int ic, const int t);
+  void OptCondX_Term2_inGaussIntegral(std::vector<std::vector<double>> &value, const int nc, const int ic, const int t);
+  void OptCondX_Term3_inGaussIntegral(std::vector<std::vector<double>> &value, const int nc, const int ic, const int t);
+  void OptCondX_Term4_inGaussIntegral(std::vector<std::vector<double>> &value, const int nc, const int ic, const int t);
+  void OptCondX_Term5_inGaussIntegral(std::vector<std::vector<double>> &value, const int nc, const int ic, const int t);
+  void OptCondX0_Term1_inGaussIntegral(std::vector<std::vector<double>> &value, const int ic);
+  void OptCondX0_Term2_inGaussIntegral(std::vector<std::vector<double>> &value, const int ic);
+  void OptCondX0_Term3_inGaussIntegral(std::vector<std::vector<double>> &value, const int ic);
+  void setValue(const int ic);
+
+  // Armijo criteria
+  void armijoCriteriaX(const double fk);
+  void armijoCriteriaX0(const double fk);
+
+  // Output functions
   void outputFowardSolutions(const int loop);
   void outputAdjointSolutions(const int loop);
   void outputFeedbackForce(const int loop);
@@ -140,6 +137,8 @@ private:
   void outputOptimizedVariables();
 
   void updateControlVariablesVTI();
+  bool checkConvergence(std::ofstream &cf, const int loop);
+
 };
 
 #endif

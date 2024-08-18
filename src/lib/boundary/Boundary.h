@@ -1,7 +1,7 @@
 /**
  * @file Boundary.h
  * @author K.Ueda
- * @date May, 2024
+ * @date August, 2024
  */
 
 #ifndef BOUNDARY_H
@@ -15,11 +15,29 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <set>
+
+class ControlBoundary
+{
+public:
+  ControlBoundary() 
+  {
+  }
+  ControlBoundaryFace inletFace;
+  std::vector<bool> isBoundaryEdge;
+  std::vector<int> CBNodeMap;
+  std::vector<int> CBCellMap;
+  std::vector<std::vector<int>> CBNodeMapInCell;
+
+  void initialize(Config &conf);
+private:
+};
+
 
 class Boundary
 {
 public:
-  virtual void assignBCs(Node &node, const int t) = 0;
+  virtual void assignBCs(Node &node) = 0;
   virtual ~Boundary()
   {
   }
@@ -38,11 +56,12 @@ public:
   void initialize(Config &conf);
   void getNewArray(std::vector<int> mapNew);
   void setValuesZero(int n);
-  void assignBCs(Node &node, const int t) override;
+  void assignBCs(Node &node) override;
   void assignPulsatileBCs(const double pulse, const int nDofsGlobal);
   void applyBCs(Cell &cell, PetscSolver &petsc);
 
   void updateValues(Array3D<double> &X, const int t);
+  void eraseControlNodes(Cell &cell, ControlBoundary &cb);
 
 public:
   std::map<int, std::vector<double>> velocitySet;
@@ -61,54 +80,6 @@ public:
 
 private:
   double gradient;
-};
-
-class DirichletBoundary
-{
-public:
-  DirichletBoundary()
-  {
-  }
-  DirichletBoundary(Config &conf)
-  {
-  }
-  virtual ~DirichletBoundary()
-  {
-  }
-
-  int nNodesVelocity, nNodesPressure, nControlNodesInCell;
-  int nControlCellsGlobal, nControlNodesGlobal;
-
-  std::vector<double> dirichletBCsValue;
-  std::vector<double> dirichletBCsValueNew;
-  std::vector<double> dirichletBCsValueInit;
-  std::vector<double> dirichletBCsValueNewInit;
-
-  std::vector<std::map<int, std::vector<double>>> vDirichlet;
-  std::vector<std::map<int, std::vector<double>>> vDirichletWall;
-  std::vector<std::map<int, double>> pDirichlet;
-  std::vector<std::map<int, std::vector<double>>> vDirichletNew;
-  std::vector<std::map<int, std::vector<double>>> vDirichletWallNew;
-  std::vector<std::map<int, double>> pDirichletNew;
-
-  std::vector<int> controlBoundaryMap;
-  std::vector<int> controlCellMap;
-  std::vector<std::vector<int>> controlNodeInCell;
-
-  std::vector<bool> isBoundaryEdge;
-
-  void initialize(Config &conf);
-  void initializeAdjoint(Config &conf);
-
-  void assignDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
-                          std::vector<std::map<int, double>> &pDirichletNew, Node &node, int &dim, const int t);
-  void assignConstantDirichletBCs(std::vector<std::map<int, std::vector<double>>> &vDirichletNew,
-                                  std::vector<std::map<int, double>> &pDirichletNew, Node &node, int &dim, const int t);
-  void assignPulsatileBCs(const int t, const double dt, const double T, const int pulseBeginItr, const int nDofsGlobal);
-  void applyDirichletBCs(Cell &cell, PetscSolver &petsc);
-  void applyDirichletBCsAdjoint(Cell &cell, PetscSolver &petsc);
-
-private:
 };
 
 #endif

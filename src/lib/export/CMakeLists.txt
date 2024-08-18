@@ -5,7 +5,6 @@ add_library(export STATIC)
 target_sources(export
   PRIVATE
     ExportDAT.cpp
-    ExportVTI.cpp
     ExportVTU.cpp
 )
 

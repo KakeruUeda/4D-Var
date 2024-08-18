@@ -43,7 +43,10 @@ void Cell::initializeAdjoint(Config &conf)
   assignNodes(conf);
   assignCoordinates(conf);
   assignPhi(conf);
+	assignSubId(conf);
   assignCellType(conf);
+
+  nCellsLocal = std::count(conf.cellId.begin(), conf.cellId.end(), mpi.myId);
 
   if(conf.gridType == GridType::STRUCTURED) {
     nCellsStrGlobal = conf.nx * conf.ny * conf.nz;

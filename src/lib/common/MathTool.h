@@ -21,6 +21,7 @@ class MathTools2D
 {
 public:
   MathTools2D(const int nNodesInCell);
+  MathTools2D(){}
 
   double detJ, weight, vol;
   double dxdr[2][2];
@@ -33,13 +34,14 @@ public:
   Array2D<double> K;
 
   void setZero();
-
+  void setShapesInGauss(Gauss &gauss, const int i1, const int i2);
+  void setFactorsInGauss(Gauss &gauss, const int i1, const int i2);
   static void compInverseMatrix(double (&inv_a)[2][2], const double (&a)[2][2]);
   static double compDeterminant(const double (&a)[2][2]);
 
-  static void comp_dxdr(double (&dxdr)[2][2], Array2D<double> &dNdr, Array2D<double> &x1, const int &nNodesInCell);
+  static void comp_dxdr(double (&dxdr)[2][2], Array2D<double> &dNdr, Array2D<double> &x1, const int nNodesInCell);
   static void comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const double (&dxdr)[2][2],
-                        const int &nNodesInCell);
+                        const int nNodesInCell);
   static double comp_tau(std::vector<double> &vel, const double &he, const double &Re, const double &dt);
 };
 

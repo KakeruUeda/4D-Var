@@ -203,6 +203,42 @@ public:
     return *this;
   }
 
+  Array2D operator*(T scalar) const
+  {
+    Array2D result(height_, width_);
+    for(int y = 0; y < height_; ++y) {
+      for(int x = 0; x < width_; ++x) {
+        result(y, x) = (*this)(y, x) * scalar;
+      }
+    }
+    return result;
+  }
+
+  Array2D operator-() const
+  {
+    Array2D result(height_, width_);
+    for(int y = 0; y < height_; ++y) {
+      for(int x = 0; x < width_; ++x) {
+        result(y, x) = -(*this)(y, x);
+      }
+    }
+    return result;
+  }
+
+  Array2D operator+(const Array2D &other) const
+  {
+    if(width_ != other.width_ || height_ != other.height_) {
+      throw std::invalid_argument("Array2D dimensions must match for addition");
+    }
+    Array2D result(height_, width_);
+    for(int y = 0; y < height_; ++y) {
+      for(int x = 0; x < width_; ++x) {
+        result(y, x) = (*this)(y, x) + other(y, x);
+      }
+    }
+    return result;
+  }
+
   inline T &operator()(int x)
   {
     return data_[x];
@@ -320,92 +356,108 @@ public:
   /// @brief Export specific row data to dat file
   /// @param filename Export file name.
   /// @param y Row index.
-  void exportDAT(const std::string& filename, int y) const
+  void exportDAT(const std::string &filename, int y) const
   {
-    if (y < 0 || y >= height_) {
+    if(y < 0 || y >= height_) {
       std::cerr << "Invalid height specified: " << y << std::endl;
       return;
     }
 
     std::ofstream ofs(filename, std::ios::binary);
-    if (!ofs) {
+    if(!ofs) {
       std::cerr << "Could not open file for writing: " << filename << std::endl;
       return;
     }
 
-    ofs.write(reinterpret_cast<const char*>(&data_[y * width_]), sizeof(T) * width_);
+    ofs.write(reinterpret_cast<const char *>(&data_[y * width_]), sizeof(T) * width_);
   }
 
   /// @brief Import specific row data from dat file.
   /// @param filename File name.
   /// @param y Row index.
-  void importDAT(const std::string& filename, int y)
+  void importDAT(const std::string &filename, int y)
   {
-    if (y < 0 || y >= height_) {
+    if(y < 0 || y >= height_) {
       std::cerr << "Invalid height specified: " << y << std::endl;
       return;
     }
 
     std::ifstream ifs(filename, std::ios::binary);
-    if (!ifs) {
+    if(!ifs) {
       std::cerr << "Could not open file for reading: " << filename << std::endl;
       return;
     }
 
-    ifs.read(reinterpret_cast<char*>(&data_[y * width_]), sizeof(T) * width_);
+    ifs.read(reinterpret_cast<char *>(&data_[y * width_]), sizeof(T) * width_);
   }
 
   /// @brief Export specific row data to binary file.
   /// @param filename File name.
   /// @param y Row index.
-  void exportBIN(const std::string& filename, int y) const
+  void exportBIN(const std::string &filename, int y) const
   {
-    if (y < 0 || y >= height_) {
+    if(y < 0 || y >= height_) {
       std::cerr << "Invalid height specified: " << y << std::endl;
       return;
     }
 
     std::ofstream ofs(filename, std::ios::binary);
-    if (!ofs) {
+    if(!ofs) {
       std::cerr << "Could not open file for writing: " << filename << std::endl;
       return;
     }
 
-    ofs.write(reinterpret_cast<const char*>(&width_), sizeof(width_));
-    ofs.write(reinterpret_cast<const char*>(&data_[y * width_]), sizeof(T) * width_);
+    ofs.write(reinterpret_cast<const char *>(&width_), sizeof(width_));
+    ofs.write(reinterpret_cast<const char *>(&data_[y * width_]), sizeof(T) * width_);
   }
 
   /// @brief Import specific row data from binary file.
   /// @param filename File name.
   /// @param y Row index.
-  void importBIN(const std::string& filename, int y)
+  void importBIN(const std::string &filename, int y)
   {
-    if (y < 0 || y >= height_) {
+    if(y < 0 || y >= height_) {
       std::cerr << "Invalid height specified: " << y << std::endl;
       return;
     }
 
     std::ifstream ifs(filename, std::ios::binary);
-    if (!ifs) {
+    if(!ifs) {
       std::cerr << "Could not open file for reading: " << filename << std::endl;
       return;
     }
 
     int fileWidth, fileHeight;
-    ifs.read(reinterpret_cast<char*>(&fileWidth), sizeof(fileWidth));
+    ifs.read(reinterpret_cast<char *>(&fileWidth), sizeof(fileWidth));
 
-    if (fileWidth != width_) {
+    if(fileWidth != width_) {
       std::cerr << "File dimensions do not match the current Array2D dimensions" << std::endl;
       return;
     }
 
-    ifs.read(reinterpret_cast<char*>(&data_[y * width_]), sizeof(T) * width_);
+    ifs.read(reinterpret_cast<char *>(&data_[y * width_]), sizeof(T) * width_);
   }
-  
+
 private:
   int width_, height_;
   T *data_;
 };
+
+template <typename T> Array2D<T> operator*(T scalar, const Array2D<T> &array)
+{
+  Array2D<T> result(array.height(), array.width());
+  for(int y = 0; y < array.height(); ++y) {
+    for(int x = 0; x < array.width(); ++x) {
+      result(y, x) = scalar * array(y, x);
+    }
+  }
+  return result;
+}
+
+template <typename T> Array2D<T> operator*(const Array2D<T> &array, T scalar)
+{
+  return scalar * array;
+}
 
 template <class T> class Array3D
 {
@@ -467,6 +519,48 @@ public:
     return *this;
   }
 
+  Array3D operator*(T scalar) const
+  {
+    Array3D result(depth_, height_, width_);
+    for(int z = 0; z < depth_; ++z) {
+      for(int y = 0; y < height_; ++y) {
+        for(int x = 0; x < width_; ++x) {
+          result(z, y, x) = (*this)(z, y, x) * scalar;
+        }
+      }
+    }
+    return result;
+  }
+
+  Array3D operator-() const
+  {
+    Array3D result(depth_, height_, width_);
+    for(int z = 0; z < depth_; ++z) {
+      for(int y = 0; y < height_; ++y) {
+        for(int x = 0; x < width_; ++x) {
+          result(z, y, x) = -(*this)(z, y, x);
+        }
+      }
+    }
+    return result;
+  }
+
+  Array3D operator+(const Array3D &other) const
+  {
+    if(width_ != other.width_ || height_ != other.height_ || depth_ != other.depth_) {
+      throw std::invalid_argument("Array3D dimensions must match for addition");
+    }
+    Array3D result(depth_, height_, width_);
+    for(int z = 0; z < depth_; ++z) {
+      for(int y = 0; y < height_; ++y) {
+        for(int x = 0; x < width_; ++x) {
+          result(z, y, x) = (*this)(z, y, x) + other(z, y, x);
+        }
+      }
+    }
+    return result;
+  }
+
   inline T &operator()(int x)
   {
     return data_[x];
@@ -506,6 +600,21 @@ public:
   inline void fillZero()
   {
     std::fill(data_, data_ + depth_ * height_ * width_, 0);
+  }
+
+  int width() const
+  {
+    return width_;
+  }
+
+  int height() const
+  {
+    return height_;
+  }
+
+  int depth() const
+  {
+    return depth_;
   }
 
   T *data() const
@@ -580,91 +689,91 @@ public:
   /// @brief Export specific slice data to dat file binary file.
   /// @param filename Export file name.
   /// @param z Slice index.
-  void exportDAT(const std::string& filename, int z) const
+  void exportDAT(const std::string &filename, int z) const
   {
-    if (z < 0 || z >= depth_) {
+    if(z < 0 || z >= depth_) {
       std::cerr << "Invalid depth specified: " << z << std::endl;
       return;
     }
 
     std::ofstream ofs(filename, std::ios::binary);
-    if (!ofs) {
+    if(!ofs) {
       std::cerr << "Could not open file for writing: " << filename << std::endl;
       return;
     }
 
-    for (int y = 0; y < height_; ++y) {
-      ofs.write(reinterpret_cast<const char*>(&data_[z * height_ * width_ + y * width_]), sizeof(T) * width_);
+    for(int y = 0; y < height_; ++y) {
+      ofs.write(reinterpret_cast<const char *>(&data_[z * height_ * width_ + y * width_]), sizeof(T) * width_);
     }
   }
 
   /// @brief Import specific slice data to dat file.
   /// @param filename Export file name.
   /// @param z Slice index.
-  void importDAT(const std::string& filename, int z)
+  void importDAT(const std::string &filename, int z)
   {
-    if (z < 0 || z >= depth_) {
+    if(z < 0 || z >= depth_) {
       std::cerr << "Invalid depth specified: " << z << std::endl;
       return;
     }
 
     std::ifstream ifs(filename, std::ios::binary);
-    if (!ifs) {
+    if(!ifs) {
       std::cerr << "Could not open file for reading: " << filename << std::endl;
       return;
     }
 
-    for (int y = 0; y < height_; ++y) {
-      ifs.read(reinterpret_cast<char*>(&data_[z * height_ * width_ + y * width_]), sizeof(T) * width_);
+    for(int y = 0; y < height_; ++y) {
+      ifs.read(reinterpret_cast<char *>(&data_[z * height_ * width_ + y * width_]), sizeof(T) * width_);
     }
   }
 
   /// @brief Import specific slice data to binary file.
   /// @param filename File name.
   /// @param z Slice index.
-  void exportBIN(const std::string& filename, int z) const
+  void exportBIN(const std::string &filename, int z) const
   {
-    if (z < 0 || z >= depth_) {
+    if(z < 0 || z >= depth_) {
       std::cerr << "Invalid depth specified: " << z << std::endl;
       return;
     }
 
     std::ofstream ofs(filename, std::ios::binary);
-    if (!ofs) {
+    if(!ofs) {
       std::cerr << "Could not open file for writing: " << filename << std::endl;
       return;
     }
 
-    ofs.write(reinterpret_cast<const char*>(&width_), sizeof(width_));
-    ofs.write(reinterpret_cast<const char*>(&height_), sizeof(height_));
-    ofs.write(reinterpret_cast<const char*>(&data_[z * height_ * width_]), sizeof(T) * height_ * width_);
+    ofs.write(reinterpret_cast<const char *>(&width_), sizeof(width_));
+    ofs.write(reinterpret_cast<const char *>(&height_), sizeof(height_));
+    ofs.write(reinterpret_cast<const char *>(&data_[z * height_ * width_]), sizeof(T) * height_ * width_);
   }
 
   /// @brief Import specific slice data from binary file.
   /// @param filename File name.
   /// @param z Slice index.
-  void importBIN(const std::string& filename, int z)
+  void importBIN(const std::string &filename, int z)
   {
-    if (z < 0 || z >= depth_) {
+    if(z < 0 || z >= depth_) {
       std::cerr << "Invalid depth specified: " << z << std::endl;
       return;
     }
     std::ifstream ifs(filename, std::ios::binary);
-    if (!ifs) {
+    if(!ifs) {
       std::cerr << "Could not open file for reading: " << filename << std::endl;
       return;
     }
 
     int fileWidth, fileHeight, fileDepth;
-    ifs.read(reinterpret_cast<char*>(&fileWidth), sizeof(fileWidth));
-    ifs.read(reinterpret_cast<char*>(&fileHeight), sizeof(fileHeight));
+    ifs.read(reinterpret_cast<char *>(&fileWidth), sizeof(fileWidth));
+    ifs.read(reinterpret_cast<char *>(&fileHeight), sizeof(fileHeight));
 
-    if (fileWidth != width_ || fileHeight != height_) {
+    if(fileWidth != width_ || fileHeight != height_) {
       std::cerr << "File dimensions do not match the current Array3D dimensions" << std::endl;
       return;
     }
 
-    ifs.read(reinterpret_cast<char*>(&data_[z * height_ * width_]), sizeof(T) * height_ * width_);
+    ifs.read(reinterpret_cast<char *>(&data_[z * height_ * width_]), sizeof(T) * height_ * width_);
   }
 
 private:
@@ -672,66 +781,23 @@ private:
   T *data_;
 };
 
-template <class T> class Array4D
+template <typename T, typename Scalar> Array3D<T> operator*(Scalar scalar, const Array3D<T> &array)
 {
-public:
-  Array4D(int time, int depth, int height, int width)
-      : time_(time), depth_(depth), height_(height), width_(width), data_(new T[time * depth * height * width]())
-  {
-  }
-  Array4D() : time_(0), depth_(0), height_(0), width_(0), data_(nullptr)
-  {
-  }
-  ~Array4D()
-  {
-    delete[] data_;
-  }
-
-  inline T &operator()(int x)
-  {
-    return data_[x];
-  }
-
-  inline const T &operator()(int x) const
-  {
-    return data_[x];
-  }
-
-  inline T &operator()(int t, int z, int y, int x)
-  {
-    return data_[t * depth_ * height_ * width_ + z * height_ * width_ + y * width_ + x];
-  }
-
-  inline const T &operator()(int t, int z, int y, int x) const
-  {
-    return data_[t * depth_ * height_ * width_ + z * height_ * width_ + y * width_ + x];
-  }
-
-  inline int size() const
-  {
-    return time_ * depth_ * height_ * width_;
-  }
-
-  inline void allocate(int newTime, int newDepth, int newHeight, int newWidth)
-  {
-    if(data_) {
-      delete[] data_;
+  Array3D<T> result(array.depth(), array.height(), array.width());
+  for(int z = 0; z < array.depth(); ++z) {
+    for(int y = 0; y < array.height(); ++y) {
+      for(int x = 0; x < array.width(); ++x) {
+        result(z, y, x) = scalar * array(z, y, x);
+      }
     }
-    data_ = new T[newTime * newDepth * newHeight * newWidth]();
-    time_ = newTime;
-    depth_ = newDepth;
-    height_ = newHeight;
-    width_ = newWidth;
   }
+  return result;
+}
 
-  inline void fillZero()
-  {
-    std::fill(data_, data_ + time_ * depth_ * height_ * width_, 0);
-  }
+template <typename T, typename Scalar> Array3D<T> operator*(const Array3D<T> &array, Scalar scalar)
+{
+  return scalar * array;
+}
 
-private:
-  int time_, depth_, height_, width_;
-  T *data_;
-};
 
 #endif

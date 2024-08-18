@@ -6,7 +6,6 @@ target_sources(mesh
 PRIVATE
   Grid.cpp
   DataGrid.cpp
-  DataGridX.cpp
   Cell.cpp
   Node.cpp
 )
@@ -17,8 +16,8 @@ PUBLIC
   ${PROJECT_SOURCE_DIR}/src/lib/config
   ${PROJECT_SOURCE_DIR}/src/lib/boundary
   ${PROJECT_SOURCE_DIR}/src/lib/mesh
-  ${PROJECT_SOURCE_DIR}/src/lib/fileIO
   ${PROJECT_SOURCE_DIR}/src/lib/import
+  ${PROJECT_SOURCE_DIR}/src/lib/export
   ${PROJECT_SOURCE_DIR}/src/lib/solver
   ${PROJECT_SOURCE_DIR}/src/lib/fem
 )

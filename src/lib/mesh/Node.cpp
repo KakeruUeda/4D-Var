@@ -51,6 +51,7 @@ void Node::initialize(Config &conf)
   for(int in = 0; in < nNodesGlobal; in++) {
     isDirichletWall[in].resize(nDofsOnNode[in], false);
   }
+	
   tmp = 0;
   for(int in = 0; in < nNodesGlobal; in++) {
     dofsMapWall[in].resize(nDofsOnNode[in]);
@@ -120,7 +121,7 @@ void Node::newMapping()
   }
 }
 
-void Node::initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap)
+void Node::initializeAdjoint(Config &conf, std::vector<int> &CBNodeMap)
 {
   // initialize variables
   x.resize(nNodesGlobal, std::vector<double>(conf.dim));
@@ -137,13 +138,19 @@ void Node::initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap)
   dofsMapWall.resize(nNodesGlobal);
   dofsBCsMapWall.resize(nNodesGlobal);
   ///////////
+  
+	for(int in = 0; in < nNodesGlobal; in++) {
+    subId[in] = conf.nodeId[in];
+  }
+	
+	nNodesLocal = count(conf.nodeId.begin(), conf.nodeId.end(), mpi.myId);
 
   for(int in = 0; in < nNodesGlobal; in++) {
     nDofsOnNode[in] = conf.dim + 1;
   }
 
-  for(int ib = 0; ib < controlBoundaryMap.size(); ib++) {
-    nDofsOnNode[controlBoundaryMap[ib]] += conf.dim;
+  for(int ib = 0; ib < CBNodeMap.size(); ib++) {
+    nDofsOnNode[CBNodeMap[ib]] += conf.dim;
   }
 
   for(int in = 0; in < nNodesGlobal; in++) {
@@ -182,10 +189,6 @@ void Node::initializeAdjoint(Config &conf, std::vector<int> &controlBoundaryMap)
     for(int d = 0; d < conf.dim; d++) {
       x[in][d] = conf.node[in][d];
     }
-  }
-
-  for(int in = 0; in < nNodesGlobal; in++) {
-    sortNode[in] = conf.sortNode[in];
   }
 
   if(conf.gridType == GridType::STRUCTURED) {

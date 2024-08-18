@@ -8,6 +8,8 @@ target_sources(inverse
     Initialize.cpp
     Adjoint.cpp
     AssemblyAdjoint.cpp
+    OptimalCondition.cpp
+    Output.cpp
 )
 
 target_include_directories(inverse
@@ -17,7 +19,6 @@ target_include_directories(inverse
     ${PROJECT_SOURCE_DIR}/src/lib/mesh
     ${PROJECT_SOURCE_DIR}/src/lib/common
     ${PROJECT_SOURCE_DIR}/src/lib/boundary
-    ${PROJECT_SOURCE_DIR}/src/lib/fileIO
     ${PROJECT_SOURCE_DIR}/src/lib/import
     ${PROJECT_SOURCE_DIR}/src/lib/export
     ${PROJECT_SOURCE_DIR}/src/lib/solver

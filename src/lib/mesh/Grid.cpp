@@ -126,20 +126,6 @@ void Grid::petscMatrixSetting(PetscSolver &petsc)
 
 void Grid::serialSetting()
 {
-  nCellsLocal = cell.nCellsGlobal;
-  nNodesLocal = node.nNodesGlobal;
-  nDofsLocal = nDofsGlobal;
-  rowStart = 0;
-  rowEnd = nDofsGlobal - 1;
-
-  node.isDirichletNew = node.isDirichlet;
-  node.dofsBCsMapNew = node.dofsBCsMap;
-  node.dofsMapNew = node.dofsMap;
-  node.nDofsOnNodeNew = node.nDofsOnNode;
-  dirichlet.vDirichletNew = dirichlet.vDirichletNew;
-
-  for(int ic = 0; ic < cell.nCellsGlobal; ic++)
-    cell(ic).nodeNew = cell(ic).node;
 }
 
 void Grid::parallelSetting(Dirichlet &dirichletBC)
@@ -190,6 +176,10 @@ void Grid::collectNodeMap()
 
   MPI_Allgatherv(&nodeListLocal[0], nNodesLocal, MPI_INT, &node.map[0], &nNodesLocalVector[0], &displs[0], MPI_INT,
                  MPI_COMM_WORLD);
+								 std::cout << "node.map.size() = " << node.map.size() << std::endl;
+								 std::string filename = "node_map.dat";
+	EXPORT::exportScalarDataDAT<int>(filename, node.map);
+
 }
 
 void Grid::distributeToLocalDofs()

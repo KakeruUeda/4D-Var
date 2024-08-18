@@ -40,7 +40,7 @@ enum class GridType
   UNSTRUCTURED = 1
 };
 
-enum class ControlBoundary
+enum class ControlBoundaryFace
 {
   left = 0,
   right = 1,
@@ -49,6 +49,7 @@ enum class ControlBoundary
   front = 4,
   back = 5
 };
+
 
 enum class VoxelVelocity
 {
@@ -72,9 +73,9 @@ public:
   TextParser tp;
   Application app;
   GridType gridType;
-  ControlBoundary controlBoundary;
-  ControlBoundary inletCB;
-  ControlBoundary outletCB;
+  ControlBoundaryFace controlBoundary;
+  ControlBoundaryFace inletCB;
+  ControlBoundaryFace outletCB;
   VoxelVelocity vvox;
   CrossSection crossSection;
 
@@ -140,19 +141,8 @@ public:
   int nNodesOptGlobal;
   std::string inputDir;
 
-  // Boundary parameter for stgrid
-  std::vector<std::string> bdStr;
-  std::vector<std::string> bdType;
-  std::vector<std::vector<double>> bdValue;
-
   // For image data
   std::vector<double> phi;
-
-  // For Dirichlet boundary data
-  std::vector<int> vDirichletNode;
-  std::vector<int> pDirichletNode;
-  std::vector<std::vector<double>> vDirichletValue;
-  std::vector<double> pDirichletValue;
 
   std::map<int, std::vector<double>> vDirichlet;
   std::map<int, std::vector<double>> vDirichletWall;
@@ -183,10 +173,6 @@ public:
 
   // data parameter
   int nControlNodesInCell;
-  std::vector<std::vector<std::vector<double>>> velocityData;
-  std::vector<std::vector<int>> controlNodeInCell;
-  std::vector<int> controlCellMap;
-
   std::string dataDir;
   
   // post inverse parameter
@@ -196,35 +182,11 @@ public:
   std::vector<std::vector<std::vector<double>>> velRef;
   std::vector<std::vector<std::vector<double>>> velOpt;
 
-  void setSolidBoundary();
-  void setFluidDomain();
-
 private:
   void setApplication(std::string appName);
   void tryOpenConfigFile(std::string inputFile);
   void tryReadConfigFile();
   void readConfigFile();
-
-  void readGridType();
-  void readStrGridParameter();
-  void readGridParameter();
-  void readBaseGridParameter();
-  void readSubGridParameter();
-  void readStrBoundaryParameter();
-  void readBoundaryParameter();
-  void readControlBoundaryParameter();
-  void readBasicParameter();
-  void readPysicalParameter();
-  void readNRParameter();
-  void readDarcyParameter();
-  void readTimeParameter();
-  void readInverseParameter();
-  void readDataParameter();
-  void readPostInverseBasicParameter();
-  void readPostInverseVelocityParameter();
-  void readPostInverseFlowRateParameter();
-  void readVoxelCreationParameter();
-  void readStrBoundaryValue(std::string face, std::string labelFace, std::string labelType, std::string labelValue);
 
 public:
   void setBoundaryVelocityValue(std::string face, double value[3]);
@@ -236,7 +198,6 @@ public:
   int setStrNode(const int i, const int j, const int k, const int p);
 
 public:
-  // Additional Setting for Structured Grid
   void setSolidDirichletValue();
   void filterFluidGrid();
 

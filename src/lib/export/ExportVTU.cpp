@@ -13,7 +13,7 @@ void EXPORT::exportMeshPartitionVTU(const std::string &file, Node &node, Cell &c
 {
   FILE *fp;
   if((fp = fopen(file.c_str(), "w")) == NULL) {
-    cout << file << " open error" << endl;
+    std::cout << file << " open error" << std::endl;
     exit(1);
   }
 
@@ -64,8 +64,8 @@ void EXPORT::exportMeshPartitionVTU(const std::string &file, Node &node, Cell &c
   fprintf(fp, "_");
   fclose(fp);
 
-  fstream ofs;
-  ofs.open(file.c_str(), ios::out | ios::app | ios_base::binary);
+  std::fstream ofs;
+  ofs.open(file.c_str(),  std::ios::out |  std::ios::app |  std::ios_base::binary);
   float *data_point_d3 = new float[node.nNodesGlobal * 3];
   int *data_point_i1 = new int[node.nNodesGlobal];
   int *data_cell_i1 = new int[cell.nCellsGlobal];
@@ -105,7 +105,7 @@ void EXPORT::exportMeshPartitionVTU(const std::string &file, Node &node, Cell &c
   ofs.close();
 
   if((fp = fopen(file.c_str(), "a")) == NULL) {
-    cout << file << " open error" << endl;
+     std::cout << file << " open error" <<  std::endl;
     exit(1);
   }
   fprintf(fp, "\n</AppendedData>\n");
@@ -117,7 +117,7 @@ void EXPORT::exportPhiVTU(const std::string &file, Node &node, Cell &cell)
 {
   FILE *fp;
   if((fp = fopen(file.c_str(), "w")) == NULL) {
-    cout << file << " open error" << endl;
+     std::cout << file << " open error" <<  std::endl;
     exit(1);
   }
 
@@ -166,8 +166,8 @@ void EXPORT::exportPhiVTU(const std::string &file, Node &node, Cell &cell)
   fprintf(fp, "_");
   fclose(fp);
 
-  fstream ofs;
-  ofs.open(file.c_str(), ios::out | ios::app | ios_base::binary);
+   std::fstream ofs;
+  ofs.open(file.c_str(),  std::ios::out |  std::ios::app |  std::ios_base::binary);
   float *data_point_d3 = new float[node.nNodesGlobal * 3];
   float *data_cell_d1 = new float[cell.nCellsGlobal];
 
@@ -198,7 +198,7 @@ void EXPORT::exportPhiVTU(const std::string &file, Node &node, Cell &cell)
   ofs.close();
 
   if((fp = fopen(file.c_str(), "a")) == NULL) {
-    cout << file << " open error" << endl;
+     std::cout << file << " open error" <<  std::endl;
     exit(1);
   }
   fprintf(fp, "\n</AppendedData>\n");

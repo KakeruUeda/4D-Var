@@ -13,9 +13,9 @@ Grid
   }
 
   StructuredGrid{
-    nx = (96, 32, 32) 
-    lx = (6.0, 2.0, 2.0)
-    image = "input/stenosis/image_direct.dat"
+    nx = (88, 32, 32) 
+    lx = (5.5, 2.0, 2.0)
+    image = "input/stenosis/image_inverse.dat"
     fluidExtraction = "ON"
   }
 }
@@ -49,6 +49,7 @@ StructuredBoundary
     value = (0,0,0)
   }
 
-  controlBoundaryExtraction = "OFF"
+  controlBoundaryExtraction = "ON"
   inletControlBoundary = "left"
+
 }

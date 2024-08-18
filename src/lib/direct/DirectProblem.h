@@ -6,11 +6,9 @@
 #include "Config.h"
 #include "Export.h"
 #include "FEM.h"
-#include "FileIO.h"
 #include "Gauss.h"
 #include "Grid.h"
 #include "Import.h"
-#include "MathCommon.h"
 #include "MathTool.h"
 #include "PetscSolver.h"
 #include "ShapeFunction.h"
@@ -47,43 +45,9 @@ public:
   int dim, nOMP;
   std::string outputDir;
 
-  /*
-  int IU, IV, IW, IP;
-  int ILU, ILV, ILW;
-  int JU, JV, JW, JP;
-  int JLU, JLV, JLW;
-
-  // Pysical parameter
-  double Re, rho, mu, nu;
-
-  // Time parameter
-  double dt;
-  int timeMax;
-  int pulsatileFlow;
-  int pulseBeginItr;
-  double T;
-
-  double NRtolerance;
-
-  // Darcy parameter
-  double alpha, resistance;
-
-  double tau;
-  */
-
-  std::vector<double> vgp;
-  std::vector<double> advgp;
-  std::vector<std::vector<double>> dvgpdx;
-
   void initialize(Config &conf);
-  void resize();
   void runSimulation();
   void outputDomain();
-  void solveUSNS(Application &app);
-  void solveUSNS(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
-                 std::vector<std::map<int, double>> &pDirichletTmp, std::vector<std::vector<double>> &v0Tmp);
-  void compInitialCondition(std::vector<std::map<int, std::vector<double>>> &vDirichletTmp,
-                            std::vector<std::map<int, double>> &pDirichletTmp);
   void matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, const int ic, const int t);
   void setLocalValuesInGauss(MatrixXd &Klocal, VectorXd &Flocal, MathTools3D &tools, double f,
                                     const int ic);
@@ -97,6 +61,8 @@ public:
   void outputSolutionsBIN(const std::string &dir, const int t);
 
 private:
+  void resizeVar();
+  void initializeVarZero();
   void settingInGauss(MathTools3D &tools, Gauss &g2, const double he, const int i1, const int i2,
                                 const int i3, const int ic, const int t);
   void usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, const double f, const int ii, const int jj);
@@ -107,11 +73,13 @@ private:
   void setVariablesZero();
   void compVorticity(const int t);
 
+public:
   // add
   void solveNavierStokes();
-  void solveFowardNavierStokes(Array2D<double> &X0, Array3D<double> &X);
+  void solveNavierStokes(Array2D<double> &X0, Array3D<double> &X);
 
   void updateInitialVelocity(Array2D<double> &X0);
+  void solveNaveirStokes(const int stepMax);
 };
 
 #endif

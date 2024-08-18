@@ -1,12 +1,19 @@
 /**
  * @file main.cpp
  * @author K.Ueda
- * @date Jun, 2024
+ * @date July, 2024
  */
 
-#include "DirectProblem.h"
+#include "InverseProblem.h"
 #include "MyMPI.h"
+#include <unistd.h>
 MyMPI mpi;
+
+
+/// @brief Main function.
+/// @param argc 
+/// @param argv Text input file name
+/// @return 
 
 int main(int argc, char *argv[])
 {
@@ -25,27 +32,24 @@ int main(int argc, char *argv[])
   }
 
   std::string input = argv[1];
-  std::string appName = "USNS";
+  std::string appName = "FDVAR";
 
   std::unique_ptr<Config> conf;
   conf.reset(new Config(input, appName));
 
   if(conf->isReadingError) {
-    if(mpi.myId == 0) {
-      std::cerr << "Reading error." << std::endl;
-    }
+    std::cerr << "Reading error." << std::endl;
     MPI_Finalize();
     return EXIT_FAILURE;
   }
 
-  DirectProblem direct(*conf);
-  direct.initialize(*conf);
+  InverseProblem inverse(*conf);
+  inverse.initialize(*conf);
 
   conf.reset();
 
   try {
-    direct.resize();
-    direct.runSimulation();
+    inverse.runSimulation();
   } catch(const std::runtime_error &e) {
     if(mpi.myId == 0) {
       std::cerr << "Exception : " << e.what() << std::endl;

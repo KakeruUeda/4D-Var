@@ -15,6 +15,7 @@
 #include "Array.h"
 #include "Boundary.h"
 #include "Config.h"
+#include "Export.h"
 
 class Grid
 {
@@ -26,7 +27,6 @@ public:
   GridType gridType;
   Cell cell;
   Node node;
-  DirichletBoundary dirichlet;
 
   int nx, ny, nz;
   double lx, ly, lz;
