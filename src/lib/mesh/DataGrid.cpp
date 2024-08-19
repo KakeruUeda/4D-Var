@@ -78,15 +78,6 @@ void DataGrid::collectCellsInVoxel()
       }
     }
   }
-
-  if(mpi.myId == 0) {
-    std::ofstream file("voxel_cells.dat");
-    for(int iv = 0; iv < nDataCellsGlobal; iv++) {
-      file << iv << " " << voxel(iv).cells.size() << std::endl;
-    }
-  }
-  MPI_Finalize();
-  exit(0);
 }
 
 void DataGrid::collectCellsInCircle(const int radious)
@@ -273,10 +264,6 @@ void DataGrid::average(const int iv, const int t)
     int ivc = voxel(iv).cells[ic];
     getNodeValues(ivc, t);
     averageInVoxel(iv, t);
-  }
-
-  if(weightIntegral == 0) {
-    throw std::runtime_error("Weight integral is zero");
   }
 
   for(int d = 0; d < 3; d++) {
