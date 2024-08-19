@@ -59,6 +59,7 @@ public:
   bool isCellsIncludedInCircle(const double radious, const int iv, const int ic);
 
   void average(const int iv, const int t);
+  void weightedAverage(const int iv, const int t);
   void interpolate();
 
   void importDAT(const std::string &filename, const int step);

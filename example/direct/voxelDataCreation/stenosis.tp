@@ -29,7 +29,7 @@ Grid
   OptGrid
   {
     origin = (0.5, 0.0, 0.0)
-    nxOpt = (80, 32, 32)
+    nxOpt = (88, 32, 32)
     lxOpt = (5.5, 2.0, 2.0)
   }
 }
@@ -39,7 +39,7 @@ SnapShot
   timeMax = 400
   nSnapShot = 11
   snapInterval = 5
-  snapTimeBeginItr = 300
+  snapTimeBeginItr = 100
 }
 
 Original

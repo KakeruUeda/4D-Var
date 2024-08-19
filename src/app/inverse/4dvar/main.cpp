@@ -13,7 +13,6 @@ MyMPI mpi;
 /// @brief Main function.
 /// @param argc 
 /// @param argv Text input file name
-/// @return 
 
 int main(int argc, char *argv[])
 {

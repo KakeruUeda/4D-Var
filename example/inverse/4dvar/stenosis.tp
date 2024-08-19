@@ -61,8 +61,8 @@ DarcyParameter
 Inverse
 {
   aCF = 1e1 
-  bCF = 1e-5
-  gCF = 1e-5
+  bCF = 0e0
+  gCF = 0e0
 
   alphaX = 1e0 
   alphaX0 = 1e0 

@@ -596,7 +596,7 @@ void InverseProblem::armijoCriteriaX0(const double fk)
   const double c1 = 1e-4;
   Array2D<double> X0_tmp;
 
-  X0_tmp.allocate(main.grid.node.nNodesGlobal, main.dim);
+  X0_tmp.allocate(main.grid.node.nNodesGlobal, 3);
   X0_tmp.fillZero();
 
   while(true) {
@@ -609,7 +609,7 @@ void InverseProblem::armijoCriteriaX0(const double fk)
 
     double tmp = 0e0;
     for(int in = 0; in < main.grid.nNodesGlobal; in++) {
-      for(int d = 0; d < dim; d++) {
+      for(int d = 0; d < 3; d++) {
         tmp += -(gradX0(in, d) * gradX0(in, d));
       }
     }
@@ -635,7 +635,7 @@ void InverseProblem::armijoCriteriaX(const double fk)
   const double c1 = 1e-4;
   Array3D<double> X_tmp;
 
-  X_tmp.allocate(main.timeMax, main.grid.node.nNodesGlobal, main.dim);
+  X_tmp.allocate(main.timeMax, main.grid.node.nNodesGlobal, 3);
   X_tmp.fillZero();
 
   while(true) {
@@ -650,7 +650,7 @@ void InverseProblem::armijoCriteriaX(const double fk)
     for(int t = 0; t < adjoint.timeMax; t++) {
       if(t % main.snap.snapInterval == 0) {
         for(int in = 0; in < main.grid.nNodesGlobal; in++) {
-          for(int d = 0; d < dim; d++) {
+          for(int d = 0; d < 3; d++) {
             tmp += -(gradX(t, in, d) * gradX(t, in, d));
           }
         }

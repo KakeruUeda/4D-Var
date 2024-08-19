@@ -232,25 +232,6 @@ void VoxelDataCreation::interpolateInitialReferenceData(Array1D<double> &N, int 
 
 void VoxelDataCreation::outputVTK()
 {
-  /*
-  for(int step = 0; step < timeMax; step++) {
-    std::string vtiFile = outputDir + "/vtk/" + "velocityOriginal_" + std::to_string(step) + ".vti";
-    EXPORT::exportVectorPointDataVTI<double>(vtiFile, "velocityOriginal", vOrig[step], nx, ny, nz, dx, dy, dz);
-  }
-  for(int step = 0; step < ntInSnapshot; step++) {
-    std::string vtiFile = outputDir + "/vtk/" + "velocityReference_" + std::to_string(step) + ".vti";
-    EXPORT::exportVectorPointDataVTI<double>(vtiFile, "velocityReference", vRef[step], nxOpt, nyOpt, nzOpt, dxOpt,
-                                             dyOpt, dzOpt);
-  }
-  for(int step = 0; step < snap.nSnapShot; step++) {
-    std::string vtiFile = outputDir + "/vtk/" + "data_" + std::to_string(step) + ".vti";
-    EXPORT::exportVelocityDataVTI(vtiFile, data, step);
-  }
-  std::string vtiFile = outputDir + "/vtk/" + "velocityReference_initial.vti";
-  EXPORT::exportVectorPointDataVTI<double>(vtiFile, "velocityReference_initial", vRefInit, nxOpt, nyOpt, nzOpt, dxOpt,
-                                           dyOpt, dzOpt);
-  */
-
   for(int step = 0; step < timeMax; step++) {
     std::string vtiFile = outputDir + "/vtk/" + "velocityOriginal_" + std::to_string(step) + ".vti";
     EXPORT::exportVectorPointDataVTI<double>(vtiFile, "velocityOriginal", vOrig, nx, ny, nz, dx, dy, dz, step);

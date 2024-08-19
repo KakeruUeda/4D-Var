@@ -157,7 +157,7 @@ void InverseProblem::OptCondX_Term1_inGaussIntegral(std::vector<std::vector<doub
 void InverseProblem::OptCondX_Term2_inGaussIntegral(std::vector<std::vector<double>> &value, const int nc, const int ic,
                                                     const int t)
 {
-  double dudx[3][3] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
+  double dudx[3][2] = {0e0, 0e0, 0e0, 0e0, 0e0, 0e0};
 
   for(int d1 = 0; d1 < 3; d1++) {
     for(int d2 = 0; d2 < 2; d2++) {
@@ -572,7 +572,7 @@ void InverseProblem::OptCondX0_Term3_inGaussIntegral(std::vector<std::vector<dou
 void InverseProblem::setValue(const int ic)
 {
   // main var - v
-  for(int d = 0; d < main.dim; d++) {
+  for(int d = 0; d < 3; d++) {
     adjoint.vk[d] = 0e0;
     adjoint.vk1[d] = 0e0;
     adjoint.vk2[d] = 0e0;
@@ -585,8 +585,8 @@ void InverseProblem::setValue(const int ic)
   }
 
   // main var - dvdx
-  for(int d = 0; d < main.dim; d++) {
-    for(int e = 0; e < main.dim; e++) {
+  for(int d = 0; d < 3; d++) {
+    for(int e = 0; e < 3; e++) {
       adjoint.dvkdx[d][e] = 0e0;
       adjoint.dvk1dx[d][e] = 0e0;
       adjoint.dvk2dx[d][e] = 0e0;
@@ -600,7 +600,7 @@ void InverseProblem::setValue(const int ic)
   }
 
   // main var - dpdx
-  for(int d = 0; d < main.dim; d++) {
+  for(int d = 0; d < 3; d++) {
     adjoint.dpkdx[d] = 0e0;
     adjoint.dpk1dx[d] = 0e0;
     adjoint.dpk2dx[d] = 0e0;
@@ -613,7 +613,7 @@ void InverseProblem::setValue(const int ic)
   }
 
   // main var - adv
-  for(int d = 0; d < main.dim; d++) {
+  for(int d = 0; d < 3; d++) {
     adjoint.advk1[d] = 0e0;
     adjoint.advk2[d] = 0e0;
     adjoint.advk3[d] = 0e0;
@@ -626,7 +626,7 @@ void InverseProblem::setValue(const int ic)
   }
 
   // lagrange multiplier - w
-  for(int d = 0; d < main.dim; d++) {
+  for(int d = 0; d < 3; d++) {
     adjoint.wk1[d] = 0e0;
     adjoint.wk2[d] = 0e0;
     for(int p = 0; p < main.grid.cell.nNodesInCell; p++) {
@@ -637,8 +637,8 @@ void InverseProblem::setValue(const int ic)
   }
 
   // lagrange multiplier - dwdx
-  for(int d = 0; d < main.dim; d++) {
-    for(int e = 0; e < main.dim; e++) {
+  for(int d = 0; d < 3; d++) {
+    for(int e = 0; e < 3; e++) {
       adjoint.dwk1dx[d][e] = 0e0;
       adjoint.dwk2dx[d][e] = 0e0;
       for(int p = 0; p < main.grid.cell.nNodesInCell; p++) {
@@ -650,7 +650,7 @@ void InverseProblem::setValue(const int ic)
   }
 
   // lagrange multiplier - dqdx
-  for(int d = 0; d < main.dim; d++) {
+  for(int d = 0; d < 3; d++) {
     adjoint.dqk1dx[d] = 0e0;
     adjoint.dqk2dx[d] = 0e0;
     for(int p = 0; p < adjoint.grid.cell.nNodesInCell; p++) {

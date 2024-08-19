@@ -176,10 +176,6 @@ void Grid::collectNodeMap()
 
   MPI_Allgatherv(&nodeListLocal[0], nNodesLocal, MPI_INT, &node.map[0], &nNodesLocalVector[0], &displs[0], MPI_INT,
                  MPI_COMM_WORLD);
-								 std::cout << "node.map.size() = " << node.map.size() << std::endl;
-								 std::string filename = "node_map.dat";
-	EXPORT::exportScalarDataDAT<int>(filename, node.map);
-
 }
 
 void Grid::distributeToLocalDofs()
