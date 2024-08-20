@@ -43,7 +43,7 @@ void Cell::initializeAdjoint(Config &conf)
   assignNodes(conf);
   assignCoordinates(conf);
   assignPhi(conf);
-	assignSubId(conf);
+  assignSubId(conf);
   assignCellType(conf);
 
   nCellsLocal = std::count(conf.cellId.begin(), conf.cellId.end(), mpi.myId);
@@ -143,5 +143,30 @@ void Cell::getBoundaries()
     data[ic].maxX = getMax(data[ic].x, 0);
     data[ic].maxY = getMax(data[ic].x, 1);
     data[ic].maxZ = getMax(data[ic].x, 2);
+  }
+}
+
+void Cell::getCenterCoordinates()
+{
+  Array2D<double> xCurrent(nNodesInCell, 3);
+	Array1D<double> N(nNodesInCell);
+
+  xCurrent.fillZero();
+	N.fillZero();
+
+  ShapeFunction3D::C3D8_N(N, 0e0, 0e0, 0e0);
+
+  for(int ic = 0; ic < nCellsGlobal; ic++) {
+    for(int p = 0; p < nNodesInCell; p++) {
+      for(int d = 0; d < 3; d++) {
+        xCurrent(p, d) = data[ic].x[p][d];
+      }
+		}
+		for(int d=0; d<3; d++){
+			data[ic].center[d] = 0e0;
+			for(int p=0; p<nNodesInCell; p++){
+				data[ic].center[d] += N(p) * xCurrent(p, d);
+			}
+		}
   }
 }

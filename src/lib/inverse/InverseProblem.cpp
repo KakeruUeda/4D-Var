@@ -71,6 +71,7 @@ void InverseProblem::runSimulation()
 
     compFeedbackForce();
     compTimeInterpolatedFeedbackForce();
+
     adjoint.solveAdjoint(main, inletCB);
 
     if(loop % outputItr == 0) {
@@ -142,14 +143,14 @@ void InverseProblem::compInitialOptimalVelocityField()
   for(int t = 0; t < main.timeMax; t++) {
     for(auto &[idx, vec] : main.dirichlet.velocitySet) {
       for(int d = 0; d < 3; d++) {
-        XArr(t, idx, d) = vec[d];
+        X(t, idx, d) = vec[d];
       }
     }
   }
 
   for(int in = 0; in < main.grid.node.nNodesGlobal; in++) {
     for(int d = 0; d < main.dim; d++) {
-      X0Arr(in, d) = main.v0(in, d);
+      X0(in, d) = main.v0(in, d);
     }
   }
 }
@@ -600,9 +601,9 @@ void InverseProblem::armijoCriteriaX0(const double fk)
   X0_tmp.fillZero();
 
   while(true) {
-    X0_tmp = X0Arr + alphaX0 * (-gradX0);
+    X0_tmp = X0 + alphaX0 * (-gradX0);
 
-    main.solveNavierStokes(X0_tmp, XArr);
+    main.solveNavierStokes(X0_tmp, X);
     compCostFunction();
 
     double lk = costFunction.total;
@@ -618,7 +619,7 @@ void InverseProblem::armijoCriteriaX0(const double fk)
 
     if(lk <= l_tmp) {
       main.v0 = X0_tmp;
-      X0Arr = X0_tmp;
+      X0 = X0_tmp;
       break;
     } else {
       alphaX0 = alphaX0 * 5e-1;
@@ -639,9 +640,9 @@ void InverseProblem::armijoCriteriaX(const double fk)
   X_tmp.fillZero();
 
   while(true) {
-    X_tmp = XArr + alphaX * (-gradX);
+    X_tmp = X + alphaX * (-gradX);
 
-    main.solveNavierStokes(X0Arr, X_tmp);
+    main.solveNavierStokes(X0, X_tmp);
     compCostFunction();
 
     double lk = costFunction.total;
@@ -659,7 +660,7 @@ void InverseProblem::armijoCriteriaX(const double fk)
     double l_tmp = fk + c1 * tmp * alphaX;
 
     if(lk <= l_tmp) {
-      XArr = X_tmp;
+      X = X_tmp;
       break;
     } else {
       alphaX = alphaX * 5e-1;

@@ -82,10 +82,10 @@ public:
 
   Array2D<double> gradX0;
   Array3D<double> gradX;
-  Array3D<double> XArr;
-  Array2D<double> X0Arr;
-  Array3D<double> XvtiArr;
-  Array2D<double> X0vtiArr;
+  Array3D<double> X;
+  Array2D<double> X0;
+  Array3D<double> Xvti;
+  Array2D<double> X0vti;
 
   void initialize(Config &conf);
   void resize();

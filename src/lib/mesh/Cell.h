@@ -13,6 +13,7 @@
 #include "Array.h"
 #include "VTKCellType.h"
 #include "Config.h"
+#include "ShapeFunction.h"
 
 struct CellInfo
 {
@@ -24,6 +25,8 @@ public:
 
   double minX, minY, minZ;
   double maxX, maxY, maxZ;
+
+  double center[3];
 
   std::vector<int> node, nodeNew;
   std::vector<int> dofsMap, dofsBCsMap;
@@ -67,6 +70,7 @@ public:
   void assignCellType(Config &conf);
 
   void getBoundaries();
+  void getCenterCoordinates();
 
   int nCellsGlobal;
   int nCellsLocal;

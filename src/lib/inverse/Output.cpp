@@ -62,11 +62,11 @@ void InverseProblem::outputControlVariables(const int loop)
 
   std::string vtuFile;
   for(int t = 0; t < main.timeMax; t++) {
-    vtuFile = main.outputDir + "/other/X_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-    EXPORT::exportVectorPointDataVTU(vtuFile, "X", main.grid.node, main.grid.cell, XArr, t);
+    vtuFile = main.outputDir + "/other/inletVelocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+    EXPORT::exportVectorPointDataVTU(vtuFile, "inletVelocity", main.grid.node, main.grid.cell, X, t);
   }
-  vtuFile = main.outputDir + "/other/X0_" + to_string(loop) + ".vtu";
-  EXPORT::exportVectorPointDataVTU(vtuFile, "X", main.grid.node, main.grid.cell, X0Arr);
+  vtuFile = main.outputDir + "/other/velocity_initial_" + to_string(loop) + ".vtu";
+  EXPORT::exportVectorPointDataVTU(vtuFile, "velocity_initial", main.grid.node, main.grid.cell, X0);
 }
 
 /******************************************
@@ -76,7 +76,7 @@ void InverseProblem::updateControlVariablesVTI()
 {
   for(int in = 0; in < main.grid.node.nNodesGlobal; in++) {
     for(int d = 0; d < dim; d++) {
-      X0vtiArr(main.grid.vecFluidUniqueNodes[in], d) = X0Arr(in, d);
+      X0vti(main.grid.vecFluidUniqueNodes[in], d) = X0(in, d);
     }
   }
 }
@@ -124,11 +124,11 @@ void InverseProblem::outputVelocityBIN(const int loop)
   for(int t = 0; t < main.timeMax; t++) {
     main.updateSolutionsVTI(t);
     binFile = main.outputDir + "/bin/velocity_" + to_string(loop) + "_" + to_string(t) + ".bin";
-    main.vvti.exportBIN(binFile, t);
+    main.vvti.exportBIN(binFile);
   }
   updateControlVariablesVTI();
   binFile = main.outputDir + "/bin/velocity_initial_" + to_string(loop) + ".bin";
-  X0vtiArr.exportBIN(binFile);
+  X0vti.exportBIN(binFile);
 }
 
 /************************************
@@ -158,7 +158,7 @@ void InverseProblem::outputOptimizedVariables()
     for(int t = 0; t < main.timeMax; t++) {
       main.updateSolutionsVTI(t);
       std::string binFile = main.outputDir + "/optimized/velocity_" + to_string(t) + ".bin";
-      main.vvti.exportBIN(binFile, t);
+      main.vvti.exportBIN(binFile);
     }
   } else if(main.grid.gridType == GridType::UNSTRUCTURED) {
     for(int t = 0; t < main.timeMax; t++) {
@@ -174,12 +174,12 @@ void InverseProblem::outputOptimizedVariables()
     std::string vtiFile;
     updateControlVariablesVTI();
     vtiFile = main.outputDir + "/optimized/velocity_initial.vti";
-    EXPORT::exportVectorPointDataVTI(vtiFile, "velocity_initial", X0vtiArr, main.grid.nx, main.grid.ny, main.grid.nz,
+    EXPORT::exportVectorPointDataVTI(vtiFile, "velocity_initial", X0vti, main.grid.nx, main.grid.ny, main.grid.nz,
                                      main.grid.dx, main.grid.dy, main.grid.dz);
   } else if(main.grid.gridType == GridType::UNSTRUCTURED) {
     std::string vtiFile;
     vtiFile = main.outputDir + "/optimized/velocity_initial.vtu";
-    EXPORT::exportVectorPointDataVTU(vtiFile, "velocity_initial", main.grid.node, main.grid.cell, X0Arr);
+    EXPORT::exportVectorPointDataVTU(vtiFile, "velocity_initial", main.grid.node, main.grid.cell, X0);
   } else {
     throw std::runtime_error("Undefined gridType");
   }
@@ -188,10 +188,10 @@ void InverseProblem::outputOptimizedVariables()
   if(main.grid.gridType == GridType::STRUCTURED) {
     updateControlVariablesVTI();
     std::string binFile = main.outputDir + "/optimized/velocity_initial.bin";
-    X0vtiArr.exportBIN(binFile);
+    X0vti.exportBIN(binFile);
   } else if(main.grid.gridType == GridType::UNSTRUCTURED) {
     std::string binFile = main.outputDir + "/optimized/velocity_initial.bin";
-    X0Arr.exportBIN(binFile);
+    X0.exportBIN(binFile);
   } else {
     throw std::runtime_error("Undefined gridType");
   }

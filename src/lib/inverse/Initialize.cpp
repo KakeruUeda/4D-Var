@@ -12,11 +12,10 @@
 void InverseProblem::initialize(Config &conf)
 {
   PetscPrintf(MPI_COMM_WORLD, "\n*** Main initialize ***\n\n");
-
+  // initialize main
   main.nu = main.mu / main.rho;
   main.Re = 1e0 / main.nu;
 
-  // Main intialize
   main.dirichlet.initialize(conf);
   main.grid.cell.initialize(conf);
   main.grid.node.initialize(conf);
@@ -25,7 +24,7 @@ void InverseProblem::initialize(Config &conf)
 
 
   PetscPrintf(MPI_COMM_WORLD, "\n*** Adjoint initialize ***\n\n");
-
+  // initialize adjoint
   adjoint.nu = adjoint.mu / adjoint.rho;
   adjoint.Re = 1e0 / adjoint.nu;
 
@@ -51,8 +50,10 @@ void InverseProblem::initialize(Config &conf)
     adjoint.grid.cell(ic).dofStartPlane[3] = tmp;
   }
 
+  // initialize data
   data.initialize(conf);
 
+  // initialize variables
   resize();
   initializeVarZero();
 }
@@ -104,12 +105,12 @@ void InverseProblem::resize()
   // inverse params
   gradX0.allocate(main.grid.node.nNodesGlobal, dim);
   gradX.allocate(main.timeMax, main.grid.node.nNodesGlobal, dim);
-  XArr.allocate(main.timeMax, main.grid.node.nNodesGlobal, dim);
-  X0Arr.allocate(main.grid.node.nNodesGlobal, dim);
+  X.allocate(main.timeMax, main.grid.node.nNodesGlobal, dim);
+  X0.allocate(main.grid.node.nNodesGlobal, dim);
 
   if(main.grid.gridType == GridType::STRUCTURED) {
-    X0vtiArr.allocate(main.grid.node.nNodesStrGlobal, 3);
-    XvtiArr.allocate(main.timeMax, main.grid.node.nNodesStrGlobal, 3);
+    X0vti.allocate(main.grid.node.nNodesStrGlobal, 3);
+    Xvti.allocate(main.timeMax, main.grid.node.nNodesStrGlobal, 3);
   }
 
   VecTool::resize(adjoint.petsc.solution, adjoint.grid.nDofsGlobal);
@@ -163,7 +164,7 @@ void InverseProblem::initializeVarZero()
   // inverse prams
   gradX0.fillZero();
   gradX.fillZero();
-  XArr.fillZero();
-  X0Arr.fillZero();
+  X.fillZero();
+  X0.fillZero();
 }
 

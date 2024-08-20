@@ -55,8 +55,9 @@ public:
   void setVoxelBoundaries();
   void collectCellsInVoxel();
   void collectCellsInCircle(const int radious);
-  bool isCellsIncludedInVoxel(const int iv, const int ic);
-  bool isCellsIncludedInCircle(const double radious, const int iv, const int ic);
+  bool isCellCenterIncludedInVoxel(const int iv, const int ic);
+  bool isCellBoundaryIncludedInVoxel(const int iv, const int ic);
+  bool isCellIncludedInCircle(const double radious, const int iv, const int ic);
 
   void average(const int iv, const int t);
   void weightedAverage(const int iv, const int t);

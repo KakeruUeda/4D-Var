@@ -70,10 +70,12 @@ void DataGrid::setVoxelBoundaries()
 
 void DataGrid::collectCellsInVoxel()
 {
-  grid.cell.getBoundaries();
+  //grid.cell.getBoundaries();
+  grid.cell.getCenterCoordinates();
+
   for(int iv = 0; iv < nDataCellsGlobal; iv++) {
     for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
-      if(isCellsIncludedInVoxel(iv, ic)) {
+      if(isCellCenterIncludedInVoxel(iv, ic)) {
         voxel(iv).cells.push_back(ic);
       }
     }
@@ -84,21 +86,29 @@ void DataGrid::collectCellsInCircle(const int radious)
 {
   for(int iv = 0; iv < nDataCellsGlobal; iv++) {
     for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
-      if(isCellsIncludedInCircle(radious, iv, ic)) {
+      if(isCellIncludedInCircle(radious, iv, ic)) {
         voxel(iv).cells.push_back(ic);
       }
     }
   }
 }
 
-bool DataGrid::isCellsIncludedInVoxel(const int iv, const int ic)
+bool DataGrid::isCellCenterIncludedInVoxel(const int iv, const int ic)
+{
+  return !(voxel(iv).maxX < grid.cell(ic).center[0] || voxel(iv).minX > grid.cell(ic).center[0] ||
+           voxel(iv).maxY < grid.cell(ic).center[1] || voxel(iv).minY > grid.cell(ic).center[1] ||
+           voxel(iv).maxZ < grid.cell(ic).center[2] || voxel(iv).minZ > grid.cell(ic).center[2]);
+}
+
+
+bool DataGrid::isCellBoundaryIncludedInVoxel(const int iv, const int ic)
 {
   return !(voxel(iv).maxX < grid.cell(ic).minX || voxel(iv).minX > grid.cell(ic).maxX ||
            voxel(iv).maxY < grid.cell(ic).minY || voxel(iv).minY > grid.cell(ic).maxY ||
            voxel(iv).maxZ < grid.cell(ic).minZ || voxel(iv).minZ > grid.cell(ic).maxZ);
 }
 
-bool DataGrid::isCellsIncludedInCircle(double radius, int iv, int ic)
+bool DataGrid::isCellIncludedInCircle(double radius, int iv, int ic)
 {
   double radius2 = radius * radius;
 
@@ -141,12 +151,12 @@ void DataGrid::compSmoothing()
 
   auto compWeight = [&](int p, const std::array<double, 3> &center) {
     double sinc_x = sinc((mt3d.xCurrent(p, 0) - center[0]) / grid.dx);
-    double sinc_y = sinc((mt3d.xCurrent(p, 0) - center[1]) / grid.dy);
-    double sinc_z = sinc((mt3d.xCurrent(p, 0) - center[2]) / grid.dz);
+    double sinc_y = sinc((mt3d.xCurrent(p, 1) - center[1]) / grid.dy);
+    double sinc_z = sinc((mt3d.xCurrent(p, 2) - center[2]) / grid.dz);
 
     double kai_x = kai(mt3d.xCurrent(p, 0), center[0], grid.dx, coeff);
-    double kai_y = kai(mt3d.xCurrent(p, 0), center[1], grid.dy, coeff);
-    double kai_z = kai(mt3d.xCurrent(p, 0), center[2], grid.dz, coeff);
+    double kai_y = kai(mt3d.xCurrent(p, 1), center[1], grid.dy, coeff);
+    double kai_z = kai(mt3d.xCurrent(p, 2), center[2], grid.dz, coeff);
 
     return sinc_x * sinc_y * sinc_z * kai_x * kai_y * kai_z;
   };

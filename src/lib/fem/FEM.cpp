@@ -49,8 +49,8 @@ double FEM::comp_tau(std::vector<double> &vel, const double he)
   return tau = pow(term1 + term2 + term3, -5e-1);
 }
 
-/***********************
- * @brief Compute pulse.
+/****************************************
+ * @brief Compute stabilization parameter.
  */
 double FEM::comp_tau(double vel[3], const double he)
 {
@@ -64,6 +64,9 @@ double FEM::comp_tau(double vel[3], const double he)
   return tau = pow(term1 + term2 + term3, -5e-1);
 }
 
+/***********************
+ * @brief Compute pulse.
+ */
 double FEM::comp_pulse(const int t)
 {
   double timePhase = (t - pulseBeginItr) * dt;
