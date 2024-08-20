@@ -11,10 +11,10 @@ https://petsc.org/release/ <br>
 https://github.com/KarypisLab/METIS <br>
 https://github.com/avr-aics-riken/TextParser <br>
 
-## Usage
+## Example
     * sh build.sh
-    * cd /<example_dir>
-    * mpirun -n <num_process> ./<solver_dir>/<solver_name> <tp_name>.tp petsc_options.dat
+    * cd example/inverse/4dvar
+    * mpirun -n <num_processes> ./../../../bin/4DVar test.tp petsc_options.dat
 
 ## Applications
 ・**UnsteadyNavierStokesSolver**: Solves Unsteady Navier-Stokes equation. <br>

@@ -13,28 +13,28 @@ Grid
   }
 
   BaseGrid{
-    node = "input/stenosis/dat/node.dat"
-    cell = "input/stenosis/dat/cell.dat"
+    node = "input/test/dat/node.dat"
+    cell = "input/test/dat/cell.dat"
   }
 
   SubGrid{
-    nodeId = "input/stenosis/dat/nodeId.dat"
-    cellId = "input/stenosis/dat/cellId.dat"
+    nodeId = "input/test/dat/nodeId.dat"
+    cellId = "input/test/dat/cellId.dat"
   }
 
   StructuredGrid{
     nx = (88, 32, 32) 
     lx = (5.5, 2.0, 2.0)
     fluidExtraction = "ON"
-    fluidUniqueNodes = "input/stenosis/dat/fluidUniqueNodes.dat"
-    image = "input/stenosis/dat/image.dat"
+    fluidUniqueNodes = "input/test/dat/fluidUniqueNodes.dat"
+    image = "input/test/dat/image.dat"
   }
 }
 
 Boundary
 {
-  velocityDirichlet = "input/stenosis/dat/velocityDirichlet.dat"
-  pressureDirichlet = "input/stenosis/dat/pressureDirichlet.dat"
+  velocityDirichlet = "input/test/dat/velocityDirichlet.dat"
+  pressureDirichlet = "input/test/dat/pressureDirichlet.dat"
 }
 
 PysicalParameter
@@ -71,9 +71,9 @@ Inverse
 
   controlBoundary = "left" 
   nControlNodesInCell = 4 
-  controlBoundaryNodeMap = "input/stenosis/dat/controlBoundaryNodeMap.dat" 
-  controlBoundaryCellMap = "input/stenosis/dat/controlBoundaryCellMap.dat" 
-  controlBoundaryNodeMapInCell = "input/stenosis/dat/controlBoundaryNodeMapInCell.dat"
+  controlBoundaryNodeMap = "input/test/dat/controlBoundaryNodeMap.dat" 
+  controlBoundaryCellMap = "input/test/dat/controlBoundaryCellMap.dat" 
+  controlBoundaryNodeMapInCell = "input/test/dat/controlBoundaryNodeMapInCell.dat"
 }
 
 Data
@@ -87,5 +87,5 @@ Data
   lxData = (5.5, 2.0, 2.0)
   voxelVelocity = "average"
 
-  dataDir = "input/stenosis/dat/data"
+  dataDir = "input/test/dat/data"
 }

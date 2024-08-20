@@ -44,5 +44,5 @@ SnapShot
 
 Original
 {
-  inputDir = "../usns/output/stenosis96x32x32/input" 
+  inputDir = "../usns/output/test/input" 
 }

@@ -15,7 +15,7 @@ Grid
   StructuredGrid{
     nx = (88, 32, 32) 
     lx = (5.5, 2.0, 2.0)
-    image = "input/stenosis/image_inverse.dat"
+    image = "input/test/image_inverse.dat"
     fluidExtraction = "ON"
   }
 }

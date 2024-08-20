@@ -2,7 +2,5 @@ bin
 build
 output
 a.out
-*.vti
-*.vtu
 *.DS_Store
 *.vscode

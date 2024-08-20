@@ -139,7 +139,7 @@ void DirectProblem::solveNaveirStokes(const int stepMax)
 
     if(mpi.myId == 0) {
       double timeNow = t * dt;
-      printf("Initial : Step: %d/%d | Time: %.2fs \n", t, timeMax, timeNow);
+      printf("Initial : Step: %d/%d | Time: %.2fs \n", t, stepMax, timeNow);
     }
     MPI_Barrier(MPI_COMM_WORLD);
   }
