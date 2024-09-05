@@ -6,7 +6,7 @@
 
 #include "InverseProblem.h"
 
-/*********************************
+/**
  * @brief Assemble adjoint system.
  */
 void Adjoint::matrixAssemblyAdjoint(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal, const int ic, const int t)
@@ -21,11 +21,12 @@ void Adjoint::matrixAssemblyAdjoint(DirectProblem &main, MatrixXd &Klocal, Vecto
   mt3d.K.allocate(grid.cell.nNodesInCell, grid.cell.nNodesInCell);
 
   for(int p = 0; p < grid.cell.nNodesInCell; p++) {
+    int n = grid.cell(ic).node[p];
     for(int d = 0; d < main.dim; d++) {
-      mt3d.xCurrent(p, d) = grid.node.x[grid.cell(ic).node[p]][d];
+      mt3d.xCurrent(p, d) = grid.node.x[n][d];
     }
   }
-
+  
   double he = comp_he(mt3d.xCurrent);
   double f = comp_f(grid.cell(ic).phi);
 
@@ -47,7 +48,7 @@ void Adjoint::matrixAssemblyAdjoint(DirectProblem &main, MatrixXd &Klocal, Vecto
   }
 }
 
-/**************************************
+/**
  * @brief Set values in gauss integral.
  */
 void Adjoint::setValuesInGaussIntegral(DirectProblem &main, Gauss &g2, const double he, const int i1, const int i2,
@@ -63,10 +64,11 @@ void Adjoint::setValuesInGaussIntegral(DirectProblem &main, Gauss &g2, const dou
   mt3d.weight = g2.weight[i1] * g2.weight[i2] * g2.weight[i3];
 
   setValue(main, ic, t);
-  tau = comp_tau(advk2, he);
+  tau = main.comp_tau(adw, he);
+  //tau = main.comp_tau2(mt3d.dNdx, adw, mt3d.nNodesInCell);
 }
 
-/**********************************************************************
+/**
  * @brief Compute element sfiffness LHS matrix on gauss integral point.
  */
 void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, const double f, const int ii, const int jj)
@@ -80,22 +82,22 @@ void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, con
   }
 
   // Mass term
-  Klocal(IU, JU) += mt3d.N(ii) * mt3d.N(jj) / main.dt * mt3d.vol;
-  Klocal(IV, JV) += mt3d.N(ii) * mt3d.N(jj) / main.dt * mt3d.vol;
-  Klocal(IW, JW) += mt3d.N(ii) * mt3d.N(jj) / main.dt * mt3d.vol;
+  Klocal(IU, JU) += main.rho * mt3d.N(ii) * mt3d.N(jj) / main.dt * mt3d.vol;
+  Klocal(IV, JV) += main.rho * mt3d.N(ii) * mt3d.N(jj) / main.dt * mt3d.vol;
+  Klocal(IW, JW) += main.rho * mt3d.N(ii) * mt3d.N(jj) / main.dt * mt3d.vol;
 
   // Diffusion term
   for(int d = 0; d < 3; d++) {
-    Klocal(IU, JU) += 5e-1 * mt3d.dNdx(ii, d) * mt3d.dNdx(jj, d) / main.Re * mt3d.vol;
-    Klocal(IV, JV) += 5e-1 * mt3d.dNdx(ii, d) * mt3d.dNdx(jj, d) / main.Re * mt3d.vol;
-    Klocal(IW, JW) += 5e-1 * mt3d.dNdx(ii, d) * mt3d.dNdx(jj, d) / main.Re * mt3d.vol;
+    Klocal(IU, JU) += 5e-1 * main.mu * mt3d.dNdx(ii, d) * mt3d.dNdx(jj, d) * mt3d.vol;
+    Klocal(IV, JV) += 5e-1 * main.mu * mt3d.dNdx(ii, d) * mt3d.dNdx(jj, d) * mt3d.vol;
+    Klocal(IW, JW) += 5e-1 * main.mu * mt3d.dNdx(ii, d) * mt3d.dNdx(jj, d) * mt3d.vol;
   }
 
   // Advection term
   for(int d = 0; d < main.dim; d++) {
-    Klocal(IU, JU) += 5e-1 * mt3d.dNdx(ii, d) * advk1[d] * mt3d.N(jj) * mt3d.vol;
-    Klocal(IV, JV) += 5e-1 * mt3d.dNdx(ii, d) * advk1[d] * mt3d.N(jj) * mt3d.vol;
-    Klocal(IW, JW) += 5e-1 * mt3d.dNdx(ii, d) * advk1[d] * mt3d.N(jj) * mt3d.vol;
+    Klocal(IU, JU) += 5e-1 * main.rho * mt3d.dNdx(ii, d) * advk1[d] * mt3d.N(jj) * mt3d.vol;
+    Klocal(IV, JV) += 5e-1 * main.rho * mt3d.dNdx(ii, d) * advk1[d] * mt3d.N(jj) * mt3d.vol;
+    Klocal(IW, JW) += 5e-1 * main.rho * mt3d.dNdx(ii, d) * advk1[d] * mt3d.N(jj) * mt3d.vol;
   }
 
   // Pressure term
@@ -109,21 +111,21 @@ void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, con
   Klocal(IP, JW) += mt3d.N(ii) * mt3d.dNdx(jj, 2) * mt3d.vol;
 
   // Darcy term
-  Klocal(IU, JU) += 5e-1 * f * mt3d.N(ii) * mt3d.N(jj) * mt3d.vol;
-  Klocal(IV, JV) += 5e-1 * f * mt3d.N(ii) * mt3d.N(jj) * mt3d.vol;
-  Klocal(IW, JW) += 5e-1 * f * mt3d.N(ii) * mt3d.N(jj) * mt3d.vol;
+  Klocal(IU, JU) += 5e-1 * f / main.rho * mt3d.N(ii) * mt3d.N(jj) * mt3d.vol;
+  Klocal(IV, JV) += 5e-1 * f / main.rho * mt3d.N(ii) * mt3d.N(jj) * mt3d.vol;
+  Klocal(IW, JW) += 5e-1 * f / main.rho * mt3d.N(ii) * mt3d.N(jj) * mt3d.vol;
 
   // SUPG mass term
-  Klocal(IU, JU) += tau * mt3d.N(ii) * advk1[0] * mt3d.dNdx(ii, 0) / main.dt * mt3d.vol;
-  Klocal(IV, JV) += tau * mt3d.N(ii) * advk1[1] * mt3d.dNdx(ii, 1) / main.dt * mt3d.vol;
-  Klocal(IW, JW) += tau * mt3d.N(ii) * advk1[2] * mt3d.dNdx(ii, 2) / main.dt * mt3d.vol;
+  Klocal(IU, JU) += tau * main.rho * mt3d.N(ii) * advk1[0] * mt3d.dNdx(ii, 0) / main.dt * mt3d.vol;
+  Klocal(IV, JV) += tau * main.rho * mt3d.N(ii) * advk1[1] * mt3d.dNdx(ii, 1) / main.dt * mt3d.vol;
+  Klocal(IW, JW) += tau * main.rho * mt3d.N(ii) * advk1[2] * mt3d.dNdx(ii, 2) / main.dt * mt3d.vol;
 
   // SUPG advection term
   for(int d1 = 0; d1 < main.dim; d1++) {
     for(int d2 = 0; d2 < main.dim; d2++) {
-      Klocal(IU, JU) += tau * advk1[d1] * 5e-1 * mt3d.dNdx(ii, d2) * advk1[d2] * mt3d.dNdx(jj, d1) * mt3d.vol;
-      Klocal(IV, JV) += tau * advk1[d1] * 5e-1 * mt3d.dNdx(ii, d2) * advk1[d2] * mt3d.dNdx(jj, d1) * mt3d.vol;
-      Klocal(IW, JW) += tau * advk1[d1] * 5e-1 * mt3d.dNdx(ii, d2) * advk1[d2] * mt3d.dNdx(jj, d1) * mt3d.vol;
+      Klocal(IU, JU) += tau * main.rho * advk1[d1] * 5e-1 * mt3d.dNdx(ii, d2) * advk1[d2] * mt3d.dNdx(jj, d1) * mt3d.vol;
+      Klocal(IV, JV) += tau * main.rho * advk1[d1] * 5e-1 * mt3d.dNdx(ii, d2) * advk1[d2] * mt3d.dNdx(jj, d1) * mt3d.vol;
+      Klocal(IW, JW) += tau * main.rho * advk1[d1] * 5e-1 * mt3d.dNdx(ii, d2) * advk1[d2] * mt3d.dNdx(jj, d1) * mt3d.vol;
     }
   }
 
@@ -145,10 +147,10 @@ void Adjoint::adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, con
   }
 
   // PSPG pressure term
-  Klocal(IP, JP) += tau * mt3d.K(ii, jj) * mt3d.vol;
+  Klocal(IP, JP) += tau / main.rho * mt3d.K(ii, jj) * mt3d.vol;
 }
 
-/**********************************************************************
+/**
  * @brief Compute element sfiffness RHS matrix on gauss integral point.
  */
 void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, const double f, const int ii)
@@ -157,101 +159,83 @@ void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, con
   mt3d.vol = mt3d.detJ * mt3d.weight;
 
   // Mass term
-  Flocal(IU) += mt3d.N(ii) * wk1[0] / main.dt * mt3d.vol;
-  Flocal(IV) += mt3d.N(ii) * wk1[1] / main.dt * mt3d.vol;
-  Flocal(IW) += mt3d.N(ii) * wk1[2] / main.dt * mt3d.vol;
-
-  /*
-  // Diffusion term
-  for(int d=0; d<3; d++){
-      if(d == 0){n1 = 2e0; n2 = 1e0; n3 = 1e0;}
-      if(d == 1){n1 = 1e0; n2 = 2e0; n3 = 1e0;}
-      if(d == 2){n1 = 1e0; n2 = 1e0; n3 = 2e0;}
-      Flocal(IU) -= 5e-1 * n1 * mt3d.dNdx(ii, d) * dwk1dx[0][d] / main.Re * mt3d.vol;
-      Flocal(IV) -= 5e-1 * n2 * mt3d.dNdx(ii, d) * dwk1dx[1][d] / main.Re * mt3d.vol;
-      Flocal(IW) -= 5e-1 * n3 * mt3d.dNdx(ii, d) * dwk1dx[2][d] / main.Re * mt3d.vol;
-  }
-  Flocal(IU) -= 5e-1 * mt3d.dNdx(ii, 1) * dwk1dx[1][0] / main.Re * mt3d.vol;
-  Flocal(IU) -= 5e-1 * mt3d.dNdx(ii, 2) * dwk1dx[2][0] / main.Re * mt3d.vol;
-  Flocal(IV) -= 5e-1 * mt3d.dNdx(ii, 0) * dwk1dx[0][1] / main.Re * mt3d.vol;
-  Flocal(IV) -= 5e-1 * mt3d.dNdx(ii, 2) * dwk1dx[2][1] / main.Re * mt3d.vol;
-  Flocal(IW) -= 5e-1 * mt3d.dNdx(ii, 0) * dwk1dx[0][2] / main.Re * mt3d.vol;
-  Flocal(IW) -= 5e-1 * mt3d.dNdx(ii, 1) * dwk1dx[1][2] / main.Re * mt3d.vol;
-  */
+  Flocal(IU) += main.rho * mt3d.N(ii) * wk1[0] / main.dt * mt3d.vol;
+  Flocal(IV) += main.rho * mt3d.N(ii) * wk1[1] / main.dt * mt3d.vol;
+  Flocal(IW) += main.rho * mt3d.N(ii) * wk1[2] / main.dt * mt3d.vol;
 
   // Diffusion term
   for(int d = 0; d < 3; d++) {
-    Flocal(IU) -= 5e-1 * mt3d.dNdx(ii, d) * dwk1dx[0][d] / main.Re * mt3d.vol;
-    Flocal(IV) -= 5e-1 * mt3d.dNdx(ii, d) * dwk1dx[1][d] / main.Re * mt3d.vol;
-    Flocal(IW) -= 5e-1 * mt3d.dNdx(ii, d) * dwk1dx[2][d] / main.Re * mt3d.vol;
+    Flocal(IU) -= 5e-1 * main.mu * mt3d.dNdx(ii, d) * dwk1dx[0][d] * mt3d.vol;
+    Flocal(IV) -= 5e-1 * main.mu * mt3d.dNdx(ii, d) * dwk1dx[1][d] * mt3d.vol;
+    Flocal(IW) -= 5e-1 * main.mu * mt3d.dNdx(ii, d) * dwk1dx[2][d] * mt3d.vol;
   }
 
   // Advection term
-  Flocal(IU) -= 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[0][0] * wk1[0] * mt3d.vol;
-  Flocal(IU) -= 0.5 * 1.5 * mt3d.N(ii) * dvkdx[0][0] * wk1[0] * mt3d.vol;
+  Flocal(IU) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvk1dx[0][0] * wk1[0] * mt3d.vol;
+  Flocal(IU) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvkdx[0][0] * wk1[0] * mt3d.vol;
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IU) -= 0.5 * mt3d.dNdx(ii, d) * advk2[d] * wk1[0] * mt3d.vol;
+    Flocal(IU) -= 0.5 * main.rho * mt3d.dNdx(ii, d) * advk2[d] * wk1[0] * mt3d.vol;
   }
-  Flocal(IU) -= 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[1][0] * wk1[1] * mt3d.vol;
-  Flocal(IU) -= 0.5 * 1.5 * mt3d.N(ii) * dvkdx[1][0] * wk1[1] * mt3d.vol;
-  Flocal(IU) -= 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[2][0] * wk1[2] * mt3d.vol;
-  Flocal(IU) -= 0.5 * 1.5 * mt3d.N(ii) * dvkdx[2][0] * wk1[2] * mt3d.vol;
+  Flocal(IU) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvk1dx[1][0] * wk1[1] * mt3d.vol;
+  Flocal(IU) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvkdx[1][0] * wk1[1] * mt3d.vol;
+  Flocal(IU) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvk1dx[2][0] * wk1[2] * mt3d.vol;
+  Flocal(IU) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvkdx[2][0] * wk1[2] * mt3d.vol;
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IU) -= 0.5 * (-0.5) * mt3d.N(ii) * dvk2dx[d][0] * wk2[d] * mt3d.vol;
-    Flocal(IU) -= 0.5 * (-0.5) * mt3d.N(ii) * dvk1dx[d][0] * wk2[d] * mt3d.vol;
-  }
-
-  Flocal(IV) -= 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[1][1] * wk1[1] * mt3d.vol;
-  Flocal(IV) -= 0.5 * 1.5 * mt3d.N(ii) * dvkdx[1][1] * wk1[1] * mt3d.vol;
-  for(int d = 0; d < main.dim; d++) {
-    Flocal(IV) -= 0.5 * mt3d.dNdx(ii, d) * advk2[d] * wk1[1] * mt3d.vol;
-  }
-  Flocal(IV) -= 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[0][1] * wk1[0] * mt3d.vol;
-  Flocal(IV) -= 0.5 * 1.5 * mt3d.N(ii) * dvkdx[0][1] * wk1[0] * mt3d.vol;
-  Flocal(IV) -= 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[2][1] * wk1[2] * mt3d.vol;
-  Flocal(IV) -= 0.5 * 1.5 * mt3d.N(ii) * dvkdx[2][1] * wk1[2] * mt3d.vol;
-  for(int d = 0; d < main.dim; d++) {
-    Flocal(IV) -= 0.5 * (-0.5) * mt3d.N(ii) * dvk2dx[d][1] * wk2[d] * mt3d.vol;
-    Flocal(IV) -= 0.5 * (-0.5) * mt3d.N(ii) * dvk1dx[d][1] * wk2[d] * mt3d.vol;
+    Flocal(IU) -= 0.5 * (-0.5) * main.rho * mt3d.N(ii) * dvk2dx[d][0] * wk2[d] * mt3d.vol;
+    Flocal(IU) -= 0.5 * (-0.5) * main.rho * mt3d.N(ii) * dvk1dx[d][0] * wk2[d] * mt3d.vol;
   }
 
-  Flocal(IW) -= 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[2][2] * wk1[2] * mt3d.vol;
-  Flocal(IW) -= 0.5 * 1.5 * mt3d.N(ii) * dvkdx[2][2] * wk1[2] * mt3d.vol;
+  Flocal(IV) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvk1dx[1][1] * wk1[1] * mt3d.vol;
+  Flocal(IV) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvkdx[1][1] * wk1[1] * mt3d.vol;
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IW) -= 0.5 * mt3d.dNdx(ii, d) * advk2[d] * wk1[2] * mt3d.vol;
+    Flocal(IV) -= 0.5 * main.rho * mt3d.dNdx(ii, d) * advk2[d] * wk1[1] * mt3d.vol;
   }
-  Flocal(IW) -= 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[0][2] * wk1[0] * mt3d.vol;
-  Flocal(IW) -= 0.5 * 1.5 * mt3d.N(ii) * dvkdx[0][2] * wk1[0] * mt3d.vol;
-  Flocal(IW) -= 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[1][2] * wk1[1] * mt3d.vol;
-  Flocal(IW) -= 0.5 * 1.5 * mt3d.N(ii) * dvkdx[1][2] * wk1[1] * mt3d.vol;
+  Flocal(IV) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvk1dx[0][1] * wk1[0] * mt3d.vol;
+  Flocal(IV) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvkdx[0][1] * wk1[0] * mt3d.vol;
+  Flocal(IV) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvk1dx[2][1] * wk1[2] * mt3d.vol;
+  Flocal(IV) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvkdx[2][1] * wk1[2] * mt3d.vol;
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IW) -= 0.5 * (-0.5) * mt3d.N(ii) * dvk2dx[d][2] * wk2[d] * mt3d.vol;
-    Flocal(IW) -= 0.5 * (-0.5) * mt3d.N(ii) * dvk1dx[d][2] * wk2[d] * mt3d.vol;
+    Flocal(IV) -= 0.5 * (-0.5) * main.rho * mt3d.N(ii) * dvk2dx[d][1] * wk2[d] * mt3d.vol;
+    Flocal(IV) -= 0.5 * (-0.5) * main.rho * mt3d.N(ii) * dvk1dx[d][1] * wk2[d] * mt3d.vol;
+  }
+
+  Flocal(IW) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvk1dx[2][2] * wk1[2] * mt3d.vol;
+  Flocal(IW) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvkdx[2][2] * wk1[2] * mt3d.vol;
+  for(int d = 0; d < main.dim; d++) {
+    Flocal(IW) -= 0.5 * main.rho * mt3d.dNdx(ii, d) * advk2[d] * wk1[2] * mt3d.vol;
+  }
+  Flocal(IW) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvk1dx[0][2] * wk1[0] * mt3d.vol;
+  Flocal(IW) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvkdx[0][2] * wk1[0] * mt3d.vol;
+  Flocal(IW) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvk1dx[1][2] * wk1[1] * mt3d.vol;
+  Flocal(IW) -= 0.5 * 1.5 * main.rho * mt3d.N(ii) * dvkdx[1][2] * wk1[1] * mt3d.vol;
+  for(int d = 0; d < main.dim; d++) {
+    Flocal(IW) -= 0.5 * (-0.5) * main.rho * mt3d.N(ii) * dvk2dx[d][2] * wk2[d] * mt3d.vol;
+    Flocal(IW) -= 0.5 * (-0.5) * main.rho * mt3d.N(ii) * dvk1dx[d][2] * wk2[d] * mt3d.vol;
   }
 
   // Darcy term
-  Flocal(IU) -= 5e-1 * f * mt3d.N(ii) * wk1[0] * mt3d.vol;
-  Flocal(IV) -= 5e-1 * f * mt3d.N(ii) * wk1[1] * mt3d.vol;
-  Flocal(IW) -= 5e-1 * f * mt3d.N(ii) * wk1[2] * mt3d.vol;
+  Flocal(IU) -= 5e-1 * f / main.rho * mt3d.N(ii) * wk1[0] * mt3d.vol;
+  Flocal(IV) -= 5e-1 * f / main.rho * mt3d.N(ii) * wk1[1] * mt3d.vol;
+  Flocal(IW) -= 5e-1 * f / main.rho * mt3d.N(ii) * wk1[2] * mt3d.vol;
 
   // SUPG mass term
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IU) -= tau * 1.5 * mt3d.N(ii) * (vk1[d] - vk[d]) / main.dt * dwk1dx[d][0] * mt3d.vol;
-    Flocal(IU) += tau * 0.5 * mt3d.N(ii) * dwk2dx[d][0] * (vk2[d] - vk1[d]) / main.dt * mt3d.vol;
+    Flocal(IU) -= tau * 1.5 * main.rho * mt3d.N(ii) * (vk1[d] - vk[d]) * dwk1dx[d][0] / main.dt * mt3d.vol;
+    Flocal(IU) += tau * 0.5 * main.rho * mt3d.N(ii) * dwk2dx[d][0] * (vk2[d] - vk1[d]) / main.dt * mt3d.vol;
   }
-  Flocal(IU) += tau * mt3d.N(ii) * advk2[0] * dwk1dx[0][0] / main.dt * mt3d.vol;
+  Flocal(IU) += tau * main.rho * mt3d.N(ii) * advk2[0] * dwk1dx[0][0] / main.dt * mt3d.vol;
 
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IV) -= tau * 1.5 * mt3d.N(ii) * (vk1[d] - vk[d]) / main.dt * dwk1dx[d][1] * mt3d.vol;
-    Flocal(IV) += tau * 0.5 * mt3d.N(ii) * dwk2dx[d][1] * (vk2[d] - vk1[d]) / main.dt * mt3d.vol;
+    Flocal(IV) -= tau * 1.5 * main.rho * mt3d.N(ii) * (vk1[d] - vk[d]) * dwk1dx[d][1]  / main.dt * mt3d.vol;
+    Flocal(IV) += tau * 0.5 * main.rho * mt3d.N(ii) * dwk2dx[d][1] * (vk2[d] - vk1[d]) / main.dt * mt3d.vol;
   }
-  Flocal(IV) += tau * mt3d.N(ii) * advk2[1] * dwk1dx[1][1] / main.dt * mt3d.vol;
+  Flocal(IV) += tau * main.rho * mt3d.N(ii) * advk2[1] * dwk1dx[1][1] / main.dt * mt3d.vol;
 
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IW) -= tau * 1.5 * mt3d.N(ii) * (vk1[d] - vk[d]) / main.dt * dwk1dx[d][1] * mt3d.vol;
-    Flocal(IW) += tau * 0.5 * mt3d.N(ii) * dwk2dx[d][2] * (vk2[d] - vk1[d]) / main.dt * mt3d.vol;
+    Flocal(IW) -= tau * 1.5 * main.rho * mt3d.N(ii) * (vk1[d] - vk[d]) * dwk1dx[d][2] / main.dt * mt3d.vol;
+    Flocal(IW) += tau * 0.5 * main.rho * mt3d.N(ii) * dwk2dx[d][2] * (vk2[d] - vk1[d]) / main.dt * mt3d.vol;
   }
-  Flocal(IW) += tau * mt3d.N(ii) * advk2[2] * dwk1dx[2][2] / main.dt * mt3d.vol;
+  Flocal(IW) += tau * main.rho * mt3d.N(ii) * advk2[2] * dwk1dx[2][2] / main.dt * mt3d.vol;
 
   // SUPG advection term
   std::vector<double> frontAdv2, frontAdv3;
@@ -265,46 +249,46 @@ void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, con
     }
   }
 
-  Flocal(IU) -= tau * frontAdv2[0] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[0][0] * mt3d.vol;
-  Flocal(IU) -= tau * frontAdv2[0] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[0][0] * mt3d.vol;
+  Flocal(IU) -= tau * main.rho * frontAdv2[0] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[0][0] * mt3d.vol;
+  Flocal(IU) -= tau * main.rho * frontAdv2[0] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[0][0] * mt3d.vol;
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IU) -= tau * frontAdv2[0] * 0.5 * mt3d.dNdx(ii, d) * advk2[d] * mt3d.vol;
+    Flocal(IU) -= tau * main.rho * frontAdv2[0] * 0.5 * mt3d.dNdx(ii, d) * advk2[d] * mt3d.vol;
   }
-  Flocal(IU) -= tau * frontAdv2[1] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[1][0] * mt3d.vol;
-  Flocal(IU) -= tau * frontAdv2[1] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[1][0] * mt3d.vol;
-  Flocal(IU) -= tau * frontAdv2[2] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[2][0] * mt3d.vol;
-  Flocal(IU) -= tau * frontAdv2[2] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[2][0] * mt3d.vol;
+  Flocal(IU) -= tau * main.rho * frontAdv2[1] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[1][0] * mt3d.vol;
+  Flocal(IU) -= tau * main.rho * frontAdv2[1] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[1][0] * mt3d.vol;
+  Flocal(IU) -= tau * main.rho * frontAdv2[2] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[2][0] * mt3d.vol;
+  Flocal(IU) -= tau * main.rho * frontAdv2[2] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[2][0] * mt3d.vol;
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IU) -= tau * frontAdv3[d] * 0.5 * (-0.5) * mt3d.N(ii) * dvk2dx[d][0] * mt3d.vol;
-    Flocal(IU) -= tau * frontAdv3[d] * 0.5 * (-0.5) * mt3d.N(ii) * dvk1dx[d][0] * mt3d.vol;
-  }
-
-  Flocal(IV) -= tau * frontAdv2[1] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[1][1] * mt3d.vol;
-  Flocal(IV) -= tau * frontAdv2[1] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[1][1] * mt3d.vol;
-  for(int d = 0; d < main.dim; d++) {
-    Flocal(IV) -= tau * frontAdv2[1] * 0.5 * mt3d.dNdx(ii, d) * advk2[d] * mt3d.vol;
-  }
-  Flocal(IV) -= tau * frontAdv2[0] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[0][1] * mt3d.vol;
-  Flocal(IV) -= tau * frontAdv2[0] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[0][1] * mt3d.vol;
-  Flocal(IV) -= tau * frontAdv2[2] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[2][1] * mt3d.vol;
-  Flocal(IV) -= tau * frontAdv2[2] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[2][1] * mt3d.vol;
-  for(int d = 0; d < main.dim; d++) {
-    Flocal(IV) -= tau * frontAdv3[d] * 0.5 * (-0.5) * mt3d.N(ii) * dvk2dx[d][1] * mt3d.vol;
-    Flocal(IV) -= tau * frontAdv3[d] * 0.5 * (-0.5) * mt3d.N(ii) * dvk1dx[d][1] * mt3d.vol;
+    Flocal(IU) -= tau * main.rho * frontAdv3[d] * 0.5 * (-0.5) * mt3d.N(ii) * dvk2dx[d][0] * mt3d.vol;
+    Flocal(IU) -= tau * main.rho * frontAdv3[d] * 0.5 * (-0.5) * mt3d.N(ii) * dvk1dx[d][0] * mt3d.vol;
   }
 
-  Flocal(IW) -= tau * frontAdv2[2] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[2][2] * mt3d.vol;
-  Flocal(IW) -= tau * frontAdv2[2] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[2][2] * mt3d.vol;
+  Flocal(IV) -= tau * main.rho * frontAdv2[1] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[1][1] * mt3d.vol;
+  Flocal(IV) -= tau * main.rho * frontAdv2[1] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[1][1] * mt3d.vol;
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IW) -= tau * frontAdv2[2] * 0.5 * mt3d.dNdx(ii, d) * advk2[d] * mt3d.vol;
+    Flocal(IV) -= tau * main.rho * frontAdv2[1] * 0.5 * mt3d.dNdx(ii, d) * advk2[d] * mt3d.vol;
   }
-  Flocal(IW) -= tau * frontAdv2[0] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[0][2] * mt3d.vol;
-  Flocal(IW) -= tau * frontAdv2[0] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[0][2] * mt3d.vol;
-  Flocal(IW) -= tau * frontAdv2[1] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[1][2] * mt3d.vol;
-  Flocal(IW) -= tau * frontAdv2[1] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[1][2] * mt3d.vol;
+  Flocal(IV) -= tau * main.rho * frontAdv2[0] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[0][1] * mt3d.vol;
+  Flocal(IV) -= tau * main.rho * frontAdv2[0] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[0][1] * mt3d.vol;
+  Flocal(IV) -= tau * main.rho * frontAdv2[2] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[2][1] * mt3d.vol;
+  Flocal(IV) -= tau * main.rho * frontAdv2[2] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[2][1] * mt3d.vol;
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IW) -= tau * frontAdv3[d] * 0.5 * (-0.5) * mt3d.N(ii) * dvk2dx[d][2] * mt3d.vol;
-    Flocal(IW) -= tau * frontAdv3[d] * 0.5 * (-0.5) * mt3d.N(ii) * dvk1dx[d][2] * mt3d.vol;
+    Flocal(IV) -= tau * main.rho * frontAdv3[d] * 0.5 * (-0.5) * mt3d.N(ii) * dvk2dx[d][1] * mt3d.vol;
+    Flocal(IV) -= tau * main.rho * frontAdv3[d] * 0.5 * (-0.5) * mt3d.N(ii) * dvk1dx[d][1] * mt3d.vol;
+  }
+
+  Flocal(IW) -= tau * main.rho * frontAdv2[2] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[2][2] * mt3d.vol;
+  Flocal(IW) -= tau * main.rho * frontAdv2[2] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[2][2] * mt3d.vol;
+  for(int d = 0; d < main.dim; d++) {
+    Flocal(IW) -= tau * main.rho * frontAdv2[2] * 0.5 * mt3d.dNdx(ii, d) * advk2[d] * mt3d.vol;
+  }
+  Flocal(IW) -= tau * main.rho * frontAdv2[0] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[0][2] * mt3d.vol;
+  Flocal(IW) -= tau * main.rho * frontAdv2[0] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[0][2] * mt3d.vol;
+  Flocal(IW) -= tau * main.rho * frontAdv2[1] * 0.5 * 1.5 * mt3d.N(ii) * dvk1dx[1][2] * mt3d.vol;
+  Flocal(IW) -= tau * main.rho * frontAdv2[1] * 0.5 * 1.5 * mt3d.N(ii) * dvkdx[1][2] * mt3d.vol;
+  for(int d = 0; d < main.dim; d++) {
+    Flocal(IW) -= tau * main.rho * frontAdv3[d] * 0.5 * (-0.5) * mt3d.N(ii) * dvk2dx[d][2] * mt3d.vol;
+    Flocal(IW) -= tau * main.rho * frontAdv3[d] * 0.5 * (-0.5) * mt3d.N(ii) * dvk1dx[d][2] * mt3d.vol;
   }
 
   std::vector<double> backAdv2L, backAdv3L;
@@ -330,32 +314,32 @@ void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, con
   }
 
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IU) += tau * 0.5 * mt3d.N(ii) * dwk2dx[d][0] * (backAdv3L[0] + backAdv3R[0]) * mt3d.vol;
-    Flocal(IU) -= tau * 1.5 * mt3d.N(ii) * dwk1dx[d][0] * (backAdv2L[0] + backAdv2R[0]) * mt3d.vol;
+    Flocal(IU) += tau * 0.5 * 0.5 * main.rho * mt3d.N(ii) * dwk2dx[d][0] * (backAdv3L[0] + backAdv3R[0]) * mt3d.vol;
+    Flocal(IU) -= tau * 0.5 * 1.5 * main.rho * mt3d.N(ii) * dwk1dx[d][0] * (backAdv2L[0] + backAdv2R[0]) * mt3d.vol;
   }
 
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IV) += tau * 0.5 * mt3d.N(ii) * dwk2dx[d][1] * (backAdv3L[1] + backAdv3R[1]) * mt3d.vol;
-    Flocal(IV) -= tau * 1.5 * mt3d.N(ii) * dwk1dx[d][1] * (backAdv2L[1] + backAdv2R[1]) * mt3d.vol;
+    Flocal(IV) += tau * 0.5 * 0.5 * main.rho * mt3d.N(ii) * dwk2dx[d][1] * (backAdv3L[1] + backAdv3R[1]) * mt3d.vol;
+    Flocal(IV) -= tau * 0.5 * 1.5 * main.rho * mt3d.N(ii) * dwk1dx[d][1] * (backAdv2L[1] + backAdv2R[1]) * mt3d.vol;
   }
 
   for(int d = 0; d < main.dim; d++) {
-    Flocal(IW) += tau * 0.5 * mt3d.N(ii) * dwk2dx[d][2] * (backAdv3L[2] + backAdv3R[2]) * mt3d.vol;
-    Flocal(IW) -= tau * 1.5 * mt3d.N(ii) * dwk1dx[d][2] * (backAdv2L[2] + backAdv2R[2]) * mt3d.vol;
+    Flocal(IW) += tau * 0.5 * 0.5 * main.rho * mt3d.N(ii) * dwk2dx[d][2] * (backAdv3L[2] + backAdv3R[2]) * mt3d.vol;
+    Flocal(IW) -= tau * 0.5 * 1.5 * main.rho * mt3d.N(ii) * dwk1dx[d][2] * (backAdv2L[2] + backAdv2R[2]) * mt3d.vol;
   }
 
   // SUPG pressure term
   for(int d = 0; d < 3; d++) {
-    Flocal(IU) -= tau * 1.5 * mt3d.N(ii) * dpk1dx[d] * dwk1dx[d][0] * mt3d.vol;
-    Flocal(IU) += tau * 0.5 * mt3d.N(ii) * dpk2dx[d] * dwk2dx[d][0] * mt3d.vol;
+    Flocal(IU) -= tau * 0.5 * 1.5 * mt3d.N(ii) * dpk1dx[d] * dwk1dx[d][0] * mt3d.vol;
+    Flocal(IU) += tau * 0.5 * 0.5 * mt3d.N(ii) * dpk2dx[d] * dwk2dx[d][0] * mt3d.vol;
   }
   for(int d = 0; d < 3; d++) {
-    Flocal(IV) -= tau * 1.5 * mt3d.N(ii) * dpk1dx[d] * dwk1dx[d][1] * mt3d.vol;
-    Flocal(IV) += tau * 0.5 * mt3d.N(ii) * dpk2dx[d] * dwk2dx[d][1] * mt3d.vol;
+    Flocal(IV) -= tau * 0.5 * 1.5 * mt3d.N(ii) * dpk1dx[d] * dwk1dx[d][1] * mt3d.vol;
+    Flocal(IV) += tau * 0.5 * 0.5 * mt3d.N(ii) * dpk2dx[d] * dwk2dx[d][1] * mt3d.vol;
   }
   for(int d = 0; d < 3; d++) {
-    Flocal(IW) -= tau * 1.5 * mt3d.N(ii) * dpk1dx[d] * dwk1dx[d][2] * mt3d.vol;
-    Flocal(IW) += tau * 0.5 * mt3d.N(ii) * dpk2dx[d] * dwk2dx[d][2] * mt3d.vol;
+    Flocal(IW) -= tau * 0.5 * 1.5 * mt3d.N(ii) * dpk1dx[d] * dwk1dx[d][2] * mt3d.vol;
+    Flocal(IW) += tau * 0.5 * 0.5 * mt3d.N(ii) * dpk2dx[d] * dwk2dx[d][2] * mt3d.vol;
   }
 
   // PSPG mass term
@@ -407,7 +391,7 @@ void Adjoint::adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, con
   }
 }
 
-/***********************************************
+/**
  * @brief Set values needed for matrix assembly
  *        on gauss integral points.
  */
@@ -522,6 +506,14 @@ void Adjoint::setValue(DirectProblem &main, const int ic, const int t)
     }
   }
 
+  for(int d = 0; d < main.dim; d++) {
+    adw[d] = 0e0;
+    for(int p = 0; p < grid.cell.nNodesInCell; p++) {
+      int n = grid.cell(ic).node[p];
+      adw[d] += mt3d.N(p) * (1.5 * w(n, d) - 0.5 * wPrev(n, d));
+    }
+  }
+
   // lagrange multiplier - dwdx
   for(int d = 0; d < main.dim; d++) {
     for(int e = 0; e < main.dim; e++) {
@@ -548,7 +540,7 @@ void Adjoint::setValue(DirectProblem &main, const int ic, const int t)
   
 }
 
-/***********************************
+/**
  * @brief Compute boundary integral.
  */
 void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &Flocal, ControlBoundary &cb,
@@ -592,7 +584,7 @@ void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &
   }
 }
 
-/*******************************************************************
+/**
  * @brief Compute LHS element sfiffness matrix for boundary integral
  *        on gauss integral point.
  */

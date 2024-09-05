@@ -28,7 +28,7 @@
 
 extern MyMPI mpi;
 
-class DirectProblem : public virtual FEM
+class DirectProblem : public FEM
 {
 public:
   DirectProblem(Config &conf);

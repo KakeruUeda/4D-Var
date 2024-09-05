@@ -6,7 +6,7 @@
 
 #include "Config.h"
 
-/**************************
+/**
  * @brief Construct config.
  */
 Config::Config(std::string inputFile, std::string appName)
@@ -16,7 +16,7 @@ Config::Config(std::string inputFile, std::string appName)
   tryReadConfigFile();
 }
 
-/**************************
+/**
  * @brief Set application.
  */
 void Config::setApplication(std::string appName)
@@ -40,7 +40,7 @@ void Config::setApplication(std::string appName)
   }
 }
 
-/**************************
+/**
  * @brief Open config file.
  */
 void Config::tryOpenConfigFile(std::string inputFile)
@@ -58,7 +58,7 @@ void Config::tryOpenConfigFile(std::string inputFile)
   }
 }
 
-/**************************
+/**
  * @brief Read config file.
  */
 void Config::tryReadConfigFile()
@@ -73,7 +73,7 @@ void Config::tryReadConfigFile()
   }
 }
 
-/**************************
+/**
  * @brief Read config file.
  */
 void Config::readConfigFile()

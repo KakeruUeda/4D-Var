@@ -6,7 +6,7 @@
 
 #include "DirectProblem.h"
 
-/**************************************
+/**
  * @brief Solve Unsteady Navier Stokes.
  */
 void DirectProblem::solveNavierStokes()
@@ -22,6 +22,7 @@ void DirectProblem::solveNavierStokes()
   petsc.initialAssembly();
 
   dirichlet.setValuesZero(grid.nDofsGlobal);
+  dirichlet.velocitySetInit = dirichlet.velocitySet;
 
   for(int t = 0; t < timeMax; t++) {
     petsc.setValueZero();
@@ -29,10 +30,14 @@ void DirectProblem::solveNavierStokes()
 
     if(pulsatileFlow == ON) {
       if(t >= pulseBeginItr) {
-        double pulse = comp_pulse(t);
-        dirichlet.assignPulsatileBCs(pulse, grid.nDofsGlobal);
+        //double pulse = comp_pulse(t);
+        double pulse = dirichlet.comp_pulse(t * dt);
+        dirichlet.assignPulsatileBCs(pulse);
+        dirichlet.getNewArray(grid.node.mapNew);
+        comp_Re(dirichlet.velocitySet);
       }
     }
+    
     dirichlet.applyBCs(grid.cell, petsc);
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -45,7 +50,8 @@ void DirectProblem::solveNavierStokes()
         MatrixXd Klocal(nDofs, nDofs);
         VectorXd Flocal(nDofs);
         matrixAssemblyUSNS(Klocal, Flocal, ic, t);
-        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, grid.cell(ic).dofsBCsMap, Klocal, Flocal);
+        petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, 
+                       grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
     }
     timer1 = MPI_Wtime() - timer1;
@@ -61,8 +67,9 @@ void DirectProblem::solveNavierStokes()
     VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
     VecGetArray(vecSEQ, &arraySolution);
 
-    // update solution vector
+    /* upadate solution vector */ 
     for(int id = 0; id < grid.nDofsGlobal; id++) {
+      petsc.solution[id] = 0e0;
       petsc.solution[id] = arraySolution[id];
     }
 
@@ -82,7 +89,7 @@ void DirectProblem::solveNavierStokes()
   VecDestroy(&vecSEQ);
 }
 
-/*******************************************************************
+/**
  * @brief Compute fully developed flow field.
  *        Usually used to get initial condition for inverse problem.
  */
@@ -130,7 +137,7 @@ void DirectProblem::solveNaveirStokes(const int stepMax)
     VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
     VecGetArray(vecSEQ, &arraySolution);
 
-    // update solution vector
+    /* update solution vector */
     for(int id = 0; id < grid.nDofsGlobal; id++) {
       petsc.solution[id] = arraySolution[id];
     }
@@ -139,7 +146,7 @@ void DirectProblem::solveNaveirStokes(const int stepMax)
 
     if(mpi.myId == 0) {
       double timeNow = t * dt;
-      printf("Initial : Step: %d/%d | Time: %.2fs \n", t, stepMax, timeNow);
+      printf("Initial : Step: %d/%d | Time: %f \n", t, stepMax, timeNow);
     }
     MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -154,7 +161,7 @@ void DirectProblem::solveNaveirStokes(const int stepMax)
   }
 }
 
-/******************************************************
+/**
  * @brief Solve Unsteady Navier Stokes
  *        for the purpose of checking armijo criteria.
  */
@@ -183,6 +190,10 @@ void DirectProblem::solveNavierStokes(Array2D<double> &X0, Array3D<double> &X)
     dirichlet.assignBCs(grid.node);
     dirichlet.applyBCs(grid.cell, petsc);
 
+    /* New Reynolds number */
+    comp_Re(dirichlet.velocitySet); 
+    restore_Re(t);
+
     for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
       int nDofs = grid.cell(ic).dofsMap.size();
 
@@ -199,7 +210,7 @@ void DirectProblem::solveNavierStokes(Array2D<double> &X0, Array3D<double> &X)
     VecScatterEnd(ctx, petsc.solnVec, vecSEQ, INSERT_VALUES, SCATTER_FORWARD);
     VecGetArray(vecSEQ, &arraySolnTmp);
 
-    // update solution vector
+    /* update solution vector */
     for(int id = 0; id < grid.nDofsGlobal; id++) {
       petsc.solution[id] = arraySolnTmp[id];
     }
@@ -236,12 +247,14 @@ void DirectProblem::updateInitialVelocity(Array2D<double> &X0)
 
 void DirectProblem::outputSolutions(const int t)
 {
+  //outputSolutionsVTU("solution", t);
+  
   switch(grid.gridType) {
   case GridType::STRUCTURED:
     updateSolutionsVTI();
     outputSolutionsVTI("solution", t);
     outputSolutionsBIN("input", t);
-    compVorticity(t);
+    //compVorticity(t);
     break;
   case GridType::UNSTRUCTURED:
     outputSolutionsVTU("solution", t);
@@ -251,6 +264,7 @@ void DirectProblem::outputSolutions(const int t)
     exit(1);
     break;
   }
+  
 }
 
 void DirectProblem::compVorticity(const int t)
@@ -298,7 +312,7 @@ void DirectProblem::compVorticity(const int t)
                                            grid.dz);
 }
 
-/********************************
+/**
  * @brief Set all solutions zero.
  */
 void DirectProblem::setVariablesZero()
@@ -310,26 +324,31 @@ void DirectProblem::setVariablesZero()
   pt.fillZero();
 }
 
-/******************************
+/**
  * @brief Update all solutions.
  */
 void DirectProblem::updateSolutions()
 {
   for(int in = 0; in < grid.node.nNodesGlobal; in++) {
     int n1 = 0;
-    for(int i = 0; i < grid.node.mapNew[in]; i++)
+    for(int i = 0; i < grid.node.mapNew[in]; i++) {
       n1 += grid.node.nDofsOnNode[i];
+    }
 
-    for(int d = 0; d < dim; d++)
-      vPrev(in, d) = v(in, d);
+    for(int d = 0; d < dim; d++) {
+       vPrev(in, d) = 0e0;
+       vPrev(in, d) = v(in, d);
+    }
 
-    for(int d = 0; d < dim; d++)
+    for(int d = 0; d < dim; d++) {
+      v(in, d) = 0e0;
       v(in, d) = petsc.solution[n1 + d];
+    }
     p(in) = petsc.solution[n1 + dim];
   }
 }
 
-/**************************************************************
+/**
  * @brief Assign time-dependent variables for adjoint equation.
  */
 void DirectProblem::updateTimeSolutions(const int t)
@@ -342,7 +361,7 @@ void DirectProblem::updateTimeSolutions(const int t)
   }
 }
 
-/**********************************
+/**
  * @brief Update solutions for VTI.
  */
 void DirectProblem::updateSolutionsVTI()
@@ -355,7 +374,7 @@ void DirectProblem::updateSolutionsVTI()
   }
 }
 
-/**********************************
+/**
  * @brief Update solutions for VTI.
  */
 void DirectProblem::updateSolutionsVTI(const int t)
@@ -368,7 +387,7 @@ void DirectProblem::updateSolutionsVTI(const int t)
   }
 }
 
-/**********************************
+/**
  * @brief Export solutions for VTI.
  */
 void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t)
@@ -383,7 +402,7 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t)
   EXPORT::exportScalarPointDataVTI(vtiFile, "pressure", pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 
-/**********************************
+/**
  * @brief Export solutions for VTI.
  */
 void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t, const int loop)
@@ -400,7 +419,7 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t, cons
                                    grid.dz);
 }
 
-/**********************************
+/**
  * @brief Export solutions for VTU.
  */
 void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t)
@@ -415,7 +434,7 @@ void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t)
   EXPORT::exportScalarPointDataVTU<double>(vtuFile, "pressure", grid.node, grid.cell, p);
 }
 
-/**********************************
+/**
  * @brief Export solutions for VTU.
  */
 void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t, const int loop)
@@ -426,10 +445,13 @@ void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t, cons
   std::string vtuFile;
   vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";
   EXPORT::exportVectorPointDataVTU<double>(vtuFile, "velocity", grid.node, grid.cell, grid.node.v);
-  vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+  vtuFile = outputDir + "/" + dir + "/pressure_" + to_string(loop) + "_" + to_string(t) + ".vtu";
   EXPORT::exportScalarPointDataVTU<double>(vtuFile, "pressure", grid.node, grid.cell, grid.node.p);
 }
 
+/**
+ * @brief Export solutions for BIN.
+ */
 void DirectProblem::outputSolutionsBIN(const std::string &dir, const int t)
 {
   if(mpi.myId > 0) {
@@ -442,7 +464,7 @@ void DirectProblem::outputSolutionsBIN(const std::string &dir, const int t)
   pvti.exportBIN(binFile);
 }
 
-/********************************************
+/**
  * @brief Take snapshots for error functions.
  */
 void SnapShot::takeSnapShot(Array2D<double> &v, const int nNodesGlobal, const int snapCount)
@@ -455,7 +477,7 @@ void SnapShot::takeSnapShot(Array2D<double> &v, const int nNodesGlobal, const in
 }
 
 
-/********************************************
+/**
  * @brief Take snapshots for error functions.
  */
 void SnapShot::takeSnapShot(Array3D<double> &v, const int nNodesGlobal, const int snapCount, const int step)

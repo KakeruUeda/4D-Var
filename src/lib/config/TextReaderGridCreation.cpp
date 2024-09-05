@@ -51,7 +51,7 @@ void TextReaderGridCreation::readGridInfo(Config &conf)
   }
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderGridCreation::readStructuredBoundaryInfo(Config &conf)
@@ -107,6 +107,39 @@ void TextReaderGridCreation::readStructuredBoundaryInfo(Config &conf)
   for(const auto &face : faces) {
     readBoundary(face);
   }
+
+  std::string sub_label;
+  
+  label = base_label + "/outlet";
+  sub_label = label + "/setOutletTractionFreeCondition";
+  if(!conf.tp.getInspectedValue(sub_label, str)) {
+    throw std::runtime_error(sub_label + " is not set");
+  }
+
+  if(str == "ON"){
+    std::string face;
+
+    sub_label = label + "/face";
+    if(!conf.tp.getInspectedValue(sub_label, face)) {
+      throw std::runtime_error(sub_label + " is not set");
+    }
+    
+    sub_label = label + "/center_tr";
+    if(!conf.tp.getInspectedVector(sub_label, conf.center_tr, 3)) {
+      throw std::runtime_error(sub_label + " is not set");
+    }
+
+    sub_label = label + "/R_tr";
+    if(!conf.tp.getInspectedValue(sub_label, conf.R_tr)) {
+      throw std::runtime_error(sub_label + " is not set");
+    }
+
+    conf.setTractionFreeCondition(face);
+  }else if(str == "OFF"){
+  }else{
+    throw std::runtime_error("set ON or OFF");
+  }
+
 
   label = base_label + "/controlBoundaryExtraction";
 

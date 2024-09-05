@@ -29,14 +29,178 @@ DataGrid::DataGrid(Config &conf, Grid &grid, SnapShot &snap)
 
 void DataGrid::initialize(Config &conf)
 {
+  grid.cell.getBoundaries();
+  grid.cell.getCenterCoordinates();
   setVoxelCenters();
-  setVoxelBoundaries();
-  collectCellsInVoxel();
+  setBoundingBox();
+  //setVoxelBoundaries();
+  //collectCellsInVoxel();
+
+  setRefinedGrid();
+  collectRefinedVoxelId();
+  collectCFDCellId();
 
   for(int t = 0; t < snap.nSnapShot; t++) {
     std::string file = conf.dataDir + "/data_" + std::to_string(t) + ".dat";
     importDAT(file, t);
   }
+  std::string file_mask = conf.dataDir + "/maskMRI.dat";
+  importMask(file_mask);
+
+  // if(mpi.myId == 0) {
+  //   std::string out_mask = "mask.vti";
+  //   exportMaskVTI(out_mask);
+  // }
+
+}
+
+void DataGrid::setRefinedGrid()
+{
+  refinementFactor = 3;
+
+  nxRefinedData = nxData * refinementFactor;
+  nyRefinedData = nyData * refinementFactor;
+  nzRefinedData = nzData * refinementFactor;
+
+  dxRefinedData = dxData / refinementFactor;
+  dyRefinedData = dyData / refinementFactor;
+  dzRefinedData = dzData / refinementFactor;
+
+  nRefinedCellGlobal = nxRefinedData * nyRefinedData * nzRefinedData;
+  nRefinedNodeGlobal = (nxRefinedData + 1) * (nyRefinedData + 1) * (nzRefinedData + 1);
+
+  refinedVoxel.allocate(nxRefinedData, nyRefinedData, nzRefinedData);
+
+  for(int k = 0; k < nzRefinedData; k++) {
+    for(int j = 0; j < nyRefinedData; j++) {
+      for(int i = 0; i < nxRefinedData; i++) {
+        refinedVoxel(k, j, i).node.resize(8, 0);
+        for(int p = 0; p < 8; p++) {
+          refinedVoxel(k, j, i).node[p] = Config::setStrNode(i, j, k, p, nxRefinedData, nyRefinedData, nzRefinedData);
+        }
+      }
+    }
+  }
+
+  refinedCoord.resize(nRefinedNodeGlobal, std::vector<double>(3, 0e0));
+
+  for(int k = 0; k < nzRefinedData + 1; k++) {
+    for(int j = 0; j < nyRefinedData + 1; j++) {
+      for(int i = 0; i < nxRefinedData + 1; i++) {
+        int in = k * (nyRefinedData + 1) * (nxRefinedData + 1) + j * (nxRefinedData + 1) + i;
+        for(int d = 0; d < 3; d++) {
+          refinedCoord[in][d] = Config::setStrCoordinate(i, j, k, d, dxRefinedData, dyRefinedData, dzRefinedData);
+        }
+      }
+    }
+  }
+
+  for(int irv = 0; irv < nRefinedCellGlobal; irv++) {
+    refinedVoxel(irv).x.resize(8, std::vector<double>(3, 0e0));
+    for(int p = 0; p < 8; p++) {
+      int in = refinedVoxel(irv).node[p];
+      for(int d = 0; d < 3; d++) {
+        refinedVoxel(irv).x[p][d] = refinedCoord[in][d];
+      }
+    }
+  }
+}
+
+void DataGrid::collectRefinedVoxelId()
+{
+  auto collectId = [&](int k, int j, int i) {
+    for(int u = k * refinementFactor; u < (k + 1) * refinementFactor; u++) {
+      for(int t = j * refinementFactor; t < (j + 1) * refinementFactor; t++) {
+        for(int s = i * refinementFactor; s < (i + 1) * refinementFactor; s++) {
+          int irv = s + t * nxRefinedData + u * nxRefinedData * nxRefinedData;
+          voxel(k, j, i).refinedVoxelId.push_back(irv);
+        }
+      }
+    }
+  };
+
+  for(int k = 0; k < nzData; k++) {
+    for(int j = 0; j < nyData; j++) {
+      for(int i = 0; i < nxData; i++) {
+        collectId(k, j, i);
+      }
+    }
+  }
+}
+
+void DataGrid::setBoundingBox()
+{
+  box.minX = grid.cell(0).minX;
+  box.maxX = grid.cell(0).maxX;
+  box.minY = grid.cell(0).minY;
+  box.maxY = grid.cell(0).maxY;
+  box.minZ = grid.cell(0).minZ;
+  box.maxZ = grid.cell(0).maxZ;
+
+  for(int ic = 1; ic < grid.cell.nCellsGlobal; ic++) {
+    if(grid.cell(ic).minX < box.minX) {
+      box.minX = grid.cell(ic).minX;
+    }
+    if(grid.cell(ic).maxX > box.maxX) {
+      box.maxX = grid.cell(ic).maxX;
+    }
+
+    if(grid.cell(ic).minY < box.minY) {
+      box.minY = grid.cell(ic).minY;
+    }
+    if(grid.cell(ic).maxY > box.maxY) {
+      box.maxY = grid.cell(ic).maxY;
+    }
+
+    if(grid.cell(ic).minZ < box.minZ) {
+      box.minZ = grid.cell(ic).minZ;
+    }
+    if(grid.cell(ic).maxZ > box.maxZ) {
+      box.maxZ = grid.cell(ic).maxZ;
+    }
+  }
+}
+
+bool DataGrid::isRefinedNodeOutside(const int in)
+{
+  return (refinedCoord[in][0] < box.minX || refinedCoord[in][0] > box.maxX || refinedCoord[in][1] < box.minY ||
+          refinedCoord[in][1] > box.maxY || refinedCoord[in][2] < box.minZ || refinedCoord[in][2] > box.maxZ);
+}
+
+
+void DataGrid::collectCFDCellId()
+{
+  CFDCellId.resize(nRefinedNodeGlobal, -1);
+
+  Octree octree(grid.cell, 0e0, lxData, 0e0, lyData, 0e0, lzData, 3);
+
+  for(int in = 0; in < nRefinedNodeGlobal; in++) {
+    bool flag = false;
+
+    std::vector<int> candidateCells = octree.getCandidateCells(refinedCoord[in]);
+
+    for(int ic : candidateCells) {
+      if(isRefinedNodeIncludedInCFDCell(in, ic)) {
+        CFDCellId[in] = ic;
+        flag = true;
+      }
+      if(flag) {
+        break; 
+      }
+    }
+  }
+  // if(mpi.myId == 0) {
+  //   std::string file = "id.vti";
+  //   EXPORT::exportScalarPointDataVTI(file, "id", CFDCellId, nxRefinedData, nyRefinedData, nzRefinedData, dxRefinedData, dyRefinedData, dzRefinedData);
+  // }
+
+}
+
+bool DataGrid::isRefinedNodeIncludedInCFDCell(const int in, const int ic)
+{
+  return !(refinedCoord[in][0] < grid.cell(ic).minX || refinedCoord[in][0] > grid.cell(ic).maxX ||
+           refinedCoord[in][1] < grid.cell(ic).minY || refinedCoord[in][1] > grid.cell(ic).maxY ||
+           refinedCoord[in][2] < grid.cell(ic).minZ || refinedCoord[in][2] > grid.cell(ic).maxZ);
 }
 
 void DataGrid::setVoxelCenters()
@@ -99,7 +263,6 @@ bool DataGrid::isCellCenterIncludedInVoxel(const int iv, const int ic)
            voxel(iv).maxY < grid.cell(ic).center[1] || voxel(iv).minY > grid.cell(ic).center[1] ||
            voxel(iv).maxZ < grid.cell(ic).center[2] || voxel(iv).minZ > grid.cell(ic).center[2]);
 }
-
 
 bool DataGrid::isCellBoundaryIncludedInVoxel(const int iv, const int ic)
 {
@@ -229,10 +392,10 @@ void DataGrid::weightedAverage(const int iv, const int t)
   }
 }
 
-void DataGrid::average(const int iv, const int t)
+void DataGrid::averageTmp(const int iv, const int t)
 {
   if(voxel(iv).cells.size() == 0) {
-    return;  // outside of the fluid domain
+    return; /* outside of the fluid domain */
   }
 
   mt3d.nNodesInCell = grid.cell.nNodesInCell;
@@ -281,6 +444,87 @@ void DataGrid::average(const int iv, const int t)
   }
 }
 
+void DataGrid::average(const int iv, const int t)
+{
+  mt3d.nNodesInCell = grid.cell.nNodesInCell;
+  mt3d.N.allocate(grid.cell.nNodesInCell);
+  mt3d.dNdr.allocate(grid.cell.nNodesInCell, 3);
+  mt3d.dNdx.allocate(grid.cell.nNodesInCell, 3);
+  mt3d.xCurrent.allocate(grid.cell.nNodesInCell, 3);
+  velCurrent.allocate(grid.cell.nNodesInCell, 3);
+
+  auto getInterpolatedVelocity = [&](const int irv, const int t, const int p) {
+    int irn = refinedVoxel(irv).node[p];
+    
+    if(CFDCellId[irn] == -1) {
+      return;
+    }
+
+    double ss = mt3d.xCurrent(p, 0) - grid.cell(CFDCellId[irn]).center[0];
+    double tt = mt3d.xCurrent(p, 1) - grid.cell(CFDCellId[irn]).center[1];
+    double uu = mt3d.xCurrent(p, 2) - grid.cell(CFDCellId[irn]).center[2];
+
+    ss = ss / (grid.dx / 2e0);
+    tt = tt / (grid.dy / 2e0);
+    uu = uu / (grid.dz / 2e0);
+
+    double eps = 1e-3;
+    if(ss < -1 - eps || ss > 1 + eps) {
+      throw std::runtime_error("s interpolation error.");
+    } else if(tt < -1 - eps || tt > 1 + eps) {
+      throw std::runtime_error("t interpolation error.");
+    } else if(uu < -1 - eps || uu > 1 + eps) {
+      throw std::runtime_error("u interpolation error.");
+    }
+
+    ShapeFunction3D::C3D8_N(mt3d.N, ss, tt, uu);
+    for(int q = 0; q < 8; q++) {
+      for(int d = 0; d < 3; d++) {
+        velCurrent(p, d) += mt3d.N(q) * snap.vSnap(t, grid.cell(CFDCellId[irn]).node[q], d);
+      }
+    }
+  };
+
+  auto getNodeValues = [&](const int irv, const int t) {
+    velCurrent.fillZero();
+    for(int p = 0; p < 8; p++) {
+      for(int d = 0; d < 3; d++) {
+        mt3d.xCurrent(p, d) = refinedVoxel(irv).x[p][d];
+      }
+      getInterpolatedVelocity(irv, t, p);
+    }
+  };
+
+  auto evaluateValues = [&](vector<double> &values, const int iv, const int t) {
+    for(int d = 0; d < 3; d++) {
+      voxel(iv).v_cfd(t, d) += values[d] * mt3d.vol;
+    }
+  };
+
+  auto averageInVoxel = [&](const int iv, const int t) {
+    for(int i1 = 0; i1 < 2; i1++) {
+      for(int i2 = 0; i2 < 2; i2++) {
+        for(int i3 = 0; i3 < 2; i3++) {
+          mt3d.setShapesInGauss(gauss, i1, i2, i3);
+          mt3d.setFactorsInGauss(gauss, i1, i2, i3);
+          auto v_gp = mt3d.getVectorValuesGP(velCurrent);
+          evaluateValues(v_gp, iv, t);
+        }
+      }
+    }
+  };
+
+  for(int i = 0; i < voxel(iv).refinedVoxelId.size(); i++) {
+    int irv = voxel(iv).refinedVoxelId[i];
+    getNodeValues(irv, t);
+    averageInVoxel(iv, t);
+  }
+
+  for(int d = 0; d < 3; d++) {
+    voxel(iv).v_cfd(t, d) /= dxData * dyData * dzData;
+  }
+}
+
 void DataGrid::exportDAT(const std::string &filename, const int step)
 {
   std::ofstream ofs(filename);
@@ -318,6 +562,79 @@ void DataGrid::importDAT(const std::string &filename, const int step)
       }
     }
   }
+}
+
+void DataGrid::importMask(const std::string &filename)
+{
+  std::ifstream ifs(filename);
+  if(!ifs) {
+    std::cerr << "Could not open file for reading: " << filename << std::endl;
+    return;
+  }
+
+  for(int k = 0; k < nzData; k++) {
+    for(int j = 0; j < nyData; j++) {
+      for(int i = 0; i < nxData; i++) {
+        ifs >> voxel(k, j, i).mask;
+      }
+    }
+  }
+}
+
+void DataGrid::exportMaskVTI(const std::string &filename)
+{
+  FILE *fp;
+  fp = fopen(filename.c_str(), "w");
+
+  if(fp == NULL) {
+    std::cerr << filename << " open error" << std::endl;
+    exit(1);
+  }
+
+  fprintf(fp, "<?xml version=\"1.0\"?>\n");
+  fprintf(fp, "<VTKFile type=\"ImageData\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
+  fprintf(fp, "<ImageData WholeExtent=\"%d %d %d %d %d %d\" Origin=\"%e %e %e\" Spacing=\"%e %e %e\">\n", 0, nxData, 0,
+          nyData, 0, nzData, 0e0, 0e0, 0e0, dxData, dyData, dzData);
+  fprintf(fp, "<Piece Extent=\"%d %d %d %d %d %d\">\n", 0, nxData, 0, nyData, 0, nzData);
+  fprintf(fp, "<PointData>\n");
+  fprintf(fp, "</PointData>\n");
+  fprintf(fp, "<CellData>\n");
+  fprintf(fp, "<DataArray type=\"Float32\" Name=\"%mask\" NumberOfComponents=\"1\" format=\"appended\" offset=\"0\">\n");
+  fprintf(fp, "</DataArray>\n");
+  fprintf(fp, "</CellData>\n");
+  fprintf(fp, "</Piece>\n");
+  fprintf(fp, "</ImageData>\n");
+  fprintf(fp, "<AppendedData encoding=\"raw\">\n");
+  fprintf(fp, "_");
+  fclose(fp);
+
+  unsigned long allsize = nxData * nyData * nzData * sizeof(float);
+
+  float *data = new float[nxData * nyData * nzData];
+
+  for(int k = 0; k < nzData; k++) {
+    for(int j = 0; j < nyData; j++) {
+      for(int i = 0; i < nxData; i++) {
+        int iv = i + j * nxData + k * nxData * nyData;
+        std::cout << voxel(k, j, i).mask << std::endl;
+        data[iv] = static_cast<float>(voxel(k, j, i).mask);
+      }
+    }
+  }
+
+  std::fstream ofs;
+  ofs.open(filename.c_str(), std::ios::out | std::ios::app | std::ios_base::binary);
+  ofs.write(reinterpret_cast<char *>(&allsize), sizeof(allsize));
+  ofs.write(reinterpret_cast<char *>(data), allsize);
+  ofs.close();
+
+  delete[] data;
+
+  fp = fopen(filename.c_str(), "a");
+  fprintf(fp, "\n");
+  fprintf(fp, "</AppendedData>\n");
+  fprintf(fp, "</VTKFile>\n");
+  fclose(fp);
 }
 
 void DataGrid::exportVTI(const std::string &filename, const int t)

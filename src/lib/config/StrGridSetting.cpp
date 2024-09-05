@@ -23,7 +23,7 @@ void Config::setStrGrid()
       for(int i = 0; i < nx; i++) {
         int ic = k * ny * nx + j * nx + i;
         for(int p = 0; p < nNodesInCell; p++) {
-          cell[ic][p] = setStrNode(i, j, k, p);
+          cell[ic][p] = setStrNode(i, j, k, p, nx, ny, nz);
         }
       }
     }
@@ -34,14 +34,15 @@ void Config::setStrGrid()
       for(int i = 0; i < nx + 1; i++) {
         int in = k * (ny + 1) * (nx + 1) + j * (nx + 1) + i;
         for(int d = 0; d < dim; d++) {
-          node[in][d] = setStrCoordinate(i, j, k, d);
+          node[in][d] = setStrCoordinate(i, j, k, d, dx, dy, dz);
         }
       }
     }
   }
 }
 
-int Config::setStrNode(const int i, const int j, const int k, const int p)
+int Config::setStrNode(const int i, const int j, const int k, const int p, 
+                       const int nx, const int ny, const int nz)
 {
   switch(p) {
   case 0:
@@ -65,7 +66,8 @@ int Config::setStrNode(const int i, const int j, const int k, const int p)
   }
 }
 
-double Config::setStrCoordinate(const int i, const int j, const int k, const int d)
+double Config::setStrCoordinate(const int i, const int j, const int k, const int d,
+                                const double dx, const double dy, const double dz)
 {
   switch(d) {
   case 0:

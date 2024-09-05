@@ -6,7 +6,7 @@
 
 #include "InverseProblem.h"
 
-/*********************************
+/**
  * @brief Solve adjoint equation.
  * @param main Direct problem.
  * @param outputDir Output directory.
@@ -91,7 +91,7 @@ void Adjoint::solveAdjoint(DirectProblem &main, ControlBoundary &cb)
   VecDestroy(&vecSEQ);
 }
 
-/*********************************
+/**
  * @brief Set all solutions zero.
  */
 void Adjoint::setVariablesZero(const int dim)
@@ -106,7 +106,7 @@ void Adjoint::setVariablesZero(const int dim)
   lt.fillZero();
 }
 
-/**********************************
+/**
  * @brief Update solutions for VTI.
  */
 void Adjoint::updateSolutionsVTI()
@@ -120,7 +120,7 @@ void Adjoint::updateSolutionsVTI()
   }
 }
 
-/**********************************
+/**
  * @brief Update solutions for VTI.
  */
 void Adjoint::updateSolutionsVTI(const int t)
@@ -134,7 +134,7 @@ void Adjoint::updateSolutionsVTI(const int t)
   }
 }
 
-/*********************************************
+/**
  * @brief Update solutions for next time step.
  */
 void Adjoint::updateSolutions()
@@ -162,7 +162,7 @@ void Adjoint::updateSolutions()
   }
 }
 
-/**********************************
+/**
  * @brief Save solutions over time.
  */
 void Adjoint::updateTimeSolutions(const int t)
@@ -176,7 +176,7 @@ void Adjoint::updateTimeSolutions(const int t)
   }
 }
 
-/***********************************
+/**
  * @brief Output solutions for VTU.
  */
 void Adjoint::outputSolutionsVTU(const std::string &dir, const int t)
@@ -193,7 +193,7 @@ void Adjoint::outputSolutionsVTU(const std::string &dir, const int t)
   EXPORT::exportVectorPointDataVTU(vtuFile, "l", grid.node, grid.cell, l);
 }
 
-/***********************************
+/**
  * @brief Output solutions for VTU.
  */
 void Adjoint::outputSolutionsVTU(const std::string &dir, const int t, const int loop)
@@ -210,7 +210,7 @@ void Adjoint::outputSolutionsVTU(const std::string &dir, const int t, const int 
   EXPORT::exportVectorPointDataVTU(vtuFile, "l", grid.node, grid.cell, lt, t);
 }
 
-/***********************************
+/**
  * @brief Output solutions for VTI.
  */
 void Adjoint::outputSolutionsVTI(const std::string &dir, const int t)
@@ -227,7 +227,7 @@ void Adjoint::outputSolutionsVTI(const std::string &dir, const int t)
   EXPORT::exportVectorPointDataVTI(vtiFile, "l", lvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
 
-/***********************************
+/**
  * @brief Output solutions for VTI.
  */
 void Adjoint::outputSolutionsVTI(const std::string &dir, const int t, const int loop)

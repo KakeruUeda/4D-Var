@@ -103,7 +103,8 @@ void Config::setBoundaryPoiseuilleValue(std::string face)
 
     if (onBoundary){
       if (r < R){
-        value = (2.0 * Q / (PI * R * R)) * (1 - (r * r) / (R * R));
+        //value = (2.0 * Q / (PI * R * R)) * (1 - (r * r) / (R * R));
+        value = (2.0 * Q) * (1 - (r * r) / (R * R));
       }else{
         value = 0.0;
       }
@@ -118,6 +119,47 @@ void Config::setBoundaryPoiseuilleValue(std::string face)
         auto [value, onBoundary] = calculatePoiseuilleVelocity(i, j, k);
         if (onBoundary){
           addVelocity(i, j, k, value);
+        }
+      }
+    }
+  }
+}
+
+void Config::setTractionFreeCondition(std::string face)
+{
+  auto eraseVelocity = [&](int i, int j, int k)
+  {
+    int n = i + j * (nx + 1) + k * (nx + 1) * (ny + 1);
+    vDirichlet.erase(n);
+  };
+
+  auto calculatePoiseuilleVelocity = [&](int i, int j, int k) -> bool
+  {
+    double r = 0.0, value = 0.0;
+    bool onBoundary = false;
+
+    if((face == "left" && i == 0) || (face == "right" && i == nx)){
+      r = sqrt(pow(center_tr[2] - k * dz, 2) + pow(center_tr[1] - j * dy, 2));
+      if(r < R_tr+R_tr/3) onBoundary = true;
+    }
+    else if((face == "top" && j == ny) || (face == "bottom" && j == 0)){
+      r = sqrt(pow(center_tr[0] - i * dx, 2) + pow(center_tr[2] - k * dz, 2));
+      if(r < R_tr+R_tr/3) onBoundary = true;
+    }
+    else if((face == "front" && k == 0) || (face == "back" && k == nz)){
+      r = sqrt(pow(center_tr[0] - i * dx, 2) + pow(center_tr[1] - j * dy, 2));
+      if(r < R_tr+R_tr/3) onBoundary = true;
+    }
+
+    return onBoundary;
+  };
+
+  for(int k=0; k<nz+1; k++){
+    for(int j=0; j<ny+1; j++){
+      for(int i=0; i<nx+1; i++){
+        auto onBoundary = calculatePoiseuilleVelocity(i, j, k);
+        if (onBoundary){
+          eraseVelocity(i, j, k);
         }
       }
     }

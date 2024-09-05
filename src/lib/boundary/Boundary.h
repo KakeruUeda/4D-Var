@@ -12,6 +12,7 @@
 #include "Config.h"
 #include "Node.h"
 #include "PetscSolver.h"
+#include "Spline.h"
 #include <iostream>
 #include <memory>
 #include <vector>
@@ -50,6 +51,12 @@ public:
   {
   }
 
+  struct AveragedVelocity
+  {
+    double time;
+    double value;
+  };
+
   Array1D<double> initialValues;
   Array1D<double> values;
 
@@ -57,15 +64,17 @@ public:
   void getNewArray(std::vector<int> mapNew);
   void setValuesZero(int n);
   void assignBCs(Node &node) override;
-  void assignPulsatileBCs(const double pulse, const int nDofsGlobal);
+  void assignPulsatileBCs(const double pulse);
   void applyBCs(Cell &cell, PetscSolver &petsc);
-
   void updateValues(Array3D<double> &X, const int t);
   void eraseControlNodes(Cell &cell, ControlBoundary &cb);
+  double comp_pulse(const double step);
 
 public:
   std::map<int, std::vector<double>> velocitySet;
   std::map<int, double> pressureSet;
+
+  std::map<int, std::vector<double>> velocitySetInit;
 
   std::map<int, std::vector<double>> velocitySetNew;
   std::map<int, double> pressureSetNew;

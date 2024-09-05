@@ -1,7 +1,7 @@
 Base
 {
   dim = 3
-  outputDir = "test"
+  outputDir = "cavity"
   numOfOMP = 1
 }
 
@@ -11,12 +11,11 @@ Grid
     type = "Structured"
     nNodesInCell = 8
   }
-
   StructuredGrid{
-    nx = (88, 32, 32) 
-    lx = (5.5, 2.0, 2.0)
-    image = "input/test/image_inverse.dat"
-    fluidExtraction = "ON"
+    nx = (64, 64, 64) 
+    lx = (1.0, 1.0, 1.0)
+    image = "input/cavity/image_direct.dat"
+    fluidExtraction = "OFF"
   }
 }
 
@@ -24,20 +23,18 @@ StructuredBoundary
 {
   top{
     type = "v"
-    value = (0,0,0)
+    value = (1,0,0)
   }
   bottom{
     type = "v"
     value = (0,0,0)
   }
   left{
-    type = "poiseuille"
-    center = (0.0, 1.0, 1.0)
-    R = 0.5
-    Q = 1.0
+    type = "v"
+    value = (0,0,0)
   }
   right{
-    type = "free"
+    type = "v"
     value = (0,0,0)
   }
   front{
@@ -48,6 +45,6 @@ StructuredBoundary
     type = "v"
     value = (0,0,0)
   }
-  controlBoundaryExtraction = "ON"
+  controlBoundaryExtraction = "OFF"
   inletControlBoundary = "left"
 }

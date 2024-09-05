@@ -27,8 +27,7 @@ int main(int argc, char *argv[])
   std::string input = argv[1];
   std::string appName = "USNS";
 
-  std::unique_ptr<Config> conf;
-  conf.reset(new Config(input, appName));
+  std::unique_ptr<Config> conf(new Config(input, appName));
 
   if(conf->isReadingError) {
     if(mpi.myId == 0) {
@@ -39,11 +38,9 @@ int main(int argc, char *argv[])
   }
 
   DirectProblem direct(*conf);
-  direct.initialize(*conf);
-
-  conf.reset();
 
   try {
+    direct.initialize(*conf);
     direct.runSimulation();
   } catch(const std::runtime_error &e) {
     if(mpi.myId == 0) {

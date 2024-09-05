@@ -6,7 +6,7 @@
 
 #include "Config.h"
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReader4DVar::readBasicInfo(Config &conf)
@@ -14,7 +14,7 @@ void TextReader4DVar::readBasicInfo(Config &conf)
   TextReaderInterface::readBasicInfo(conf);
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReader4DVar::readBoundaryInfo(Config &conf)
@@ -22,7 +22,7 @@ void TextReader4DVar::readBoundaryInfo(Config &conf)
   TextReaderInterface::readBoundaryInfo(conf);
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReader4DVar::readPhysicalInfo(Config &conf)
@@ -30,7 +30,7 @@ void TextReader4DVar::readPhysicalInfo(Config &conf)
   TextReaderInterface::readPhysicalInfo(conf);
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReader4DVar::readDarcyInfo(Config &conf)
@@ -38,7 +38,7 @@ void TextReader4DVar::readDarcyInfo(Config &conf)
   TextReaderInterface::readDarcyInfo(conf);
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReader4DVar::readTimeInfo(Config &conf)
@@ -46,7 +46,7 @@ void TextReader4DVar::readTimeInfo(Config &conf)
   TextReaderInterface::readTimeInfo(conf);
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReader4DVar::readGridInfo(Config &conf)

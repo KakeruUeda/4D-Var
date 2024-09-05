@@ -6,28 +6,26 @@
 
 #include "InverseProblem.h"
 
-/************************************
+/**
  * @brief Initialize inverse problem.
  */
 void InverseProblem::initialize(Config &conf)
 {
   PetscPrintf(MPI_COMM_WORLD, "\n*** Main initialize ***\n\n");
   // initialize main
-  main.nu = main.mu / main.rho;
-  main.Re = 1e0 / main.nu;
-
   main.dirichlet.initialize(conf);
   main.grid.cell.initialize(conf);
   main.grid.node.initialize(conf);
   main.grid.prepareMatrix(main.dirichlet, main.petsc, main.outputDir, main.timeMax);
   main.dirichlet.getNewArray(main.grid.node.mapNew);
 
+  main.comp_Re(main.dirichlet.velocitySet);
+
+  if(mpi.myId == 0)
+    std::cout << "Re: " << main.Re << std::endl;
 
   PetscPrintf(MPI_COMM_WORLD, "\n*** Adjoint initialize ***\n\n");
   // initialize adjoint
-  adjoint.nu = adjoint.mu / adjoint.rho;
-  adjoint.Re = 1e0 / adjoint.nu;
-
   adjoint.grid.cell.initializeAdjoint(conf);
   adjoint.dirichlet.initialize(conf);
   inletCB.initialize(conf);
@@ -76,6 +74,8 @@ void InverseProblem::resize()
     main.vvti.allocate(main.grid.node.nNodesStrGlobal, 3);
     main.pvti.allocate(main.grid.node.nNodesStrGlobal);
   }
+
+  main.velCurrent.allocate(main.grid.cell.nNodesInCell, 3);
 
   VecTool::resize(main.petsc.solution, main.grid.nDofsGlobal);
 

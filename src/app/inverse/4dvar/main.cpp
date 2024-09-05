@@ -10,10 +10,9 @@
 MyMPI mpi;
 
 
-/// @brief Main function.
-/// @param argc 
-/// @param argv Text input file name
-
+/**
+ * @brief Main function.
+ */
 int main(int argc, char *argv[])
 {
   std::string petscfile = argv[2];
@@ -33,8 +32,7 @@ int main(int argc, char *argv[])
   std::string input = argv[1];
   std::string appName = "FDVAR";
 
-  std::unique_ptr<Config> conf;
-  conf.reset(new Config(input, appName));
+  std::unique_ptr<Config> conf(new Config(input, appName));
 
   if(conf->isReadingError) {
     std::cerr << "Reading error." << std::endl;
@@ -43,11 +41,9 @@ int main(int argc, char *argv[])
   }
 
   InverseProblem inverse(*conf);
-  inverse.initialize(*conf);
-
-  conf.reset();
 
   try {
+    inverse.initialize(*conf);
     inverse.runSimulation();
   } catch(const std::runtime_error &e) {
     if(mpi.myId == 0) {

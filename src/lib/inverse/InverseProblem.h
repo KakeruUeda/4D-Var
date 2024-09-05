@@ -135,6 +135,7 @@ private:
   void outputVelocityData(const int loop);
   void outputVelocityBIN(const int loop);
   void outputOptimizedVariables();
+  void outputGradients(const int loop);
 
   void updateControlVariablesVTI();
   bool checkConvergence(std::ofstream &cf, const int loop);

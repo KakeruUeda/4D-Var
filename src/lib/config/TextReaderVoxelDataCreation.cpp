@@ -6,7 +6,7 @@
 
 #include "Config.h"
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderVoxelDataCreation::readBasicInfo(Config &conf)
@@ -14,7 +14,7 @@ void TextReaderVoxelDataCreation::readBasicInfo(Config &conf)
   TextReaderInterface::readBasicInfo(conf);
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderVoxelDataCreation::readSnapInfo(Config &conf)
@@ -44,7 +44,7 @@ void TextReaderVoxelDataCreation::readSnapInfo(Config &conf)
   }
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderVoxelDataCreation::readGridInfo(Config &conf)
@@ -150,7 +150,7 @@ void TextReaderVoxelDataCreation::readGridInfo(Config &conf)
   conf.nNodesOptGlobal = (conf.nxOpt + 1) * (conf.nyOpt + 1) * (conf.nzOpt + 1);
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderVoxelDataCreation::readOriginalInfo(Config &conf)

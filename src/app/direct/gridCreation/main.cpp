@@ -52,7 +52,7 @@ int main(int argc, char *argv[])
   }
 
   gc.outputDat();
-  gc.outputVTU();  // debug
+  gc.outputVTU();  /* debug */
 
   MPI_Finalize();
   return EXIT_SUCCESS;

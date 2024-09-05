@@ -43,7 +43,10 @@ public:
   double tau;
 
   // Pysical parameter
-  double Re, rho, mu, nu;
+  double rho, mu, nu, Re;
+  double U, L;
+
+  vector<double> Re_t;
 
   // Darcy parameter
   double alpha, resistance;
@@ -75,6 +78,8 @@ public:
   Array1D<double> qvti;
   Array2D<double> lvti;
 
+  Array2D<double> velCurrent;
+
   double v_gp[3];
   double adv_gp[3];
   double dvdx_gp[3][3];
@@ -83,14 +88,17 @@ public:
   double dvkdx[3][3], dvk1dx[3][3], dvk2dx[3][3];
   double advk1[3], advk2[3], advk3[3];
   double dpkdx[3], dpk1dx[3], dpk2dx[3];
-  double wk[3], wk1[3], wk2[3];
+  double wk[3], wk1[3], wk2[3], adw[3];
   double dwkdx[3][3], dwk1dx[3][3], dwk2dx[3][3];
   double dqkdx[3], dqk1dx[3], dqk2dx[3];
 
+  void comp_Re(std::map<int, std::vector<double>> &velocityMap);
+  void restore_Re(const int t);
+  double get_Re(const int t);
   double comp_he(Array2D<double> &x);
   double comp_f(const double phi);
-  double comp_tau(std::vector<double> &vel, const double he);
-  double comp_tau(double vel[3], const double he);
+  double comp_tau(const double vel[3], const double he);
+  double comp_tau2(Array2D<double> &dNdx, const double vel[3], const int nNodesInCell);
   double comp_pulse(const int t);
 
   void compValueOnGaussPoint(Grid &grid, MathTools3D &tools,  double (&arr)[3], Array2D<double> &value, const int ic);

@@ -1,7 +1,7 @@
 Base
 {
   dim = 3
-  outputDir = "test"
+  outputDir = "Ubend"
   numOfOMP = 1
 }
 
@@ -13,31 +13,32 @@ Grid
   }
 
   StructuredGrid{
-    nx = (88, 32, 32) 
-    lx = (5.5, 2.0, 2.0)
-    image = "input/test/image_inverse.dat"
+    nx = (64, 64, 64) 
+    lx = (0.050625, 0.050625, 0.0513)
+    image = "input/Ubend/image_inverse.dat"
     fluidExtraction = "ON"
   }
+
 }
 
 StructuredBoundary
 {
   top{
-    type = "v"
+    type = "free"
     value = (0,0,0)
   }
   bottom{
+    type = "poiseuille"
+    center = (0.0253125, 0, 0.025245522)
+    R = 0.0125
+    Q = 0.196460615
+  }
+  left{
     type = "v"
     value = (0,0,0)
   }
-  left{
-    type = "poiseuille"
-    center = (0.0, 1.0, 1.0)
-    R = 0.5
-    Q = 1.0
-  }
   right{
-    type = "free"
+    type = "v"
     value = (0,0,0)
   }
   front{
@@ -48,6 +49,9 @@ StructuredBoundary
     type = "v"
     value = (0,0,0)
   }
+  outlet{
+    setOutletTractionFreeCondition = "OFF"
+  }
   controlBoundaryExtraction = "ON"
-  inletControlBoundary = "left"
+  inletControlBoundary = "bottom"
 }

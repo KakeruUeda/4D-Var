@@ -6,7 +6,7 @@
 
 #include "Config.h"
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderUSNS::readBasicInfo(Config &conf)
@@ -14,7 +14,7 @@ void TextReaderUSNS::readBasicInfo(Config &conf)
   TextReaderInterface::readBasicInfo(conf);
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderUSNS::readBoundaryInfo(Config &conf)
@@ -22,7 +22,7 @@ void TextReaderUSNS::readBoundaryInfo(Config &conf)
   TextReaderInterface::readBoundaryInfo(conf);
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderUSNS::readPhysicalInfo(Config &conf)
@@ -30,7 +30,7 @@ void TextReaderUSNS::readPhysicalInfo(Config &conf)
   TextReaderInterface::readPhysicalInfo(conf);
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderUSNS::readDarcyInfo(Config &conf)
@@ -38,7 +38,7 @@ void TextReaderUSNS::readDarcyInfo(Config &conf)
   TextReaderInterface::readDarcyInfo(conf);
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderUSNS::readTimeInfo(Config &conf)
@@ -46,7 +46,7 @@ void TextReaderUSNS::readTimeInfo(Config &conf)
   TextReaderInterface::readTimeInfo(conf);
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderUSNS::readGridInfo(Config &conf)

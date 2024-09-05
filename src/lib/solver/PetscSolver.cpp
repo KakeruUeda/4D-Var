@@ -197,11 +197,11 @@ int PetscSolver::solve()
   CHKERRQ(errpetsc);
 
   if(reason < 0) {
-    PetscPrintf(MPI_COMM_WORLD, "\n Divergence... %d iterations. \n", its);
+    PetscPrintf(MPI_COMM_WORLD, "Diverged... %d iterations. \n", its);
     std::cout << reason << std::endl;
     exit(1);
   } else {
-    // PetscPrintf(MPI_COMM_WORLD, "\n Convergence in %d iterations. \n", its);
+    //PetscPrintf(MPI_COMM_WORLD, "Solver converged in %d iterations. \n", its);
   }
 
   return 0;

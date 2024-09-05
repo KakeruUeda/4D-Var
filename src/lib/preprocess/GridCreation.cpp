@@ -6,9 +6,9 @@
 
 #include "GridCreation.h"
 
-/// @brief Constructor.
-/// @param conf Config object
-/// @return void
+/**
+ * @brief Constructor.
+ */
 GridCreation::GridCreation(Config &conf)
 {
   outputDir = conf.outputDir;
@@ -24,9 +24,9 @@ GridCreation::GridCreation(Config &conf)
   mkdir(dir.c_str(), S_IRWXU | S_IRWXG | S_IRWXO);
 }
 
-/// @brief Initialize grid.
-/// @param conf Config object.
-/// @return void.
+/**
+ * @brief Initialize grid.
+ */
 void GridCreation::initialize(Config &conf)
 {
   grid.gridType = conf.gridType;
@@ -47,9 +47,9 @@ void GridCreation::initialize(Config &conf)
   }
 }
 
-/// @brief Initialize CFD grid cells.
-/// @param conf Config object.
-/// @return void.
+/**
+ * @brief Initialize CFD grid cells.
+ */
 void GridCreation::initializeCells(Config &conf)
 {
   grid.cell.nNodesInCell = conf.nNodesInCell;
@@ -65,6 +65,9 @@ void GridCreation::initializeCells(Config &conf)
   }
 }
 
+/**
+ * @brief Initialize CFD grid nodes.
+ */
 void GridCreation::initializeNodes(Config &conf)
 {
   grid.node.nNodesGlobal = conf.nNodesGlobal;
@@ -76,9 +79,9 @@ void GridCreation::initializeNodes(Config &conf)
   nodeId.resize(grid.node.nNodesGlobal, 0);
 }
 
-/// @brief Set cell type.
-/// @param nNodesInCell Number of nodes in a cell.
-/// @return void.
+/**
+ * @brief Initialize CFD cell type.
+ */
 void GridCreation::setCellType(int nNodesInCell)
 {
   if(nNodesInCell == 4) {
@@ -92,8 +95,9 @@ void GridCreation::setCellType(int nNodesInCell)
   }
 }
 
-/// @brief Divide whole grid.
-/// @return void.
+/**
+ * @brief Divide whole grid.
+ */
 void GridCreation::divideWholeGrid()
 {
   if(mpi.myId != 0) {
@@ -117,11 +121,9 @@ void GridCreation::divideWholeGrid()
   partitionMesh(eptr.data(), eind.data(), nparts);
 }
 
-/// @brief Partition mesh.
-/// @param eptr tmp.
-/// @param eind tmp.
-/// @param nparts tmp.
-/// @return void.
+/**
+ * @brief Partition mesh.
+ */
 void GridCreation::partitionMesh(int *eptr, int *eind, int nparts)
 {
   int ncommon_nodes = 4;
@@ -143,8 +145,9 @@ void GridCreation::partitionMesh(int *eptr, int *eind, int nparts)
   }
 }
 
-/// @brief Collect local grid.
-/// @return void.
+/**
+ * @brief Collect local grid.
+ */
 void GridCreation::collectLocalGrid()
 {
   MPI_Bcast(cellId.data(), grid.cell.nCellsGlobal, MPI_INT, 0, MPI_COMM_WORLD);
@@ -158,8 +161,9 @@ void GridCreation::collectLocalGrid()
   printf("nNodesLocal =  %5d \t numOfId = %5d \t myId = %5d \n", grid.nNodesLocal, mpi.nId, mpi.myId);
 }
 
-/// @brief Extract control boundary.
-/// @return void.
+/**
+ * @brief Output
+ */
 void GridCreation::outputDat()
 {
   if(mpi.myId != 0) {
@@ -195,8 +199,9 @@ void GridCreation::outputDat()
   }
 }
 
-/// @brief Output VTU file.
-/// @return void.
+/**
+ * @brief Output
+ */
 void GridCreation::outputVTU()
 {
   if(mpi.myId != 0) {
@@ -210,6 +215,15 @@ void GridCreation::outputVTU()
   EXPORT::exportScalarPointDataVTU<int>(vtuFile, "nodeId", grid.node, grid.cell, nodeId);
 	vtuFile = outputDir + "/vtu/image.vtu";
 	EXPORT::exportScalarCellDataVTU<double>(vtuFile, "image", grid.node, grid.cell, phi);
+
+  std::vector<std::vector<double>> dirichlet;
+  dirichlet.resize(grid.node.nNodesGlobal, std::vector<double>(3, 0e0));
+  for (auto &entry : vDirichlet)
+  {
+     dirichlet[entry.first] = entry.second;
+  }
+  vtuFile = outputDir + "/vtu/vDirichlet.vtu";
+  EXPORT::exportVectorPointDataVTU<double>(vtuFile, "vDirichlet", grid.node,grid.cell, dirichlet);
 }
 
 /*

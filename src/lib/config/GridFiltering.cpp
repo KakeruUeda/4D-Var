@@ -1,6 +1,6 @@
 #include "Config.h"
 
-/*****************************************
+/**
  * @brief Set velocity Dirichlet boundary
  *        condition to zero on solid nodes.
  */
@@ -21,7 +21,7 @@ void Config::setSolidDirichletValue()
   }
 }
 
-/*******************************
+/**
  * @brief Identify unique cells.
  */
 void Config::getUniqueCells()
@@ -33,7 +33,7 @@ void Config::getUniqueCells()
   }
 }
 
-/*******************************
+/**
  * @brief Identify unique nodes.
  */
 void Config::getUniqueNodes()
@@ -45,7 +45,7 @@ void Config::getUniqueNodes()
   }
 }
 
-/*****************************************
+/**
  * @brief Identify unique control boundary cells.
  */
 void Config::getUniqueCBCells()
@@ -57,7 +57,7 @@ void Config::getUniqueCBCells()
   }
 }
 
-/******************************************************
+/**
  * @brief Identify unique control boundary cells index.
  */
 void Config::getUniqueCBCellsIdx()
@@ -70,7 +70,7 @@ void Config::getUniqueCBCellsIdx()
   }
 }
 
-/************************************************
+/**
  * @brief Identify unique control boundary nodes.
  */
 void Config::getUniqueCBNodes()
@@ -85,7 +85,7 @@ void Config::getUniqueCBNodes()
   }
 }
 
-/*****************************************************
+/**
  * @brief Create new filtered map for cells and nodes.
  */
 void Config::getNewFilterdMap()
@@ -101,7 +101,7 @@ void Config::getNewFilterdMap()
   }
 }
 
-/********************************************
+/** 
  * @brief Filter cells based on unique cells.
  */
 void Config::filterCell()
@@ -115,7 +115,7 @@ void Config::filterCell()
   cell = std::move(filteredValues);
 }
 
-/*************************************************
+/**
  * @brief Filter phi values based on unique cells.
  */
 void Config::filterPhi()
@@ -129,7 +129,7 @@ void Config::filterPhi()
   phi = std::move(filteredValues);
 }
 
-/********************************************
+/**
  * @brief Filter nodes based on unique nodes.
  */
 void Config::filterNode()
@@ -143,7 +143,7 @@ void Config::filterNode()
   node = std::move(filteredValues);
 }
 
-/***************************************
+/**
  * @brief Filter control boundary nodes.
  */
 void Config::filterMapCB()
@@ -157,7 +157,7 @@ void Config::filterMapCB()
   CBNodeMap = std::move(filteredValues);
 }
 
-/***************************************
+/**
  * @brief Filter control boundary cells.
  */
 void Config::filterMapCBCell()
@@ -171,7 +171,7 @@ void Config::filterMapCBCell()
   CBCellMap = std::move(filteredValues);
 }
 
-/************************************************
+/**
  * @brief Filter control boundary nodes in cells.
  */
 void Config::filterMapCBInCell()
@@ -184,7 +184,7 @@ void Config::filterMapCBInCell()
   CBNodeMapInCell = std::move(filteredValues);
 }
 
-/********************************************************
+/**
  * @brief Filter velocity Dirichlet boundary conditions.
  */
 void Config::filterVelocityDirichlet()
@@ -199,7 +199,7 @@ void Config::filterVelocityDirichlet()
   vDirichlet = std::move(filteredValues);
 }
 
-/*******************************************************
+/**
  * @brief Filter pressure Dirichlet boundary conditions.
  */
 void Config::filterPressureDirichlet()
@@ -214,7 +214,7 @@ void Config::filterPressureDirichlet()
   pDirichlet = std::move(filteredValues);
 }
 
-/******************************************
+/**
  * @brief Apply new cell and node mappings.
  */
 void Config::applyMapping()
@@ -252,7 +252,7 @@ void Config::applyMapping()
   pDirichlet = std::move(ptmp);
 }
 
-/**************************************************
+/**
  * @brief Filter fluid domain from structured grid.
  */
 void Config::filterFluidGrid()

@@ -6,7 +6,7 @@
 
 #include "InverseProblem.h"
 
-/***************************************
+/**
  * @brief Output velocity and pressure.
  */
 void InverseProblem::outputFowardSolutions(const int loop)
@@ -28,7 +28,7 @@ void InverseProblem::outputFowardSolutions(const int loop)
   }
 }
 
-/************************
+/**
  * @brief Output w, q, l.
  */
 void InverseProblem::outputAdjointSolutions(const int loop)
@@ -51,7 +51,25 @@ void InverseProblem::outputAdjointSolutions(const int loop)
   }
 }
 
-/*******************************************
+/**
+ * @brief Output gradients.
+ */
+void InverseProblem::outputGradients(const int loop)
+{
+  if(mpi.myId != 0) {
+    return;
+  }
+
+  std::string vtuFile;
+  for(int t = 0; t < main.timeMax; t++) {
+    vtuFile = main.outputDir + "/other/gradX_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+    EXPORT::exportVectorPointDataVTU(vtuFile, "gradX", main.grid.node, main.grid.cell, gradX, t);
+  }
+  vtuFile = main.outputDir + "/other/gradX0_" + to_string(loop) + ".vtu";
+  EXPORT::exportVectorPointDataVTU(vtuFile, "gradX0", main.grid.node, main.grid.cell, gradX0);
+}
+
+/**
  * @brief Output control variables X and X0.
  */
 void InverseProblem::outputControlVariables(const int loop)
@@ -69,7 +87,7 @@ void InverseProblem::outputControlVariables(const int loop)
   EXPORT::exportVectorPointDataVTU(vtuFile, "velocity_initial", main.grid.node, main.grid.cell, X0);
 }
 
-/******************************************
+/**
  * @brief Update control variables for VTI.
  */
 void InverseProblem::updateControlVariablesVTI()
@@ -81,7 +99,7 @@ void InverseProblem::updateControlVariablesVTI()
   }
 }
 
-/***********************************************
+/**
  * @brief Output velocity data (vCFD, vMRI, ve).
  */
 void InverseProblem::outputVelocityData(const int loop)
@@ -96,7 +114,7 @@ void InverseProblem::outputVelocityData(const int loop)
   }
 }
 
-/*************************************************
+/**
  * @brief Output time interpolated feedback force.
  */
 void InverseProblem::outputFeedbackForce(const int loop)
@@ -112,7 +130,7 @@ void InverseProblem::outputFeedbackForce(const int loop)
   }
 }
 
-/****************************************
+/**
  * @brief Output velocity to binary file.
  */
 void InverseProblem::outputVelocityBIN(const int loop)
@@ -131,7 +149,7 @@ void InverseProblem::outputVelocityBIN(const int loop)
   X0vti.exportBIN(binFile);
 }
 
-/************************************
+/**
  * @brief Output optimized variables.
  */
 void InverseProblem::outputOptimizedVariables()

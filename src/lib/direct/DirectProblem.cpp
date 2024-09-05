@@ -6,8 +6,8 @@
 
 #include "DirectProblem.h"
 
-/***************************************************
- * @brief Construct direct problem from config file.
+/**
+ * @brief Constructer.
  */
 DirectProblem::DirectProblem(Config &conf)
     : FEM(conf), app(conf.app), dim(conf.dim), outputDir(conf.outputDir),
@@ -32,7 +32,7 @@ DirectProblem::DirectProblem(Config &conf)
   }
 }
 
-/**************************************************
+/**
  * @brief Simulate Unsteady Navier Stokes Equation.
  */
 void DirectProblem::runSimulation()
@@ -41,7 +41,7 @@ void DirectProblem::runSimulation()
   solveNavierStokes();
 }
 
-/**********************************************
+/**
  * @brief Visualize partitioned domain and phi.
  */
 void DirectProblem::outputDomain()

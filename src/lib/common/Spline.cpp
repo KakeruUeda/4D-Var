@@ -1,6 +1,6 @@
 #include "Spline.h"
 
-/*************************************************************
+/**
  * @brief Compute coefficients of the spline
  * @ref   https://qiita.com/khidaka/items/84610cd890ecb8443d96
  */
@@ -64,7 +64,7 @@ std::vector<Spline::Coefficients> Spline::compCoefficients(const std::vector<dou
   return coefficients;
 }
 
-/*************************************************************
+/**
  * @brief Evaluate the spline
  * @ref   https://qiita.com/khidaka/items/84610cd890ecb8443d96
  */

@@ -1,0 +1,60 @@
+Base
+{
+  dim = 3
+  outputDir = "unilateralStenosis"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  BaseGrid{
+    node = "input/unilateralStenosis/node.dat"
+    cell = "input/unilateralStenosis/cell.dat"
+  }
+
+  SubGrid{
+    nodeId = "input/unilateralStenosis/nodeId.dat"
+    cellId = "input/unilateralStenosis/cellId.dat"
+  }
+
+  StructuredGrid{
+    nx = (64, 32, 32) 
+    lx = (4.0, 2.0, 2.0)
+    fluidExtraction = "ON"
+    fluidUniqueNodes = "input/unilateralStenosis/fluidUniqueNodes.dat"
+    image = "input/unilateralStenosis/image.dat"
+  }
+}
+
+Boundary
+{
+  velocityDirichlet = "input/unilateralStenosis/velocityDirichlet.dat"
+  pressureDirichlet = "input/unilateralStenosis/pressureDirichlet.dat"
+}
+
+PysicalParameter
+{   
+  rho = 30
+  mu = 1   
+  L = 0.5
+}
+
+TimeParameter
+{
+  dt = 0.02
+  timeMax = 400
+  pulsatileFlow = "ON"
+  pulseBeginItr = 250
+  T = 0.5
+}
+
+DarcyParameter
+{
+  alpha = 1e-2
+  resistance = 1e3
+}

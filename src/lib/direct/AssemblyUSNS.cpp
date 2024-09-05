@@ -6,7 +6,7 @@
 
 #include "DirectProblem.h"
 
-/**************************
+/**
  * @brief Assemble system.
  */
 void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, const int ic, const int t)
@@ -17,11 +17,15 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, const
   Flocal.setZero();
 
   for(int p = 0; p < grid.cell.nNodesInCell; p++) {
+    int n = grid.cell(ic).node[p];
     for(int d = 0; d < 3; d++) {
       tools.xCurrent(p, d) = 0e0;
-      tools.xCurrent(p, d) = grid.node.x[grid.cell(ic).node[p]][d];
+      tools.xCurrent(p, d) = grid.node.x[n][d];
+      velCurrent(p, d) = 0e0;
+      velCurrent(p, d) = 1.5 * v(n, d) - 0.5 * vPrev(n, d);
     }
   }
+
   double he = comp_he(tools.xCurrent);
   double f = comp_f(grid.cell(ic).phi);
 
@@ -36,7 +40,7 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, const
   }
 }
 
-/******************************************
+/**
  * @brief Assemble local matrix and vector.
  */
 void DirectProblem::setLocalValuesInGauss(MatrixXd &Klocal, VectorXd &Flocal, MathTools3D &tools, double f,
@@ -52,7 +56,7 @@ void DirectProblem::setLocalValuesInGauss(MatrixXd &Klocal, VectorXd &Flocal, Ma
   }
 }
 
-/**************************************
+/**
  * @brief Set Values in gauss integral.
  */
 void DirectProblem::settingInGauss(MathTools3D &tools, Gauss &g2, const double he, const int i1, const int i2,
@@ -69,9 +73,10 @@ void DirectProblem::settingInGauss(MathTools3D &tools, Gauss &g2, const double h
 
   setVelocityValue(tools, ic, t);
   tau = comp_tau(adv_gp, he);
+  //tau = comp_tau2(tools.dNdx, adv_gp, tools.nNodesInCell);
 }
 
-/**********************************************************************
+/**
  * @brief Compute element sfiffness LHS matrix on gauss integral point.
  */
 void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, const double f, const int ii,
@@ -86,22 +91,22 @@ void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, c
   }
 
   // Mass term
-  Klocal(IU, JU) += tools.N(ii) * tools.N(jj) / dt * tools.vol;
-  Klocal(IV, JV) += tools.N(ii) * tools.N(jj) / dt * tools.vol;
-  Klocal(IW, JW) += tools.N(ii) * tools.N(jj) / dt * tools.vol;
+  Klocal(IU, JU) += rho * tools.N(ii) * tools.N(jj) / dt * tools.vol;
+  Klocal(IV, JV) += rho * tools.N(ii) * tools.N(jj) / dt * tools.vol;
+  Klocal(IW, JW) += rho * tools.N(ii) * tools.N(jj) / dt * tools.vol;
 
   // Diffusion term
   for(int d = 0; d < 3; d++) {
-    Klocal(IU, JU) += 5e-1 * tools.dNdx(ii, d) * tools.dNdx(jj, d) / Re * tools.vol;
-    Klocal(IV, JV) += 5e-1 * tools.dNdx(ii, d) * tools.dNdx(jj, d) / Re * tools.vol;
-    Klocal(IW, JW) += 5e-1 * tools.dNdx(ii, d) * tools.dNdx(jj, d) / Re * tools.vol;
+    Klocal(IU, JU) += 5e-1 * mu * tools.dNdx(ii, d) * tools.dNdx(jj, d) * tools.vol;
+    Klocal(IV, JV) += 5e-1 * mu * tools.dNdx(ii, d) * tools.dNdx(jj, d) * tools.vol;
+    Klocal(IW, JW) += 5e-1 * mu * tools.dNdx(ii, d) * tools.dNdx(jj, d) * tools.vol;
   }
 
   // Advection term
   for(int d = 0; d < 3; d++) {
-    Klocal(IU, JU) += 5e-1 * tools.N(ii) * adv_gp[d] * tools.dNdx(jj, d) * tools.vol;
-    Klocal(IV, JV) += 5e-1 * tools.N(ii) * adv_gp[d] * tools.dNdx(jj, d) * tools.vol;
-    Klocal(IW, JW) += 5e-1 * tools.N(ii) * adv_gp[d] * tools.dNdx(jj, d) * tools.vol;
+    Klocal(IU, JU) += 5e-1 * rho * tools.N(ii) * adv_gp[d] * tools.dNdx(jj, d) * tools.vol;
+    Klocal(IV, JV) += 5e-1 * rho * tools.N(ii) * adv_gp[d] * tools.dNdx(jj, d) * tools.vol;
+    Klocal(IW, JW) += 5e-1 * rho * tools.N(ii) * adv_gp[d] * tools.dNdx(jj, d) * tools.vol;
   }
 
   // Pressure term
@@ -115,23 +120,23 @@ void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, c
   Klocal(IP, JW) += tools.N(ii) * tools.dNdx(jj, 2) * tools.vol;
 
   // Darcy term
-  Klocal(IU, JU) += 5e-1 * f * tools.N(ii) * tools.N(jj) * tools.vol;
-  Klocal(IV, JV) += 5e-1 * f * tools.N(ii) * tools.N(jj) * tools.vol;
-  Klocal(IW, JW) += 5e-1 * f * tools.N(ii) * tools.N(jj) * tools.vol;
+  Klocal(IU, JU) += 5e-1 * f / rho * tools.N(ii) * tools.N(jj) * tools.vol;
+  Klocal(IV, JV) += 5e-1 * f / rho * tools.N(ii) * tools.N(jj) * tools.vol;
+  Klocal(IW, JW) += 5e-1 * f / rho * tools.N(ii) * tools.N(jj) * tools.vol;
 
   // SUPG　mass term
   for(int d = 0; d < 3; d++) {
-    Klocal(IU, JU) += tau * tools.dNdx(ii, d) * adv_gp[d] * tools.N(jj) / dt * tools.vol;
-    Klocal(IV, JV) += tau * tools.dNdx(ii, d) * adv_gp[d] * tools.N(jj) / dt * tools.vol;
-    Klocal(IW, JW) += tau * tools.dNdx(ii, d) * adv_gp[d] * tools.N(jj) / dt * tools.vol;
+    Klocal(IU, JU) += tau * rho * tools.dNdx(ii, d) * adv_gp[d] * tools.N(jj) / dt * tools.vol;
+    Klocal(IV, JV) += tau * rho * tools.dNdx(ii, d) * adv_gp[d] * tools.N(jj) / dt * tools.vol;
+    Klocal(IW, JW) += tau * rho * tools.dNdx(ii, d) * adv_gp[d] * tools.N(jj) / dt * tools.vol;
   }
 
   // SUPG advection term
   for(int d1 = 0; d1 < 3; d1++) {
     for(int d2 = 0; d2 < 3; d2++) {
-      Klocal(IU, JU) += 5e-1 * tau * adv_gp[d2] * tools.dNdx(ii, d2) * adv_gp[d1] * tools.dNdx(jj, d1) * tools.vol;
-      Klocal(IV, JV) += 5e-1 * tau * adv_gp[d2] * tools.dNdx(ii, d2) * adv_gp[d1] * tools.dNdx(jj, d1) * tools.vol;
-      Klocal(IW, JW) += 5e-1 * tau * adv_gp[d2] * tools.dNdx(ii, d2) * adv_gp[d1] * tools.dNdx(jj, d1) * tools.vol;
+      Klocal(IU, JU) += 5e-1 * tau * rho * adv_gp[d2] * tools.dNdx(ii, d2) * adv_gp[d1] * tools.dNdx(jj, d1) * tools.vol;
+      Klocal(IV, JV) += 5e-1 * tau * rho * adv_gp[d2] * tools.dNdx(ii, d2) * adv_gp[d1] * tools.dNdx(jj, d1) * tools.vol;
+      Klocal(IW, JW) += 5e-1 * tau * rho * adv_gp[d2] * tools.dNdx(ii, d2) * adv_gp[d1] * tools.dNdx(jj, d1) * tools.vol;
     }
   }
 
@@ -143,9 +148,9 @@ void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, c
   }
 
   // PSPG mass term
-  Klocal(IP, JU) += tau * tools.dNdx(ii, 0) * tools.N(jj) / dt * tools.vol;
-  Klocal(IP, JV) += tau * tools.dNdx(ii, 1) * tools.N(jj) / dt * tools.vol;
-  Klocal(IP, JW) += tau * tools.dNdx(ii, 2) * tools.N(jj) / dt * tools.vol;
+  Klocal(IP, JU) += tau  * tools.dNdx(ii, 0) * tools.N(jj) / dt * tools.vol;
+  Klocal(IP, JV) += tau  * tools.dNdx(ii, 1) * tools.N(jj) / dt * tools.vol;
+  Klocal(IP, JW) += tau  * tools.dNdx(ii, 2) * tools.N(jj) / dt * tools.vol;
 
   // PSPG asvection term
   for(int d = 0; d < 3; d++) {
@@ -155,10 +160,10 @@ void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, c
   }
 
   // PSPG pressure term
-  Klocal(IP, JP) += tau * tools.K(ii, jj) * tools.vol;
+  Klocal(IP, JP) += tau / rho * tools.K(ii, jj) * tools.vol;
 }
 
-/**********************************************************************
+/**
  * @brief Compute element sfiffness RHS vector on gauss integral point.
  */
 void DirectProblem::usnsGaussIntegralRHS(VectorXd &Flocal, MathTools3D &tools, const double f, const int ii)
@@ -167,42 +172,42 @@ void DirectProblem::usnsGaussIntegralRHS(VectorXd &Flocal, MathTools3D &tools, c
   tools.vol = tools.detJ * tools.weight;
 
   // Mass term
-  Flocal(IU) += tools.N(ii) * v_gp[0] / dt * tools.vol;
-  Flocal(IV) += tools.N(ii) * v_gp[1] / dt * tools.vol;
-  Flocal(IW) += tools.N(ii) * v_gp[2] / dt * tools.vol;
+  Flocal(IU) += rho * tools.N(ii) * v_gp[0] / dt * tools.vol;
+  Flocal(IV) += rho * tools.N(ii) * v_gp[1] / dt * tools.vol;
+  Flocal(IW) += rho * tools.N(ii) * v_gp[2] / dt * tools.vol;
 
   // Diffusion term
   for(int d = 0; d < 3; d++) {
-    Flocal(IU) -= 5e-1 * tools.dNdx(ii, d) * dvdx_gp[0][d] / Re * tools.vol;
-    Flocal(IV) -= 5e-1 * tools.dNdx(ii, d) * dvdx_gp[1][d] / Re * tools.vol;
-    Flocal(IW) -= 5e-1 * tools.dNdx(ii, d) * dvdx_gp[2][d] / Re * tools.vol;
+    Flocal(IU) -= 5e-1 * mu * tools.dNdx(ii, d) * dvdx_gp[0][d] * tools.vol;
+    Flocal(IV) -= 5e-1 * mu * tools.dNdx(ii, d) * dvdx_gp[1][d] * tools.vol;
+    Flocal(IW) -= 5e-1 * mu * tools.dNdx(ii, d) * dvdx_gp[2][d] * tools.vol;
   }
 
   // Advection term
   for(int d = 0; d < 3; d++) {
-    Flocal(IU) -= 5e-1 * tools.N(ii) * adv_gp[d] * dvdx_gp[0][d] * tools.vol;
-    Flocal(IV) -= 5e-1 * tools.N(ii) * adv_gp[d] * dvdx_gp[1][d] * tools.vol;
-    Flocal(IW) -= 5e-1 * tools.N(ii) * adv_gp[d] * dvdx_gp[2][d] * tools.vol;
+    Flocal(IU) -= 5e-1 * rho * tools.N(ii) * adv_gp[d] * dvdx_gp[0][d] * tools.vol;
+    Flocal(IV) -= 5e-1 * rho * tools.N(ii) * adv_gp[d] * dvdx_gp[1][d] * tools.vol;
+    Flocal(IW) -= 5e-1 * rho * tools.N(ii) * adv_gp[d] * dvdx_gp[2][d] * tools.vol;
   }
 
   // Darcy term
-  Flocal(IU) -= 5e-1 * f * tools.N(ii) * v_gp[0] * tools.vol;
-  Flocal(IV) -= 5e-1 * f * tools.N(ii) * v_gp[1] * tools.vol;
-  Flocal(IW) -= 5e-1 * f * tools.N(ii) * v_gp[2] * tools.vol;
+  Flocal(IU) -= 5e-1 * f / rho * tools.N(ii) * v_gp[0] * tools.vol;
+  Flocal(IV) -= 5e-1 * f / rho * tools.N(ii) * v_gp[1] * tools.vol;
+  Flocal(IW) -= 5e-1 * f / rho * tools.N(ii) * v_gp[2] * tools.vol;
 
   // SUPG mass term
   for(int d = 0; d < 3; d++) {
-    Flocal(IU) += tau * tools.dNdx(ii, d) * adv_gp[d] * v_gp[0] / dt * tools.vol;
-    Flocal(IV) += tau * tools.dNdx(ii, d) * adv_gp[d] * v_gp[1] / dt * tools.vol;
-    Flocal(IW) += tau * tools.dNdx(ii, d) * adv_gp[d] * v_gp[2] / dt * tools.vol;
+    Flocal(IU) += tau * rho * tools.dNdx(ii, d) * adv_gp[d] * v_gp[0] / dt * tools.vol;
+    Flocal(IV) += tau * rho * tools.dNdx(ii, d) * adv_gp[d] * v_gp[1] / dt * tools.vol;
+    Flocal(IW) += tau * rho * tools.dNdx(ii, d) * adv_gp[d] * v_gp[2] / dt * tools.vol;
   }
 
   // SUPG advection term
   for(int d1 = 0; d1 < 3; d1++) {
     for(int d2 = 0; d2 < 3; d2++) {
-      Flocal(IU) -= 5e-1 * tau * v_gp[d2] * tools.dNdx(ii, d2) * adv_gp[d1] * dvdx_gp[0][d1] * tools.vol;
-      Flocal(IV) -= 5e-1 * tau * v_gp[d2] * tools.dNdx(ii, d2) * adv_gp[d1] * dvdx_gp[1][d1] * tools.vol;
-      Flocal(IW) -= 5e-1 * tau * v_gp[d2] * tools.dNdx(ii, d2) * adv_gp[d1] * dvdx_gp[2][d1] * tools.vol;
+      Flocal(IU) -= 5e-1 * tau * rho * v_gp[d2] * tools.dNdx(ii, d2) * adv_gp[d1] * dvdx_gp[0][d1] * tools.vol;
+      Flocal(IV) -= 5e-1 * tau * rho * v_gp[d2] * tools.dNdx(ii, d2) * adv_gp[d1] * dvdx_gp[1][d1] * tools.vol;
+      Flocal(IW) -= 5e-1 * tau * rho * v_gp[d2] * tools.dNdx(ii, d2) * adv_gp[d1] * dvdx_gp[2][d1] * tools.vol;
     }
   }
 

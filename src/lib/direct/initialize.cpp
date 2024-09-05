@@ -6,17 +6,20 @@
 
 #include "DirectProblem.h"
 
-/***********************************
+/**
  * @brief Initialize direct problem.
  */
 void DirectProblem::initialize(Config &conf)
 {
-  nu = mu / rho;
-  Re = 1e0 / nu;
-
   grid.cell.initialize(conf);
   grid.node.initialize(conf);
   dirichlet.initialize(conf);
+
+  comp_Re(dirichlet.velocitySet);
+
+  if(mpi.myId == 0){
+    std::cout << "Re = " << Re << std::endl;
+  }
 
   grid.prepareMatrix(dirichlet, petsc, outputDir, timeMax);
   dirichlet.getNewArray(grid.node.mapNew);
@@ -44,6 +47,8 @@ void DirectProblem::resizeVar()
     vvti.allocate(grid.node.nNodesStrGlobal, dim);
     pvti.allocate(grid.node.nNodesStrGlobal);
   }
+
+  velCurrent.allocate(grid.cell.nNodesInCell, 3);
 
   VecTool::resize(petsc.solution, grid.nDofsGlobal);
 }

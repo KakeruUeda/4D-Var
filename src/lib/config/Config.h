@@ -85,7 +85,7 @@ public:
   std::string outputDir;
 
   // Physical parameter
-  double rho, mu, Re;
+  double rho, mu, nu, L;
 
   double NRtolerance;
 
@@ -156,6 +156,9 @@ public:
   double center[3];
   double R, Q, maxVelocity;
 
+  double center_tr[3];
+  double R_tr;
+
   std::vector<int> CBNodeMap;
   std::vector<int> CBCellMap;
   std::vector<std::vector<int>> CBNodeMapInCell;
@@ -192,10 +195,14 @@ public:
   void setBoundaryVelocityValue(std::string face, double value[3]);
   void setBoundaryPressureValue(std::string face, const double value);
   void setBoundaryPoiseuilleValue(std::string face);
+  void setTractionFreeCondition(std::string face);
   void setControlBoundary();
   void setStrGrid();
-  double setStrCoordinate(const int i, const int j, const int k, const int d);
-  int setStrNode(const int i, const int j, const int k, const int p);
+
+  static double setStrCoordinate(const int i, const int j, const int k, const int d, 
+                                 const double dx, const double dy, const double dz);
+  static int setStrNode(const int i, const int j, const int k, const int p, 
+                         const int nx, const int ny, const int nz);
 
 public:
   void setSolidDirichletValue();

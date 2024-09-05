@@ -6,7 +6,7 @@
 
 #include "Config.h"
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderInterface::readBasicInfo(Config &conf)
@@ -25,7 +25,7 @@ void TextReaderInterface::readBasicInfo(Config &conf)
   }
 }
 
-/**********************************
+/** 
  * @brief Read interface grid info.
  */
 void TextReaderInterface::readGridInfo(Config &conf)
@@ -86,7 +86,7 @@ void TextReaderInterface::readGridInfo(Config &conf)
   }
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderInterface::readBoundaryInfo(Config &conf)
@@ -134,7 +134,7 @@ void TextReaderInterface::readBoundaryInfo(Config &conf)
   }
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderInterface::readPhysicalInfo(Config &conf)
@@ -151,9 +151,16 @@ void TextReaderInterface::readPhysicalInfo(Config &conf)
   if(!conf.tp.getInspectedValue(label, conf.mu)) {
     throw std::runtime_error(label + " is not set");
   }
+
+  label = base_label + "/L";
+  if(!conf.tp.getInspectedValue(label, conf.L)) {
+    throw std::runtime_error(label + " is not set");
+  }
+
+  conf.nu = conf.mu / conf.rho;
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderInterface::readTimeInfo(Config &conf)
@@ -197,7 +204,7 @@ void TextReaderInterface::readTimeInfo(Config &conf)
   }
 }
 
-/*****************************
+/**
  * @brief Read text parameter.
  */
 void TextReaderInterface::readDarcyInfo(Config &conf)

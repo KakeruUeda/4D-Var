@@ -1,0 +1,60 @@
+Base
+{
+  dim = 3
+  outputDir = "cavity"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  BaseGrid{
+    node = "input/cavity/node.dat"
+    cell = "input/cavity/cell.dat"
+  }
+
+  SubGrid{
+    nodeId = "input/cavity/nodeId.dat"
+    cellId = "input/cavity/cellId.dat"
+  }
+
+  StructuredGrid{
+    nx = (64, 64, 64) 
+    lx = (1.0, 1.0, 1.0)
+    fluidExtraction = "OFF"
+    fluidUniqueNodes = "input/cavity/fluidUniqueNodes.dat"
+    image = "input/cavity/image.dat"
+  }
+}
+
+Boundary
+{
+  velocityDirichlet = "input/cavity/velocityDirichlet.dat"
+  pressureDirichlet = "input/cavity/pressureDirichlet.dat"
+}
+
+PysicalParameter
+{   
+  rho = 1000
+  mu = 1   
+  L = 1.0
+}
+
+TimeParameter
+{
+  dt = 0.01
+  timeMax = 400
+  pulsatileFlow = "OFF"
+  pulseBeginItr = 250
+  T = 0.5
+}
+
+DarcyParameter
+{
+  alpha = 1e-2
+  resistance = 1e3
+}

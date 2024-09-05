@@ -6,7 +6,7 @@
 
 #include "InverseProblem.h"
 
-/***************************************************
+/**
  * @brief construct inverse object from config param
  */
 InverseProblem::InverseProblem(Config &conf)
@@ -41,7 +41,7 @@ InverseProblem::InverseProblem(Config &conf)
   adjoint.outputDir = outputDir;
 }
 
-/*****************************
+/**
  * @brief Run inverse routine
  */
 void InverseProblem::runSimulation()
@@ -81,6 +81,7 @@ void InverseProblem::runSimulation()
       outputControlVariables(loop);
       outputVelocityData(loop);
       outputFeedbackForce(loop);
+      outputGradients(loop);
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -96,8 +97,8 @@ void InverseProblem::runSimulation()
   outputOptimizedVariables();
 }
 
-/******************************************
- * @brief Check if cost function converged.
+/**
+ * @brief Check cnvergence of the cost function.
  */
 bool InverseProblem::checkConvergence(std::ofstream &cf, const int loop)
 {
@@ -105,7 +106,7 @@ bool InverseProblem::checkConvergence(std::ofstream &cf, const int loop)
     double diff = costFunction.history[loop] - costFunction.history[loop - 10];
     diff = fabs(diff);
 
-    if(diff < 1e-4) {
+    if(diff < 1e-3) {
       PetscPrintf(MPI_COMM_WORLD, "Converged. OptItr = %d", loop);
       cf.close();
       return true;
@@ -114,7 +115,7 @@ bool InverseProblem::checkConvergence(std::ofstream &cf, const int loop)
   return false;
 }
 
-/************************************************************
+/**
  * @brief Guess initial condition.
  *        Getting initial velocity field for inverse problem
  *        using poiseuille inlet condition.
@@ -153,9 +154,18 @@ void InverseProblem::compInitialOptimalVelocityField()
       X0(in, d) = main.v0(in, d);
     }
   }
+
+  /*
+  for(int icb = 0; icb < inletCB.CBNodeMap.size(); icb++){
+    int in = inletCB.CBNodeMap[icb];
+    for(int d = 0; d < 3; d++){
+      X0(in, d) = 0e0;
+    }
+  }
+  */
 }
 
-/****************************************************
+/**
  * @brief Compute discrepancies over domain and time
  */
 void InverseProblem::compCostFunction()
@@ -202,6 +212,9 @@ void InverseProblem::compCostFunction()
   // term 1
   for(int t = 0; t < main.snap.nSnapShot; t++) {
     for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+      if(data.voxel(iv).mask < 0.999) {
+        continue;
+      }
       double dev = 0e0;
       double volume = data.dxData * data.dyData * data.dzData;
       double deltaT = main.dt * main.snap.snapInterval;
@@ -291,7 +304,7 @@ void InverseProblem::compCostFunction()
   costFunction.sum();
 }
 
-/************************************************
+/**
  * @brief Compute value for regularization term2
  *        on gauss integral point.
  */
@@ -311,7 +324,7 @@ void InverseProblem::RegTerm2_inGaussIntegral(double &value, const int nc, const
   }
 }
 
-/************************************************
+/**
  * @brief Compute value for regularization term3
  *        on gauss integral point.
  */
@@ -335,7 +348,7 @@ void InverseProblem::RegTerm3_inGaussIntegral(double &value, const int nc, const
   }
 }
 
-/************************************************
+/**
  * @brief Compute value for regularization term4
  *        on gauss integral point.
  */
@@ -366,7 +379,7 @@ void InverseProblem::RegTerm4_inGaussIntegral(double &value, const int nc, const
   }
 }
 
-/************************************************
+/**
  * @brief Compute value for regularization term3
  *        on gauss integral point.
  */
@@ -403,7 +416,7 @@ void InverseProblem::RegTerm5_inGaussIntegral(double &value, const int nc, const
   }
 }
 
-/************************************************
+/**
  * @brief Compute value for regularization term6
  *        on gauss integral point.
  */
@@ -423,7 +436,7 @@ void InverseProblem::RegTerm6_inGaussIntegral(double &value, const int ic)
   }
 }
 
-/************************************************
+/**
  * @brief Compute value for regularization term7
  *        on gauss integral point.
  */
@@ -447,7 +460,7 @@ void InverseProblem::RegTerm7_inGaussIntegral(double &value, const int ic)
   }
 }
 
-/************************************************
+/**
  * @brief Compute value for regularization term3
  *        on gauss integral point.
  */
@@ -465,7 +478,7 @@ void InverseProblem::compFeedbackForce()
   }
 }
 
-/********************************************************
+/**
  * @brief Assemble RHS feedback force for adjoint system.
  * @param ic: cell index.
  * @param t: time index.
@@ -507,7 +520,7 @@ void InverseProblem::assembleFeedbackForce(const int ic, const int t)
   }
 }
 
-/*****************************************************************
+/**
  * @brief Interpolate space-discrete feedback force onto CFD node.
  */
 void InverseProblem::compInterpolatedFeeback(double (&feedback)[3], double (&point)[3], const int t)
@@ -546,7 +559,7 @@ void InverseProblem::compInterpolatedFeeback(double (&feedback)[3], double (&poi
   }
 }
 
-/********************************************************
+/**
  * @brief Compute feedback force on gauss integral point.
  */
 void InverseProblem::feedbackGaussIntegral(double (&feedback)[3], const int ic, const int t)
@@ -559,7 +572,7 @@ void InverseProblem::feedbackGaussIntegral(double (&feedback)[3], const int ic, 
   }
 }
 
-/**************************************************************
+/**
  * @brief Interpolate the feedback force at each CFD time step.
  */
 void InverseProblem::compTimeInterpolatedFeedbackForce()
@@ -589,7 +602,7 @@ void InverseProblem::compTimeInterpolatedFeedbackForce()
 }
 
 
-/***********************************
+/**
  * @brief Decide step length for X0.
  */
 void InverseProblem::armijoCriteriaX0(const double fk)
@@ -628,7 +641,7 @@ void InverseProblem::armijoCriteriaX0(const double fk)
   }
 }
 
-/**********************************
+/**
  * @brief Decide step length for X.
  */
 void InverseProblem::armijoCriteriaX(const double fk)

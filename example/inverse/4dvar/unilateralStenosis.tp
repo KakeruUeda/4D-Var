@@ -1,0 +1,92 @@
+Base
+{
+  dim = 3
+  outputDir = "unilateralStenosis"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  BaseGrid{
+    node = "input/unilateralStenosis/dat/node.dat"
+    cell = "input/unilateralStenosis/dat/cell.dat"
+  }
+
+  SubGrid{
+    nodeId = "input/unilateralStenosis/dat/nodeId.dat"
+    cellId = "input/unilateralStenosis/dat/cellId.dat"
+  }
+
+  StructuredGrid{
+    nx = (56, 32, 32) 
+    lx = (3.5, 2.0, 2.0)
+    fluidExtraction = "ON"
+    fluidUniqueNodes = "input/unilateralStenosis/dat/fluidUniqueNodes.dat"
+    image = "input/unilateralStenosis/dat/image.dat"
+  }
+}
+
+Boundary
+{
+  velocityDirichlet = "input/unilateralStenosis/dat/velocityDirichlet.dat"
+  pressureDirichlet = "input/unilateralStenosis/dat/pressureDirichlet.dat"
+}
+
+PysicalParameter
+{   
+  rho = 30
+  mu = 1   
+  L = 0.5
+}
+
+TimeParameter
+{
+  dt = 0.02
+  timeMax = 51
+  pulsatileFlow = "OFF"
+  pulseBeginItr = 100
+  T = 0.5
+}
+
+DarcyParameter
+{
+  alpha = 1e-2
+  resistance = 1e3
+}
+
+Inverse
+{
+  aCF = 1e1 
+  bCF = 0e0
+  gCF = 0e0
+
+  alphaX = 1e0 
+  alphaX0 = 1e0
+  loopMAX = 300
+  outputItr = 5
+
+  controlBoundary = "left" 
+  nControlNodesInCell = 4 
+  controlBoundaryNodeMap = "input/unilateralStenosis/dat/controlBoundaryNodeMap.dat" 
+  controlBoundaryCellMap = "input/unilateralStenosis/dat/controlBoundaryCellMap.dat" 
+  controlBoundaryNodeMapInCell = "input/unilateralStenosis/dat/controlBoundaryNodeMapInCell.dat"
+}
+
+Data
+{
+  nSnapShot = 11 
+  snapInterval = 5
+  snapTimeBeginItr = 0
+
+  nNodesInDataCell = 8 
+  nxData = (28, 16, 16)
+  lxData = (3.5, 2.0, 2.0)
+  voxelVelocity = "average"
+
+  dataDir = "input/unilateralStenosis/dat/data"
+}
