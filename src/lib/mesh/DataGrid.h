@@ -25,6 +25,9 @@ struct VoxelInfo
   double center[3];
   double minX, minY, minZ;
   double maxX, maxY, maxZ;
+
+  int CFDCellId;
+
   vector<int> cells;
   vector<int> refinedVoxelId;
   Array2D<double> v_cfd, v_mri, v_err;  // (time, dim)
@@ -89,7 +92,7 @@ public:
   void average(const int iv, const int t);
   void averageTmp(const int iv, const int t);
   void weightedAverage(const int iv, const int t);
-  void interpolate();
+  void interpolate(const int iv, const int t);
 
   void importDAT(const std::string &filename, const int step);
   void exportDAT(const std::string &filename, const int step);
@@ -98,10 +101,13 @@ public:
 
   void importMask(const std::string &filename);
   
+  void setBoundingBox();
   void setRefinedGrid();
   void collectRefinedVoxelId();
   void collectCFDCellId();
+  void collectVoxelCenterCFDCell();
   bool isRefinedNodeIncludedInCFDCell(const int in, const int ic);
+  bool isVoxelCenterIncludedInCFDCell(const int iv, const int ic);
 
 private:
   double coeff;
@@ -111,7 +117,6 @@ private:
   Array1D<double> smoothing;
 
   void compSmoothing();
-  void setBoundingBox();
   bool isRefinedNodeOutside(const int in);
 
   BoundingBox box;

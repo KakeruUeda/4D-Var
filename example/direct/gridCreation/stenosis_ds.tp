@@ -1,7 +1,7 @@
 Base
 {
   dim = 3
-  outputDir = "Ubend"
+  outputDir = "stenosis_ds_24x16x16"
   numOfOMP = 1
 }
 
@@ -13,32 +13,31 @@ Grid
   }
 
   StructuredGrid{
-    nx = (64, 64, 64) 
-    lx = (0.050625, 0.050625, 0.0513)
-    image = "input/Ubend/image.dat"
+    nx = (48, 32, 32) 
+    lx = (3.0, 2.0, 2.0)
+    image = "input/stenosis_ds/image.dat"
     fluidExtraction = "ON"
   }
-
 }
 
 StructuredBoundary
 {
   top{
-    type = "free"
+    type = "v"
     value = (0,0,0)
   }
   bottom{
-    type = "poiseuille"
-    center = (0.0240625, 0, 0.0266)  // (0.9375 is added to xorigin for a resistration)
-    R = 0.0125
-    Q = 0.3
-  }
-  left{
     type = "v"
     value = (0,0,0)
   }
+  left{
+    type = "poiseuille"
+    center = (0.0, 1.0, 1.0)
+    R = 0.4
+    Q = 4.0
+  }
   right{
-    type = "v"
+    type = "free"
     value = (0,0,0)
   }
   front{
@@ -53,5 +52,5 @@ StructuredBoundary
     setOutletTractionFreeCondition = "OFF"
   }
   controlBoundaryExtraction = "ON"
-  inletControlBoundary = "bottom"
+  inletControlBoundary = "left"
 }

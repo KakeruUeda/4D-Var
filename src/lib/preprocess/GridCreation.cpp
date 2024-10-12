@@ -44,6 +44,7 @@ void GridCreation::initialize(Config &conf)
     CBNodeMap = conf.CBNodeMap;
     CBCellMap = conf.CBCellMap;
     CBNodeMapInCell = conf.CBNodeMapInCell;
+    CBEdgeNodeMap = conf.CBEdgeNodeMap;
   }
 }
 
@@ -196,6 +197,8 @@ void GridCreation::outputDat()
     EXPORT::exportScalarDataDAT<int>(datFile, CBCellMap);
     datFile = outputDir + "/dat/controlBoundaryNodeMapInCell.dat";
     EXPORT::exportVectorDataDAT<int>(datFile, CBNodeMapInCell);
+    datFile = outputDir + "/dat/controlBoundaryEdgeNodeMap.dat";
+    EXPORT::exportScalarDataDAT<int>(datFile, CBEdgeNodeMap);
   }
 }
 

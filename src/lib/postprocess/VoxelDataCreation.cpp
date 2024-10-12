@@ -117,9 +117,13 @@ void VoxelDataCreation::createReferenceData()
 
 void VoxelDataCreation::createData()
 {
+  grid.cell.getBoundaries();
+  grid.cell.getCenterCoordinates();
   data.setVoxelCenters();
-  data.setVoxelBoundaries();
-  data.collectCellsInVoxel();
+
+  data.setRefinedGrid();
+  data.collectRefinedVoxelId();
+  data.collectCFDCellId();
 
   for(int t = 0; t < data.snap.nSnapShot; t++) {
     for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {

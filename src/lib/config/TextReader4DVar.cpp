@@ -218,6 +218,14 @@ void TextReader4DVar::readInverseInfo(Config &conf)
   }
   IMPORT::importScalarDataDAT<int>(controlBoundaryNodeMap, conf.CBNodeMap);
 
+  std::string controlBoundaryEdgeNodeMap;
+  label = base_label + "/controlBoundaryEdgeNodeMap";
+
+  if(!conf.tp.getInspectedValue(label, controlBoundaryEdgeNodeMap)) {
+    throw std::runtime_error(label + " is not set");
+  }
+  IMPORT::importScalarDataDAT<int>(controlBoundaryEdgeNodeMap, conf.CBEdgeNodeMap);
+
   std::string controlBoundaryCellMap;
   label = base_label + "/controlBoundaryCellMap";
 

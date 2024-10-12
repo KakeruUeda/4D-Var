@@ -21,11 +21,10 @@ void Dirichlet::initialize(Config &conf)
  */
 void Dirichlet::eraseControlNodes(Cell &cell, ControlBoundary &cb)
 {
-  for(int in=0; in<cb.CBNodeMap.size(); in++){
+  for(int in = 0; in < cb.CBNodeMap.size(); in++) {
     velocitySet.erase(cb.CBNodeMap[in]);
   }
 }
-
 
 void Dirichlet::setValuesZero(int n)
 {
@@ -37,7 +36,7 @@ void Dirichlet::setValuesZero(int n)
 
 void Dirichlet::assignPulsatileBCs(const double pulse)
 {
-  for (auto &entry : velocitySet){
+  for(auto &entry : velocitySet) {
     std::vector<double> &velocities = entry.second;
 
     velocities[0] = velocitySetInit[entry.first][0] * pulse;
@@ -115,41 +114,69 @@ void Dirichlet::applyBCs(Cell &cell, PetscSolver &petsc)
 void Dirichlet::updateValues(Array3D<double> &X, const int t)
 {
   for(auto &[idx, vec] : velocitySet) {
-    if(vec[0] == 0 && vec[1] == 0 && vec[2] == 0){
-      continue;
-    }
+    //if(vec[0] == 0 && vec[1] == 0 && vec[2] == 0) {
+    //  continue;
+    //}
     for(int d = 0; d < 3; d++) {
       vec[d] = X(t, idx, d);
     }
   }
 }
 
-/**
- * @brief tmp.
- */
-constexpr Dirichlet::AveragedVelocity velArray[32] = 
-{
-  {0 * 0.02947812, 0.11943478}, {1 * 0.02947812, 0.14436713}, 
-  {2 * 0.02947812, 0.17000289}, {3 * 0.02947812, 0.20747005},
-  {4 * 0.02947812, 0.2368427}, {5 * 0.02947812, 0.26329655}, 
-  {6 * 0.02947812, 0.26288376}, {7 * 0.02947812, 0.25537007},
-  {8 * 0.02947812, 0.25249323}, {9 * 0.02947812, 0.24208209}, 
-  {10 * 0.02947812, 0.22972814}, {11 * 0.02947812, 0.19955092},
-  {12 * 0.02947812, 0.17341562}, {13 * 0.02947812, 0.147503}, 
-  {14 * 0.02947812, 0.12755212}, {15 * 0.02947812, 0.11137679},
-  {16 * 0.02947812, 0.08759725}, {17 * 0.02947812, 0.07680825},
-  {18 * 0.02947812, 0.08648109}, {19 * 0.02947812, 0.09086978},
-  {20 * 0.02947812, 0.07851191}, {21 * 0.02947812, 0.06508125}, 
-  {22 * 0.02947812, 0.05969055}, {23 * 0.02947812, 0.0566123},
-  {24 * 0.02947812, 0.0549937}, {25 * 0.02947812, 0.05120174}, 
-  {26 * 0.02947812, 0.04861119}, {27 * 0.02947812, 0.05262863},
-  {28 * 0.02947812, 0.05423519}, {29 * 0.02947812, 0.04585582}, 
-  {30 * 0.02947812, 0.05972958}, {31 * 0.02947812, 0.06170865}
+constexpr Dirichlet::AveragedVelocity velArray[32] = {
+    {0 * 0.02947812,  0.11943478},
+    {1 * 0.02947812,  0.14436713},
+    {2 * 0.02947812,  0.17000289},
+    {3 * 0.02947812,  0.20747005},
+    {4 * 0.02947812,  0.2368427 },
+    {5 * 0.02947812,  0.26329655},
+    {6 * 0.02947812,  0.26288376},
+    {7 * 0.02947812,  0.25537007},
+    {8 * 0.02947812,  0.25249323},
+    {9 * 0.02947812,  0.24208209},
+    {10 * 0.02947812, 0.22972814},
+    {11 * 0.02947812, 0.19955092},
+    {12 * 0.02947812, 0.17341562},
+    {13 * 0.02947812, 0.147503  },
+    {14 * 0.02947812, 0.12755212},
+    {15 * 0.02947812, 0.11137679},
+    {16 * 0.02947812, 0.08759725},
+    {17 * 0.02947812, 0.07680825},
+    {18 * 0.02947812, 0.08648109},
+    {19 * 0.02947812, 0.09086978},
+    {20 * 0.02947812, 0.07851191},
+    {21 * 0.02947812, 0.06508125},
+    {22 * 0.02947812, 0.05969055},
+    {23 * 0.02947812, 0.0566123 },
+    {24 * 0.02947812, 0.0549937 },
+    {25 * 0.02947812, 0.05120174},
+    {26 * 0.02947812, 0.04861119},
+    {27 * 0.02947812, 0.05262863},
+    {28 * 0.02947812, 0.05423519},
+    {29 * 0.02947812, 0.04585582},
+    {30 * 0.02947812, 0.05972958},
+    {31 * 0.02947812, 0.06170865}
 };
 
-/**
- * @brief tmp.
- */
+constexpr Dirichlet::AveragedVelocity velArray2[16] = {
+    {0 * 0.02947812,  0.11943478},
+    {1 * 0.02947812,  0.14436713},
+    {2 * 0.02947812,  0.17000289},
+    {3 * 0.02947812,  0.20747005},
+    {4 * 0.02947812,  0.2368427 },
+    {5 * 0.02947812,  0.26329655},
+    {6 * 0.02947812,  0.26288376},
+    {7 * 0.02947812,  0.25537007},
+    {8 * 0.02947812,  0.25249323},
+    {9 * 0.02947812,  0.24208209},
+    {10 * 0.02947812, 0.22972814},
+    {11 * 0.02947812, 0.19955092},
+    {12 * 0.02947812, 0.17341562},
+    {13 * 0.02947812, 0.147503  },
+    {14 * 0.02947812, 0.12755212},
+    {15 * 0.02947812, 0.11137679}
+};
+
 double Dirichlet::comp_pulse(double timeNow)
 {
   std::vector<double> x, y;
@@ -161,20 +188,20 @@ double Dirichlet::comp_pulse(double timeNow)
 
   vector<Spline::Coefficients> cf = Spline::compCoefficients(x, y);
 
-  static double maxTime = velArray[31].time; 
-  static bool maxTimeUpdated = false; 
+  static double maxTime = velArray[31].time;
+  static bool maxTimeUpdated = false;
 
   if(timeNow > maxTime && !maxTimeUpdated) {
-    maxTime = timeNow; 
-    maxTimeUpdated = true; 
+    maxTime = timeNow;
+    maxTimeUpdated = true;
   }
 
   if(timeNow >= 3 * maxTime) {
-    if(mpi.myId == 0){
+    if(mpi.myId == 0) {
       std::cout << "SimTime has completed three cycles. Exiting..." << std::endl;
     }
     MPI_Finalize();
-    std::exit(0); 
+    std::exit(0);
   }
 
   double adjustedTime = std::fmod(timeNow, maxTime);
@@ -184,11 +211,30 @@ double Dirichlet::comp_pulse(double timeNow)
 }
 
 /**
+ * @brief tmp.
+ */
+double Dirichlet::comp_pulse2(double timeNow, std::vector<std::array<double, 2>> &velArr)
+{
+  std::vector<double> x, y;
+
+  for(const auto &arr : velArr) {
+    x.push_back(arr[0]);
+    y.push_back(arr[1]);
+  }
+
+  vector<Spline::Coefficients> cf = Spline::compCoefficients(x, y);
+
+  double pulse = Spline::evaluate(cf, timeNow);
+  return pulse;
+}
+
+/**
  * @brief Initialization.
  */
 void ControlBoundary::initialize(Config &conf)
 {
   CBNodeMap = std::move(conf.CBNodeMap);
+  CBEdgeNodeMap = std::move(conf.CBEdgeNodeMap);
   CBCellMap = std::move(conf.CBCellMap);
   CBNodeMapInCell = std::move(conf.CBNodeMapInCell);
 }

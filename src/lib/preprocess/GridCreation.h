@@ -41,6 +41,7 @@ private:
   std::map<int, double> pDirichlet;
 
   std::vector<int> CBNodeMap;
+  std::vector<int> CBEdgeNodeMap;
   std::vector<int> CBCellMap;
   std::vector<std::vector<int>> CBNodeMapInCell;
 

@@ -160,8 +160,10 @@ public:
   double R_tr;
 
   std::vector<int> CBNodeMap;
+  std::vector<int> CBEdgeNodeMap;
   std::vector<int> CBCellMap;
   std::vector<std::vector<int>> CBNodeMapInCell;
+
   int CBExtraction;
 
   // For cell and node data
@@ -210,6 +212,7 @@ public:
 
   std::set<int> fluidUniqueCells;
   std::set<int> fluidUniqueNodes;
+  std::set<int> fluidUniqueCBEdgeNodes;
   std::set<int> fluidUniqueCBCells;
   std::set<int> fluidUniqueCBNodes;
   std::set<int> fluidUniqueCBCellsIdx;
@@ -228,7 +231,8 @@ public:
   void filterCell();
   void filterPhi();
   void filterNode();
-  void filterMapCB();
+  void filterMapCBNode();
+  void filterMapCBEdgeNode();
   void filterMapCBCell();
   void filterMapCBInCell();
   void filterVelocityDirichlet();

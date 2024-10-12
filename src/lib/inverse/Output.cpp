@@ -28,6 +28,7 @@ void InverseProblem::outputFowardSolutions(const int loop)
   }
 }
 
+
 /**
  * @brief Output w, q, l.
  */
@@ -112,6 +113,7 @@ void InverseProblem::outputVelocityData(const int loop)
     vtiFile = main.outputDir + "/data/data_" + to_string(loop) + "_" + to_string(t) + ".vti";
     data.exportVTI(vtiFile, t);
   }
+
 }
 
 /**

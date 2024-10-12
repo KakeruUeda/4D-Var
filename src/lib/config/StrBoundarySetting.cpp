@@ -104,7 +104,7 @@ void Config::setBoundaryPoiseuilleValue(std::string face)
     if (onBoundary){
       if (r < R){
         //value = (2.0 * Q / (PI * R * R)) * (1 - (r * r) / (R * R));
-        value = (2.0 * Q) * (1 - (r * r) / (R * R));
+        value = Q * (1 - (r * r) / (R * R));
       }else{
         value = 0.0;
       }
@@ -238,7 +238,7 @@ void Config::setControlBoundary()
     collectBoundary(
         [&](int, int j, int){ return j == 0; },
         [&](int, int j, int){ return j == 0; },
-        {0, 4, 5, 1});
+        {0, 1, 5, 4});
     break;
   case ControlBoundaryFace::front:
     collectBoundary(
@@ -250,7 +250,7 @@ void Config::setControlBoundary()
     collectBoundary(
         [&](int, int, int k){ return k == nz; },
         [&](int, int, int k){ return k == nz-1; },
-        {4, 7, 6, 5});
+        {4, 5, 6, 7});
     break;
   default:
     break;

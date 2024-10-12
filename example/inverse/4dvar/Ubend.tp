@@ -1,7 +1,7 @@
 Base
 {
   dim = 3
-  outputDir = "Ubend"
+  outputDir = "Ubend_int_reg2e-4"
   numOfOMP = 1
 }
 
@@ -61,13 +61,13 @@ DarcyParameter
 
 Inverse
 {
-  aCF = 1e5
-  bCF = 0e0
-  gCF = 0e0
+  aCF = 1e7
+  bCF = 2e-4
+  gCF = 2e-4
 
-  alphaX = 1e0 
-  alphaX0 = 2e0
-  loopMAX = 100
+  alphaX = 1e0
+  alphaX0 = 1e0
+  loopMAX = 1000
   outputItr = 5
 
   controlBoundary = "bottom" 
@@ -82,11 +82,11 @@ Data
   nSnapShot = 16
   snapInterval = 10
   snapTimeBeginItr = 0
-
+  
   nNodesInDataCell = 8 
   nxData = (27, 27, 27)
   lxData = (0.050625, 0.050625, 0.0513)
-  voxelVelocity = "average"
+  voxelVelocity = "interpolation"
 
   dataDir = "input/Ubend/dat/data"
 }

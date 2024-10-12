@@ -48,6 +48,7 @@ void InverseProblem::runSimulation()
 {
   main.outputDomain();
   compInitialOptimalVelocityField();
+
   std::ofstream cf(outputDir + "/dat/costFunction.dat");
 
   for(int loop = 0; loop < loopMax; loop++) {
@@ -74,6 +75,8 @@ void InverseProblem::runSimulation()
 
     adjoint.solveAdjoint(main, inletCB);
 
+    compOptimalCondition();
+
     if(loop % outputItr == 0) {
       outputFowardSolutions(loop);
       outputAdjointSolutions(loop);
@@ -84,8 +87,6 @@ void InverseProblem::runSimulation()
       outputGradients(loop);
     }
     MPI_Barrier(MPI_COMM_WORLD);
-
-    compOptimalCondition();
 
     armijoCriteriaX0(costFunction.total);
     armijoCriteriaX(costFunction.total);
@@ -106,7 +107,7 @@ bool InverseProblem::checkConvergence(std::ofstream &cf, const int loop)
     double diff = costFunction.history[loop] - costFunction.history[loop - 10];
     diff = fabs(diff);
 
-    if(diff < 1e-3) {
+    if(diff < 1e-4) {
       PetscPrintf(MPI_COMM_WORLD, "Converged. OptItr = %d", loop);
       cf.close();
       return true;
@@ -115,6 +116,39 @@ bool InverseProblem::checkConvergence(std::ofstream &cf, const int loop)
   return false;
 }
 
+void InverseProblem::compInletAveragedVeloicty(std::vector<std::array<double, 2>> &velArr)
+{ 
+  for(int t = 0; t < data.snap.nSnapShot; t++) {
+    double velAve = 0e0;
+    int count = 0;
+
+    for(int k = 0; k < data.nzData; k++) {
+      for(int j = 0; j < data.nyData; j++) {
+        for(int i = 0; i < data.nxData; i++) {
+          if(j == 0) {
+            if(data.voxel(k, j, i).v_mri(t, 0) == 0 && data.voxel(k, j, i).v_mri(t, 1) == 0 &&
+               data.voxel(k, j, i).v_mri(t, 2) == 0) {
+              continue;
+            }
+            double uu = data.voxel(k, j, i).v_mri(t, 0) * data.voxel(k, j, i).v_mri(t, 0);
+            double vv = data.voxel(k, j, i).v_mri(t, 1) * data.voxel(k, j, i).v_mri(t, 1);
+            double ww = data.voxel(k, j, i).v_mri(t, 2) * data.voxel(k, j, i).v_mri(t, 2);
+            velAve += sqrt(uu + vv + ww);
+            count++;
+          }
+        }
+      }
+    }
+
+    velAve = velAve;
+
+    std::array<double, 2> arr = {t * 0.02947812, velAve / count};
+    velArr.push_back(arr);
+
+  }
+}
+
+
 /**
  * @brief Guess initial condition.
  *        Getting initial velocity field for inverse problem
@@ -122,7 +156,10 @@ bool InverseProblem::checkConvergence(std::ofstream &cf, const int loop)
  */
 void InverseProblem::compInitialOptimalVelocityField()
 {
-  main.solveNaveirStokes(main.timeMax * 3);
+  std::vector<std::array<double, 2>> velArr;
+  compInletAveragedVeloicty(velArr);
+
+  main.solveNaveirStokes(main.timeMax * 3, velArr);
 
   for(int t = 0; t < main.timeMax; t++) {
     for(int in = 0; in < main.grid.node.nNodesGlobal; in++) {
@@ -132,7 +169,6 @@ void InverseProblem::compInitialOptimalVelocityField()
     }
   }
 
-  // take snapshot
   int snapCount = 0;
   for(int t = 0; t < main.timeMax; t++) {
     if((t - main.snap.snapTimeBeginItr) % main.snap.snapInterval == 0) {
@@ -140,6 +176,9 @@ void InverseProblem::compInitialOptimalVelocityField()
       snapCount++;
     }
   }
+
+  //std::vector<std::map<int, std::vector<double>>> vectorVelocitySet;
+  //main.solveNaveirStokes(velArr, vectorVelocitySet);
 
   for(int t = 0; t < main.timeMax; t++) {
     for(auto &[idx, vec] : main.dirichlet.velocitySet) {
@@ -155,14 +194,6 @@ void InverseProblem::compInitialOptimalVelocityField()
     }
   }
 
-  /*
-  for(int icb = 0; icb < inletCB.CBNodeMap.size(); icb++){
-    int in = inletCB.CBNodeMap[icb];
-    for(int d = 0; d < 3; d++){
-      X0(in, d) = 0e0;
-    }
-  }
-  */
 }
 
 /**
@@ -199,7 +230,7 @@ void InverseProblem::compCostFunction()
   case VoxelVelocity::INTERPOLATION:
     for(int t = 0; t < main.snap.nSnapShot; t++) {
       for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-        //data.interpolate(iv, t);
+        data.interpolate(iv, t);
       }
     }
     break;
@@ -212,9 +243,9 @@ void InverseProblem::compCostFunction()
   // term 1
   for(int t = 0; t < main.snap.nSnapShot; t++) {
     for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-      if(data.voxel(iv).mask < 0.999) {
-        continue;
-      }
+      //if(data.voxel(iv).mask < 0.999) {
+        //continue;
+      //}
       double dev = 0e0;
       double volume = data.dxData * data.dyData * data.dzData;
       double deltaT = main.dt * main.snap.snapInterval;
@@ -247,8 +278,8 @@ void InverseProblem::compCostFunction()
     for(int ic = 0; ic < inletCB.CBCellMap.size(); ic++) {
 
       for(int p = 0; p < nc; p++) {
-        for(int d = 0; d < dim - 1; d++) {
-          int n = inletCB.CBNodeMapInCell[ic][p];
+        int n = inletCB.CBNodeMapInCell[ic][p];
+        for(int d = 0; d < 2; d++) {
           mt2d.xCurrent(p, d) = main.grid.node.x[n][planeDir[d]];
         }
       }
@@ -262,16 +293,16 @@ void InverseProblem::compCostFunction()
         for(int i2 = 0; i2 < 2; i2++) {
           mt2d.setShapesInGauss(gauss, i1, i2);
           mt2d.setFactorsInGauss(gauss, i1, i2);
-          RegTerm2_inGaussIntegral(value2, nc, ic, t);
+          //RegTerm2_inGaussIntegral(value2, nc, ic, t);
           RegTerm3_inGaussIntegral(value3, nc, ic, t);
           RegTerm4_inGaussIntegral(value4, nc, ic, t);
-          RegTerm5_inGaussIntegral(value5, nc, ic, t);
+          //RegTerm5_inGaussIntegral(value5, nc, ic, t);
         }
       }
-      costFunction.term2 += 5e-1 * bCF * value2;
+      //costFunction.term2 += 5e-1 * bCF * value2;
       costFunction.term3 += 5e-1 * bCF * value3;
       costFunction.term4 += 5e-1 * bCF * value4;
-      costFunction.term5 += 5e-1 * bCF * value5;
+      //costFunction.term5 += 5e-1 * bCF * value5;
     }
   }
 
@@ -292,12 +323,12 @@ void InverseProblem::compCostFunction()
         for(int i3 = 0; i3 < 2; i3++) {
           mt3d.setShapesInGauss(gauss, i1, i2, i3);
           mt3d.setFactorsInGauss(gauss, i1, i2, i3);
-          RegTerm6_inGaussIntegral(value6, ic);
+          //RegTerm6_inGaussIntegral(value6, ic);
           RegTerm7_inGaussIntegral(value7, ic);
-        }
+        } 
       }
     }
-    costFunction.term6 += 5e-1 * gCF * value6;
+    //costFunction.term6 += 5e-1 * gCF * value6;
     costFunction.term7 += 5e-1 * gCF * value7;
   }
 
@@ -545,7 +576,7 @@ void InverseProblem::compInterpolatedFeeback(double (&feedback)[3], double (&poi
   ShapeFunction3D::C3D8_N(N, ss, tt, uu);
 
   auto velocity = [&](int iz, int iy, int ix, int d, const int t) -> double {
-    if(ix < 0 || iy < 0 || iz < 0 || ix >= main.grid.nx || iy >= main.grid.ny || iz >= main.grid.nz) {
+    if(ix < 0 || iy < 0 || iz < 0 || ix >= data.nxData || iy >= data.nyData || iz >= data.nzData) {
       return 0e0;
     }
     return data.voxel(iz, iy, ix).v_err(t, d);
@@ -607,6 +638,8 @@ void InverseProblem::compTimeInterpolatedFeedbackForce()
  */
 void InverseProblem::armijoCriteriaX0(const double fk)
 {
+  if(alphaX0 < 1e-7) return;
+
   const double c1 = 1e-4;
   Array2D<double> X0_tmp;
 
@@ -614,6 +647,8 @@ void InverseProblem::armijoCriteriaX0(const double fk)
   X0_tmp.fillZero();
 
   while(true) {
+    if(alphaX0 < 1e-7) break;
+
     X0_tmp = X0 + alphaX0 * (-gradX0);
 
     main.solveNavierStokes(X0_tmp, X);
@@ -622,6 +657,7 @@ void InverseProblem::armijoCriteriaX0(const double fk)
     double lk = costFunction.total;
 
     double tmp = 0e0;
+
     for(int in = 0; in < main.grid.nNodesGlobal; in++) {
       for(int d = 0; d < 3; d++) {
         tmp += -(gradX0(in, d) * gradX0(in, d));
@@ -646,6 +682,8 @@ void InverseProblem::armijoCriteriaX0(const double fk)
  */
 void InverseProblem::armijoCriteriaX(const double fk)
 {
+  if(alphaX < 1e-7) return;
+
   const double c1 = 1e-4;
   Array3D<double> X_tmp;
 
@@ -653,6 +691,8 @@ void InverseProblem::armijoCriteriaX(const double fk)
   X_tmp.fillZero();
 
   while(true) {
+    if(alphaX < 1e-7) break;
+
     X_tmp = X + alphaX * (-gradX);
 
     main.solveNavierStokes(X0, X_tmp);
@@ -661,6 +701,7 @@ void InverseProblem::armijoCriteriaX(const double fk)
     double lk = costFunction.total;
 
     double tmp = 0e0;
+
     for(int t = 0; t < adjoint.timeMax; t++) {
       if(t % main.snap.snapInterval == 0) {
         for(int in = 0; in < main.grid.nNodesGlobal; in++) {
@@ -670,6 +711,7 @@ void InverseProblem::armijoCriteriaX(const double fk)
         }
       }
     }
+    
     double l_tmp = fk + c1 * tmp * alphaX;
 
     if(lk <= l_tmp) {

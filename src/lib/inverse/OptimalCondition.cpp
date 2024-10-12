@@ -69,10 +69,10 @@ void InverseProblem::compOptimalCondition()
         for(int i2 = 0; i2 < 2; i2++) {
           mt2d.setShapesInGauss(gauss, i1, i2);
           mt2d.setFactorsInGauss(gauss, i1, i2);
-          OptCondX_Term1_inGaussIntegral(value1, nc, ic, t);
+          //OptCondX_Term1_inGaussIntegral(value1, nc, ic, t);
           OptCondX_Term2_inGaussIntegral(value2, nc, ic, t);
           OptCondX_Term3_inGaussIntegral(value3, nc, ic, t);
-          OptCondX_Term4_inGaussIntegral(value4, nc, ic, t);
+          //OptCondX_Term4_inGaussIntegral(value4, nc, ic, t);
           OptCondX_Term5_inGaussIntegral(value5, nc, ic, t);
         }
       }
@@ -80,14 +80,21 @@ void InverseProblem::compOptimalCondition()
       for(int p = 0; p < nc; p++) {
         int in = inletCB.CBNodeMapInCell[ic][p];
         for(int d = 0; d < 3; d++) {
-          gradX(t, in, d) += bCF * value1[p][d];
+          //gradX(t, in, d) += bCF * value1[p][d];
           gradX(t, in, d) += bCF * value2[p][d];
           gradX(t, in, d) += bCF * value3[p][d];
-          gradX(t, in, d) += bCF * value4[p][d];
+          //gradX(t, in, d) += bCF * value4[p][d];
           gradX(t, in, d) += value5[p][d];
         }
       }
     }
+
+    for(int ie = 0; ie < inletCB.CBEdgeNodeMap.size(); ie++) {
+      for(int d = 0; d < 3; d++) {
+        gradX(t, inletCB.CBEdgeNodeMap[ie], d) = 0e0;
+      }
+    }
+
   }
 
   VecTool::resize(value1, main.grid.cell.nNodesInCell, 3);
@@ -118,7 +125,7 @@ void InverseProblem::compOptimalCondition()
         for(int i3 = 0; i3 < 2; i3++) {
           mt3d.setShapesInGauss(gauss, i1, i2, i3);
           mt3d.setFactorsInGauss(gauss, i1, i2, i3);
-          OptCondX0_Term1_inGaussIntegral(value1, ic);
+          //OptCondX0_Term1_inGaussIntegral(value1, ic);
           OptCondX0_Term2_inGaussIntegral(value2, ic);
           OptCondX0_Term3_inGaussIntegral(value3, ic);
         }
@@ -128,21 +135,13 @@ void InverseProblem::compOptimalCondition()
     for(int p = 0; p < main.grid.cell.nNodesInCell; p++) {
       int in = main.grid.cell(ic).node[p];
       for(int d = 0; d < main.dim; d++) {
-        gradX0(in, d) += gCF * value1[p][d];
+        //gradX0(in, d) += gCF * value1[p][d];
         gradX0(in, d) += gCF * value2[p][d];
         gradX0(in, d) += value3[p][d];
       }
     }
   }
 
-  /*
-  for(int icb = 0; icb < inletCB.CBNodeMap.size(); icb++){
-    int in = inletCB.CBNodeMap[icb];
-    for(int d = 0; d < 3; d++){
-      gradX0(in, d) = 0e0;
-    }
-  }
-  */
 }
 
 void InverseProblem::OptCondX_Term1_inGaussIntegral(std::vector<std::vector<double>> &value, const int nc, const int ic,
@@ -333,7 +332,7 @@ void InverseProblem::OptCondX0_Term3_inGaussIntegral(std::vector<std::vector<dou
   double he = main.comp_he(mt3d.xCurrent);
   double f = main.comp_f(main.grid.cell(ic).phi);
 
-  main.tau = main.comp_tau(adjoint.adw, he);
+  main.tau = main.comp_tau(adjoint.advk1, he);
   //main.tau = main.comp_tau2(mt3d.dNdx, adjoint.adw, mt3d.nNodesInCell);
 
   for(int p = 0; p < main.grid.cell.nNodesInCell; p++) {

@@ -64,7 +64,7 @@ void Adjoint::setValuesInGaussIntegral(DirectProblem &main, Gauss &g2, const dou
   mt3d.weight = g2.weight[i1] * g2.weight[i2] * g2.weight[i3];
 
   setValue(main, ic, t);
-  tau = main.comp_tau(adw, he);
+  tau = main.comp_tau(advk1, he);
   //tau = main.comp_tau2(mt3d.dNdx, adw, mt3d.nNodesInCell);
 }
 
@@ -406,12 +406,12 @@ void Adjoint::setValue(DirectProblem &main, const int ic, const int t)
       int n = grid.cell(ic).node[p];
       if(t == timeMax - 1) {
         vk[d] += mt3d.N(p) * main.vt(t, n, d);
-        vk1[d] = 0e0;
-        vk2[d] = 0e0;
+        //vk1[d] += mt3d.N(p) * main.vt(t, n, d);
+        //vk2[d] += mt3d.N(p) * main.vt(t, n, d);
       } else if(t == timeMax - 2) {
         vk[d] += mt3d.N(p) * main.vt(t, n, d);
         vk1[d] += mt3d.N(p) * main.vt(t + 1, n, d);
-        vk2[d] = 0e0;
+        //vk2[d] += mt3d.N(p) * main.vt(t + 1, n, d);
       } else {
         vk[d] += mt3d.N(p) * main.vt(t, n, d);
         vk1[d] += mt3d.N(p) * main.vt(t + 1, n, d);
@@ -430,12 +430,12 @@ void Adjoint::setValue(DirectProblem &main, const int ic, const int t)
         int n = grid.cell(ic).node[p];
         if(t == timeMax - 1) {
           dvkdx[d][e] += mt3d.dNdx(p, e) * main.vt(t, n, d);
-          dvk1dx[d][e] = 0e0;
-          dvk2dx[d][e] = 0e0;
+          //dvk1dx[d][e] += mt3d.dNdx(p, e) * main.vt(t, n, d);
+          //dvk2dx[d][e] += mt3d.dNdx(p, e) * main.vt(t, n, d);
         } else if(t == timeMax - 2) {
           dvkdx[d][e] += mt3d.dNdx(p, e) * main.vt(t, n, d);
           dvk1dx[d][e] += mt3d.dNdx(p, e) * main.vt(t + 1, n, d);
-          dvk2dx[d][e] = 0e0;
+          //dvk2dx[d][e] += mt3d.dNdx(p, e) * main.vt(t + 1, n, d);
         } else {
           dvkdx[d][e] += mt3d.dNdx(p, e) * main.vt(t, n, d);
           dvk1dx[d][e] += mt3d.dNdx(p, e) * main.vt(t + 1, n, d);
@@ -454,12 +454,12 @@ void Adjoint::setValue(DirectProblem &main, const int ic, const int t)
       int n = grid.cell(ic).node[p];
       if(t == timeMax - 1) {
         dpkdx[d] += mt3d.dNdx(p, d) * main.pt(t, n);
-        dpk1dx[d] = 0e0;
-        dpk2dx[d] = 0e0;
+        //dpk1dx[d] += mt3d.dNdx(p, d) * main.pt(t, n);
+        //dpk2dx[d] += mt3d.dNdx(p, d) * main.pt(t, n);
       } else if(t == timeMax - 2) {
         dpkdx[d] += mt3d.dNdx(p, d) * main.pt(t, n);
         dpk1dx[d] += mt3d.dNdx(p, d) * main.pt(t + 1, n);
-        dpk2dx[d] = 0e0;
+        //dpk2dx[d] += mt3d.dNdx(p, d) * main.pt(t + 1, n);
       } else {
         dpkdx[d] += mt3d.dNdx(p, d) * main.pt(t, n);
         dpk1dx[d] += mt3d.dNdx(p, d) * main.pt(t + 1, n);
@@ -573,6 +573,7 @@ void Adjoint::boundaryIntegral(DirectProblem &main, MatrixXd &Klocal, VectorXd &
       MathTools2D::comp_dxdr(mt2d.dxdr, mt2d.dNdr, mt2d.xCurrent, nc);
       mt2d.detJ = MathTools2D::compDeterminant(mt2d.dxdr);
       mt2d.weight = g2.weight[i1] * g2.weight[i2];
+
       for(int ii = 0; ii < nc; ii++) {
         updateRowIndexPlane(grid, ii, ic);
         for(int jj = 0; jj < nc; jj++) {

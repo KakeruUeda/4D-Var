@@ -21,8 +21,6 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, const
     for(int d = 0; d < 3; d++) {
       tools.xCurrent(p, d) = 0e0;
       tools.xCurrent(p, d) = grid.node.x[n][d];
-      velCurrent(p, d) = 0e0;
-      velCurrent(p, d) = 1.5 * v(n, d) - 0.5 * vPrev(n, d);
     }
   }
 
@@ -30,6 +28,7 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, const
   double f = comp_f(grid.cell(ic).phi);
 
   Gauss g2(2);
+
   for(int i1 = 0; i1 < 2; i1++) {
     for(int i2 = 0; i2 < 2; i2++) {
       for(int i3 = 0; i3 < 2; i3++) {
@@ -82,7 +81,6 @@ void DirectProblem::settingInGauss(MathTools3D &tools, Gauss &g2, const double h
 void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, const double f, const int ii,
                                          const int jj)
 {
-  int n1, n2, n3;
   tools.vol = tools.detJ * tools.weight;
 
   tools.K(ii, jj) = 0e0;
@@ -148,9 +146,9 @@ void DirectProblem::usnsGaussIntegralLHS(MatrixXd &Klocal, MathTools3D &tools, c
   }
 
   // PSPG mass term
-  Klocal(IP, JU) += tau  * tools.dNdx(ii, 0) * tools.N(jj) / dt * tools.vol;
-  Klocal(IP, JV) += tau  * tools.dNdx(ii, 1) * tools.N(jj) / dt * tools.vol;
-  Klocal(IP, JW) += tau  * tools.dNdx(ii, 2) * tools.N(jj) / dt * tools.vol;
+  Klocal(IP, JU) += tau * tools.dNdx(ii, 0) * tools.N(jj) / dt * tools.vol;
+  Klocal(IP, JV) += tau * tools.dNdx(ii, 1) * tools.N(jj) / dt * tools.vol;
+  Klocal(IP, JW) += tau * tools.dNdx(ii, 2) * tools.N(jj) / dt * tools.vol;
 
   // PSPG asvection term
   for(int d = 0; d < 3; d++) {

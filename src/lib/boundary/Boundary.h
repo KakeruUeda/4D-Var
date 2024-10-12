@@ -27,6 +27,7 @@ public:
   ControlBoundaryFace inletFace;
   std::vector<bool> isBoundaryEdge;
   std::vector<int> CBNodeMap;
+  std::vector<int> CBEdgeNodeMap;
   std::vector<int> CBCellMap;
   std::vector<std::vector<int>> CBNodeMapInCell;
 
@@ -69,6 +70,7 @@ public:
   void updateValues(Array3D<double> &X, const int t);
   void eraseControlNodes(Cell &cell, ControlBoundary &cb);
   double comp_pulse(const double step);
+  double comp_pulse2(double timeNow, std::vector<std::array<double, 2>> &velArr);
 
 public:
   std::map<int, std::vector<double>> velocitySet;

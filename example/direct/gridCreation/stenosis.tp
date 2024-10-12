@@ -1,7 +1,7 @@
 Base
 {
   dim = 3
-  outputDir = "test"
+  outputDir = "stenosis_44x16x16"
   numOfOMP = 1
 }
 

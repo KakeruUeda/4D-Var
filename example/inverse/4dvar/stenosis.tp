@@ -1,7 +1,7 @@
 Base
 {
   dim = 3
-  outputDir = "stenosis"
+  outputDir = "stenosis_int_44x16x16"
   numOfOMP = 1
 }
 
@@ -61,13 +61,13 @@ DarcyParameter
 
 Inverse
 {
-  aCF = 1e1 
+  aCF = 2e1 
   bCF = 0e0
   gCF = 0e0
 
   alphaX = 1e0 
   alphaX0 = 2e0
-  loopMAX = 300
+  loopMAX = 10000
   outputItr = 5
 
   controlBoundary = "left" 
@@ -86,7 +86,8 @@ Data
   nNodesInDataCell = 8 
   nxData = (44, 16, 16)
   lxData = (5.5, 2.0, 2.0)
-  voxelVelocity = "average"
+  voxelVelocity = "interpolation"
 
-  dataDir = "input/stenosis/dat/data"
+  dataDir = "input/stenosis/dat/data_44x16x16"
 }
+

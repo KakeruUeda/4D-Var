@@ -27,7 +27,7 @@ void Config::setSolidDirichletValue()
 void Config::getUniqueCells()
 {
   for(int ic = 0; ic < phi.size(); ic++) {
-    if(phi[ic] > 1e-12) {
+    if(phi[ic] > 0) {
       fluidUniqueCells.insert(ic);
     }
   }
@@ -80,6 +80,21 @@ void Config::getUniqueCBNodes()
     if(phi[cb] > 1e-12) {
       for(int node : CBNodeMapInCell[icb]) {
         fluidUniqueCBNodes.insert(node);
+      }
+    }
+  }
+
+  std::set<int> tmp;
+  tmp = fluidUniqueCBNodes;
+
+  for(int icb = 0; icb < CBCellMap.size(); icb++) {
+    int cb = CBCellMap[icb];
+    if(phi[cb] < 1e-12) {
+      for(int node : CBNodeMapInCell[icb]) {
+        int erased = tmp.erase(node);
+        if(erased > 0) {
+          fluidUniqueCBEdgeNodes.insert(node);
+        }
       }
     }
   }
@@ -146,7 +161,7 @@ void Config::filterNode()
 /**
  * @brief Filter control boundary nodes.
  */
-void Config::filterMapCB()
+void Config::filterMapCBNode()
 {
   std::vector<int> filteredValues;
 
@@ -155,6 +170,20 @@ void Config::filterMapCB()
   }
 
   CBNodeMap = std::move(filteredValues);
+}
+
+/**
+ * @brief Filter nodes based on unique nodes.
+ */
+void Config::filterMapCBEdgeNode()
+{
+  std::vector<int> filteredValues;
+
+  for(int in : fluidUniqueCBEdgeNodes) {
+    filteredValues.push_back(in);
+  }
+
+  CBEdgeNodeMap = std::move(filteredValues);
 }
 
 /**
@@ -239,6 +268,10 @@ void Config::applyMapping()
     value = nodeMapping[value];
   }
 
+  for(auto &value : CBEdgeNodeMap) {
+    value = nodeMapping[value];
+  }
+
   std::map<int, std::vector<double>> vtmp;
   for(auto &entry : vDirichlet) {
     vtmp[nodeMapping[entry.first]] = std::move(entry.second);
@@ -281,7 +314,8 @@ void Config::filterFluidGrid()
   filterNode();
 
   if(CBExtraction == ON) {
-    filterMapCB();
+    filterMapCBNode();
+    filterMapCBEdgeNode();
     filterMapCBCell();
     filterMapCBInCell();
   }

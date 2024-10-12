@@ -79,7 +79,9 @@ public:
   void solveNavierStokes(Array2D<double> &X0, Array3D<double> &X);
 
   void updateInitialVelocity(Array2D<double> &X0);
-  void solveNaveirStokes(const int stepMax);
+  void solveNaveirStokes(const int stepMax, std::vector<std::array<double, 2>> &velArr);
+  void solveNaveirStokes(std::vector<std::array<double, 2>> &velArr, 
+                         std::vector<std::map<int, std::vector<double>>> &vectorVelocitySet);
 };
 
 #endif

@@ -93,6 +93,7 @@ public:
   void runSimulation();
 
 private:
+  void compInletAveragedVeloicty(std::vector<std::array<double, 2>> &velArr);
   void compInitialOptimalVelocityField();
 
   // Cost function
