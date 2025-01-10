@@ -94,6 +94,10 @@ public:
 
 private:
   void compInletAveragedVeloicty(std::vector<std::array<double, 2>> &velArr);
+  void compInletFlowRate(std::vector<std::array<double, 2>> &velArr);
+  void compInletFlowRate_X(std::vector<std::array<double, 2>> &velArr);
+  void compInletFlowRate_tmp(const int n, std::vector<std::array<double, 2>> &velArr);
+  void compInletMaxVelocity(std::vector<std::array<double, 2>> &velArr);
   void compInitialOptimalVelocityField();
 
   // Cost function

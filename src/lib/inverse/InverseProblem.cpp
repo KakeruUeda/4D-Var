@@ -49,6 +49,8 @@ void InverseProblem::runSimulation()
   main.outputDomain();
   compInitialOptimalVelocityField();
 
+  data.comp_v_mri_t(main.dt, main.timeMax);
+
   std::ofstream cf(outputDir + "/dat/costFunction.dat");
 
   for(int loop = 0; loop < loopMax; loop++) {
@@ -60,18 +62,18 @@ void InverseProblem::runSimulation()
     costFunction.history.push_back(costFunction.total);
 
     if(mpi.myId == 0) {
-      cf << costFunction.term1 << " " << costFunction.term2 << " " 
-         << costFunction.term3 << " " << costFunction.term4 << " " 
-         << costFunction.term5 << " " << costFunction.term6 << " " 
-         << costFunction.term7 << " " << costFunction.total;
+      cf << costFunction.term1 << " " << costFunction.term2 << " " << costFunction.term3 << " " << costFunction.term4
+         << " " << costFunction.term5 << " " << costFunction.term6 << " " << costFunction.term7 << " "
+         << costFunction.total;
       cf << std::endl;
     }
 
     bool isConverged = checkConvergence(cf, loop);
-    if(isConverged) break;
+    if(isConverged)
+      break;
 
     compFeedbackForce();
-    compTimeInterpolatedFeedbackForce();
+    //compTimeInterpolatedFeedbackForce();
 
     adjoint.solveAdjoint(main, inletCB);
 
@@ -79,12 +81,12 @@ void InverseProblem::runSimulation()
 
     if(loop % outputItr == 0) {
       outputFowardSolutions(loop);
-      outputAdjointSolutions(loop);
-      outputVelocityBIN(loop);
-      outputControlVariables(loop);
+      //outputAdjointSolutions(loop);
+      //outputVelocityBIN(loop);
+      //outputControlVariables(loop);
       outputVelocityData(loop);
-      outputFeedbackForce(loop);
-      outputGradients(loop);
+      //outputFeedbackForce(loop);
+      //outputGradients(loop);
     }
     MPI_Barrier(MPI_COMM_WORLD);
 
@@ -107,7 +109,7 @@ bool InverseProblem::checkConvergence(std::ofstream &cf, const int loop)
     double diff = costFunction.history[loop] - costFunction.history[loop - 10];
     diff = fabs(diff);
 
-    if(diff < 1e-4) {
+    if(diff < 1e-3) {
       PetscPrintf(MPI_COMM_WORLD, "Converged. OptItr = %d", loop);
       cf.close();
       return true;
@@ -117,8 +119,9 @@ bool InverseProblem::checkConvergence(std::ofstream &cf, const int loop)
 }
 
 void InverseProblem::compInletAveragedVeloicty(std::vector<std::array<double, 2>> &velArr)
-{ 
+{
   for(int t = 0; t < data.snap.nSnapShot; t++) {
+    double velSum = 0e0;
     double velAve = 0e0;
     int count = 0;
 
@@ -126,28 +129,236 @@ void InverseProblem::compInletAveragedVeloicty(std::vector<std::array<double, 2>
       for(int j = 0; j < data.nyData; j++) {
         for(int i = 0; i < data.nxData; i++) {
           if(j == 0) {
-            if(data.voxel(k, j, i).v_mri(t, 0) == 0 && data.voxel(k, j, i).v_mri(t, 1) == 0 &&
-               data.voxel(k, j, i).v_mri(t, 2) == 0) {
+            if(fabs(data.voxel(k, j, i).v_mri(t, 1)) < 1e-8) {
               continue;
             }
-            double uu = data.voxel(k, j, i).v_mri(t, 0) * data.voxel(k, j, i).v_mri(t, 0);
-            double vv = data.voxel(k, j, i).v_mri(t, 1) * data.voxel(k, j, i).v_mri(t, 1);
-            double ww = data.voxel(k, j, i).v_mri(t, 2) * data.voxel(k, j, i).v_mri(t, 2);
-            velAve += sqrt(uu + vv + ww);
+            velSum += data.voxel(k, j, i).v_mri(t, 1);
             count++;
           }
         }
       }
     }
 
-    velAve = velAve;
+    velAve = velSum / count;
 
-    std::array<double, 2> arr = {t * 0.02947812, velAve / count};
+    if(mpi.myId == 0)
+      std::cout << "t = " << t << " velAve = " << velAve << std::endl;
+
+    std::array<double, 2> arr = {t * 0.02947812, velAve};
     velArr.push_back(arr);
+  }
 
+  MPI_Finalize();
+  exit(1);
+}
+
+void InverseProblem::compInletFlowRate(std::vector<std::array<double, 2>> &velArr)
+{
+  double dt = main.dt * data.snap.snapInterval;
+
+  for(int t = 0; t < data.snap.nSnapShot; t++) {
+    double flowRate = 0e0;
+
+    for(int k = 0; k < data.nzData; k++) {
+      for(int j = 0; j < data.nyData; j++) {
+        for(int i = 0; i < data.nxData; i++) {
+          if(data.voxel(k, j, i).mask < 0.9999) continue;
+          if(j == 0) {
+            flowRate += data.voxel(k, j, i).v_mri(t, 1) * data.dxData * data.dzData;
+          }
+        }
+      }
+    }
+
+    if(mpi.myId == 0) {
+      std::cout << "flowRate = " << flowRate << std::endl;
+    }
+
+    std::array<double, 2> arr = {t * dt, flowRate};
+    velArr.push_back(arr);
+  }
+
+  // MPI_Finalize();
+  // exit(1);
+}
+
+void InverseProblem::compInletFlowRate_X(std::vector<std::array<double, 2>> &velArr)
+{
+  double dt = main.dt * data.snap.snapInterval;
+
+  int sub_nx = 500;
+  int sub_nz = 500;
+
+  int nSubCell = sub_nx * sub_nz;
+  int nSubNode = (sub_nx + 1) * (sub_nz + 1);
+
+  double sub_dx = main.grid.lx / sub_nx;
+  double sub_dz = main.grid.lz / sub_nz;
+
+  std::vector<std::vector<double>> sub_x(nSubNode, std::vector<double>(2, 0e0));
+
+  for(int k = 0; k < sub_nz + 1; k++) {
+    for(int i = 0; i < sub_nx + 1; i++) {
+      sub_x[i + k * (sub_nx + 1)][0] = i * sub_dx;
+      sub_x[i + k * (sub_nx + 1)][1] = k * sub_dz;
+    }
+  }
+
+  mt2d.nNodesInCell = 4;
+  mt2d.N.allocate(4);
+  mt2d.xCurrent.allocate(4, 2);
+  mt2d.dNdr.allocate(4, 2);
+  mt2d.dNdx.allocate(4, 2);
+
+  for(int t = 0; t < data.snap.nSnapShot; t++) {
+    double flowRate = 0e0;
+    std::vector<double> vel_y;
+
+    for(int k = 0; k < data.nzData; k++) {
+      for(int j = 0; j < data.nyData; j++) {
+        for(int i = 0; i < data.nxData; i++) {
+          if(j == 0) {
+            vel_y.push_back(data.voxel(k, j, i).v_mri(t, 1));
+          }
+        }
+      }
+    }
+
+    std::vector<double> vel_y_int(nSubNode, 0e0);
+
+    for(int k = 0; k < sub_nz + 1; k++) {
+      for(int i = 0; i < sub_nx + 1; i++) {
+        int in = i + k * (sub_nx + 1);
+
+        double px = i * sub_dx - data.dxData / 2e0;
+        double pz = k * sub_dz - data.dzData / 2e0;
+
+        int ix = px / data.dxData + EPS;
+        int iz = pz / data.dzData + EPS;
+
+        if(px < 0 || px >= main.grid.lx - data.dxData || pz < 0 || pz >= main.grid.lz - data.dzData) {
+          continue;
+        }
+
+        double s = (px - (ix * data.dxData + (data.dxData / 2e0))) / (data.dxData / 2e0);
+        double u = (pz - (iz * data.dzData + (data.dzData / 2e0))) / (data.dzData / 2e0);
+
+        if(s < -1 - EPS || s > 1 + EPS || u < -1 - EPS || u > 1 + EPS) {
+          if(mpi.myId == 0)
+            std::cerr << "px = " << px << " pz = " << pz << " ix = " << ix << " iz = " << iz << " s = " << s
+                      << " u = " << u << "\n";
+          throw std::runtime_error("Interpolation error: s or u out of bounds.");
+        }
+
+        Array1D<double> N(4);
+        ShapeFunction2D::C2D4_N(N, s, u);
+        vel_y_int[in] = N(0) * vel_y[ix + iz * data.nxData] + N(1) * vel_y[(ix + 1) + iz * data.nxData] +
+                        N(2) * vel_y[(ix + 1) + (iz + 1) * data.nxData] + N(3) * vel_y[ix + (iz + 1) * data.nxData];
+      }
+    }
+
+    for(int k = 0; k < sub_nz; k++) {
+      for(int i = 0; i < sub_nx; i++) {
+        for(int d = 0; d < 2; d++) {
+          mt2d.xCurrent(0, d) = sub_x[i + k * (sub_nx + 1)][d];
+          mt2d.xCurrent(1, d) = sub_x[(i + 1) + k * (sub_nx + 1)][d];
+          mt2d.xCurrent(2, d) = sub_x[(i + 1) + (k + 1) * (sub_nx + 1)][d];
+          mt2d.xCurrent(3, d) = sub_x[i + (k + 1) * (sub_nx + 1)][d];
+        }
+
+        Gauss g2(2);
+
+        for(int i2 = 0; i2 < 2; i2++) {
+          for(int i1 = 0; i1 < 2; i1++) {
+            mt2d.setShapesInGauss(g2, i1, i2);
+            mt2d.setFactorsInGauss(g2, i1, i2);
+
+            flowRate += mt2d.vol * (vel_y_int[i + k * (sub_nx + 1)] * mt2d.N(0) +
+                                    vel_y_int[(i + 1) + k * (sub_nx + 1)] * mt2d.N(1) +
+                                    vel_y_int[(i + 1) + (k + 1) * (sub_nx + 1)] * mt2d.N(2) +
+                                    vel_y_int[i + (k + 1) * (sub_nx + 1)] * mt2d.N(3));
+          }
+        }
+      }
+    }
+
+    if(mpi.myId == 0) {
+      std::cout << "flowRateX = " << flowRate << std::endl;
+    }
+  }
+
+  MPI_Finalize();
+  exit(1);
+}
+
+void InverseProblem::compInletFlowRate_tmp(const int n, std::vector<std::array<double, 2>> &velArr)
+{
+  double dt = main.dt * data.snap.snapInterval;
+
+  for(int t = 0; t < data.snap.nSnapShot; t++) {
+    double flowRate = 0e0;
+
+    for(int k = 0; k < data.nzData; k++) {
+      for(int j = 0; j < data.nyData; j++) {
+        for(int i = 0; i < data.nxData; i++) {
+          if(j == 0) {
+            if(fabs(data.voxel(k, j, i).v_mri(t, 1)) > 0.5)
+              continue;
+            flowRate += data.voxel(k, j, i).v_mri(t, 1) * data.dxData * data.dzData;
+          }
+        }
+      }
+    }
+
+    std::array<double, 2> arr;
+
+    if(n == 0) {
+      arr = {t * dt, flowRate};
+      if(mpi.myId == 0)
+        std::cout << 0.6 * flowRate << std::endl;
+    } else if(n == 1) {
+      arr = {t * dt, flowRate};
+      if(mpi.myId == 0)
+        std::cout << flowRate << std::endl;
+    } else if(n == 2) {
+      arr = {t * dt, flowRate};
+    }
+
+    velArr.push_back(arr);
   }
 }
 
+void InverseProblem::compInletMaxVelocity(std::vector<std::array<double, 2>> &velArr)
+{
+  double dt = main.dt * data.snap.snapInterval;
+
+  for(int t = 0; t < data.snap.nSnapShot; t++) {
+    double max = 0e0;
+
+    for(int k = 0; k < data.nzData; k++) {
+      for(int j = 0; j < data.nyData; j++) {
+        for(int i = 0; i < data.nxData; i++) {
+          if(j == 0) {
+            if((i >= 7 && i <= 18) && (k >= 8 && k <= 19)) {
+              if(fabs(data.voxel(k, j, i).v_mri(t, 1)) > 0.5)
+                continue;
+              double max_tmp = data.voxel(k, j, i).v_mri(t, 1);
+              if(max_tmp > max) {  // > 0 only
+                max = max_tmp;
+              }
+            }
+          }
+        }
+      }
+    }
+
+    if(mpi.myId == 0)
+      std::cout << max << std::endl;
+
+    std::array<double, 2> arr = {t * dt, max};
+    velArr.push_back(arr);
+  }
+}
 
 /**
  * @brief Guess initial condition.
@@ -157,10 +368,23 @@ void InverseProblem::compInletAveragedVeloicty(std::vector<std::array<double, 2>
 void InverseProblem::compInitialOptimalVelocityField()
 {
   std::vector<std::array<double, 2>> velArr;
-  compInletAveragedVeloicty(velArr);
+  //compInletFlowRate(velArr);
+  //compInletFlowRate_X(velArr);
+  //compInletAveragedVeloicty(velArr);
+  compInletMaxVelocity(velArr);
 
   main.solveNaveirStokes(main.timeMax * 3, velArr);
 
+  /*
+  main.v.fillZero();
+  main.vPrev.fillZero();
+  main.p.fillZero();
+
+  main.vt.fillZero();
+  main.pt.fillZero();
+  */
+
+  /*
   for(int t = 0; t < main.timeMax; t++) {
     for(int in = 0; in < main.grid.node.nNodesGlobal; in++) {
       for(int d = 0; d < 3; d++) {
@@ -176,12 +400,34 @@ void InverseProblem::compInitialOptimalVelocityField()
       snapCount++;
     }
   }
+  */
 
-  //std::vector<std::map<int, std::vector<double>>> vectorVelocitySet;
-  //main.solveNaveirStokes(velArr, vectorVelocitySet);
+  // std::vector<std::array<double, 2>> velArr0, velArr1;
+  // compInletFlowRate_tmp(0, velArr0);
+  // compInletFlowRate_tmp(1, velArr1);
+
+  // std::vector<std::map<int, std::vector<double>>> vectorVelocitySet;
+  // std::vector<std::map<int, std::vector<double>>> vectorVelocitySet_dummy;
+
+  // main.dirichlet.setValuesZero(main.grid.nDofsGlobal);
+  // main.dirichlet.velocitySetInit = main.dirichlet.velocitySet;
+
+  // main.solveNaveirStokes(velArr0, vectorVelocitySet_dummy);
+  // main.solveNaveirStokes(velArr1, vectorVelocitySet_dummy);
+  // main.solveNaveirStokes(velArr1, vectorVelocitySet_dummy);
+  // main.solveNaveirStokes(velArr1, vectorVelocitySet);
+
+  // for(int in = 0; in < main.grid.node.nNodesGlobal; in++) {
+  //   for(int d = 0; d < 3; d++) {
+  //     main.v0(in, d) = main.vt(0, in, d);
+  //   }
+  // }
+
+  std::vector<std::map<int, std::vector<double>>> vectorVelocitySet;
+  main.solveNaveirStokes(velArr, vectorVelocitySet);
 
   for(int t = 0; t < main.timeMax; t++) {
-    for(auto &[idx, vec] : main.dirichlet.velocitySet) {
+    for(auto &[idx, vec] : vectorVelocitySet[t]) {
       for(int d = 0; d < 3; d++) {
         X(t, idx, d) = vec[d];
       }
@@ -193,7 +439,6 @@ void InverseProblem::compInitialOptimalVelocityField()
       X0(in, d) = main.v0(in, d);
     }
   }
-
 }
 
 /**
@@ -209,20 +454,46 @@ void InverseProblem::compCostFunction()
   costFunction.term6 = 0e0;
   costFunction.term7 = 0e0;
 
-  for(int t = 0; t < main.snap.nSnapShot; t++) {
+  // for(int t = 0; t < main.snap.nSnapShot; t++) {
+  //   for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+  //     for(int d = 0; d < dim; d++) {
+  //       data.voxel(iv).v_cfd(t, d) = 0e0;
+  //       data.voxel(iv).v_err(t, d) = 0e0;
+  //     }
+  //   }
+  // }
+
+  // switch(data.vvox) {
+  // case VoxelVelocity::AVERAGE:
+  //   for(int t = 0; t < main.snap.nSnapShot; t++) {
+  //     for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+  //       data.average(iv, t);
+  //     }
+  //   }
+  //   break;
+
+  // case VoxelVelocity::INTERPOLATION:
+  //   for(int t = 0; t < main.snap.nSnapShot; t++) {
+  //     for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+  //       data.interpolate(iv, t);
+  //     }
+  //   }
+  //   break;
+
+  for(int t = 0; t < main.timeMax; t++) {
     for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
       for(int d = 0; d < dim; d++) {
-        data.voxel(iv).v_cfd(t, d) = 0e0;
-        data.voxel(iv).v_err(t, d) = 0e0;
+        data.voxel(iv).v_cfd_t(t, d) = 0e0;
+        data.voxel(iv).v_err_t(t, d) = 0e0;
       }
     }
   }
 
   switch(data.vvox) {
   case VoxelVelocity::AVERAGE:
-    for(int t = 0; t < main.snap.nSnapShot; t++) {
+    for(int t = 0; t < main.timeMax; t++) {
       for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-        data.average(iv, t);
+        data.average_t(main.vt, iv, t);
       }
     }
     break;
@@ -230,7 +501,7 @@ void InverseProblem::compCostFunction()
   case VoxelVelocity::INTERPOLATION:
     for(int t = 0; t < main.snap.nSnapShot; t++) {
       for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-        data.interpolate(iv, t);
+        //data.interpolate(iv, t);
       }
     }
     break;
@@ -240,23 +511,38 @@ void InverseProblem::compCostFunction()
     exit(1);
   }
 
+  // // term 1
+  // for(int t = 0; t < main.snap.nSnapShot; t++) {
+  //   for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+  //     //if(data.voxel(iv).mask < 0.999) {
+  //     //continue;
+  //     //}
+  //     double dev = 0e0;
+  //     double volume = data.dxData * data.dyData * data.dzData;
+  //     double deltaT = main.dt * main.snap.snapInterval;
+  //     for(int d = 0; d < dim; d++) {
+  //       data.voxel(iv).v_err(t, d) = data.voxel(iv).v_cfd(t, d) - data.voxel(iv).v_mri(t, d);
+  //       dev += data.voxel(iv).v_err(t, d) * data.voxel(iv).v_err(t, d);
+  //     }
+  //     costFunction.term1 += 5e-1 * aCF * dev * volume * deltaT;
+  //   }
+  // }
+
   // term 1
-  for(int t = 0; t < main.snap.nSnapShot; t++) {
+  for(int t = 0; t < main.timeMax; t++) {
     for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-      //if(data.voxel(iv).mask < 0.999) {
-        //continue;
-      //}
       double dev = 0e0;
       double volume = data.dxData * data.dyData * data.dzData;
-      double deltaT = main.dt * main.snap.snapInterval;
+
+      if(data.voxel(iv).mask < 0.9999) continue;
+
       for(int d = 0; d < dim; d++) {
-        data.voxel(iv).v_err(t, d) = data.voxel(iv).v_cfd(t, d) - data.voxel(iv).v_mri(t, d);
-        dev += data.voxel(iv).v_err(t, d) * data.voxel(iv).v_err(t, d);
+        data.voxel(iv).v_err_t(t, d) = data.voxel(iv).v_cfd_t(t, d) - data.voxel(iv).v_mri_t(t, d);
+        dev += data.voxel(iv).v_err_t(t, d) * data.voxel(iv).v_err_t(t, d);
       }
-      costFunction.term1 += 5e-1 * aCF * dev * volume * deltaT;
+      costFunction.term1 += 5e-1 * aCF * dev * volume * main.dt;
     }
   }
-
   int nc = inletCB.CBNodeMapInCell[0].size();
 
   Gauss gauss(2);
@@ -325,7 +611,7 @@ void InverseProblem::compCostFunction()
           mt3d.setFactorsInGauss(gauss, i1, i2, i3);
           //RegTerm6_inGaussIntegral(value6, ic);
           RegTerm7_inGaussIntegral(value7, ic);
-        } 
+        }
       }
     }
     //costFunction.term6 += 5e-1 * gCF * value6;
@@ -497,7 +783,13 @@ void InverseProblem::RegTerm7_inGaussIntegral(double &value, const int ic)
  */
 void InverseProblem::compFeedbackForce()
 {
-  for(int t = 0; t < main.snap.nSnapShot; t++) {
+  mt3d.nNodesInCell = main.grid.cell.nNodesInCell;
+  mt3d.N.allocate(main.grid.cell.nNodesInCell);
+  mt3d.dNdr.allocate(main.grid.cell.nNodesInCell, 3);
+  mt3d.dNdx.allocate(main.grid.cell.nNodesInCell, 3);
+  mt3d.xCurrent.allocate(main.grid.cell.nNodesInCell, 3);
+
+  for(int t = 0; t < main.timeMax; t++) {
     for(int in = 0; in < main.grid.node.nNodesGlobal; in++) {
       for(int d = 0; d < dim; d++) {
         adjoint.feedbackForce(t, in, d) = 0e0;
@@ -517,12 +809,6 @@ void InverseProblem::compFeedbackForce()
 void InverseProblem::assembleFeedbackForce(const int ic, const int t)
 {
   Gauss g2(2);
-
-  mt3d.nNodesInCell = main.grid.cell.nNodesInCell;
-  mt3d.N.allocate(main.grid.cell.nNodesInCell);
-  mt3d.dNdr.allocate(main.grid.cell.nNodesInCell, 3);
-  mt3d.dNdx.allocate(main.grid.cell.nNodesInCell, 3);
-  mt3d.xCurrent.allocate(main.grid.cell.nNodesInCell, 3);
 
   for(int p = 0; p < main.grid.cell.nNodesInCell; p++) {
     for(int d = 0; d < dim; d++) {
@@ -579,7 +865,7 @@ void InverseProblem::compInterpolatedFeeback(double (&feedback)[3], double (&poi
     if(ix < 0 || iy < 0 || iz < 0 || ix >= data.nxData || iy >= data.nyData || iz >= data.nzData) {
       return 0e0;
     }
-    return data.voxel(iz, iy, ix).v_err(t, d);
+    return data.voxel(iz, iy, ix).v_err_t(t, d);
   };
 
   for(int d = 0; d < 3; d++) {
@@ -602,6 +888,7 @@ void InverseProblem::feedbackGaussIntegral(double (&feedback)[3], const int ic, 
     }
   }
 }
+
 
 /**
  * @brief Interpolate the feedback force at each CFD time step.
@@ -632,13 +919,14 @@ void InverseProblem::compTimeInterpolatedFeedbackForce()
   }
 }
 
-
 /**
- * @brief Decide step length for X0.
+ * @brief Decide step 
+ * length for X0.
  */
 void InverseProblem::armijoCriteriaX0(const double fk)
 {
-  if(alphaX0 < 1e-7) return;
+  if(alphaX0 < 1e-7)
+    return;
 
   const double c1 = 1e-4;
   Array2D<double> X0_tmp;
@@ -647,7 +935,8 @@ void InverseProblem::armijoCriteriaX0(const double fk)
   X0_tmp.fillZero();
 
   while(true) {
-    if(alphaX0 < 1e-7) break;
+    if(alphaX0 < 1e-7)
+      break;
 
     X0_tmp = X0 + alphaX0 * (-gradX0);
 
@@ -682,7 +971,8 @@ void InverseProblem::armijoCriteriaX0(const double fk)
  */
 void InverseProblem::armijoCriteriaX(const double fk)
 {
-  if(alphaX < 1e-7) return;
+  if(alphaX < 1e-7)
+    return;
 
   const double c1 = 1e-4;
   Array3D<double> X_tmp;
@@ -691,7 +981,8 @@ void InverseProblem::armijoCriteriaX(const double fk)
   X_tmp.fillZero();
 
   while(true) {
-    if(alphaX < 1e-7) break;
+    if(alphaX < 1e-7)
+      break;
 
     X_tmp = X + alphaX * (-gradX);
 
@@ -711,7 +1002,7 @@ void InverseProblem::armijoCriteriaX(const double fk)
         }
       }
     }
-    
+
     double l_tmp = fk + c1 * tmp * alphaX;
 
     if(lk <= l_tmp) {

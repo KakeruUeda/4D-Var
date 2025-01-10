@@ -80,6 +80,15 @@ double FEM::comp_he(Array2D<double> &x)
 
 
 /**
+ * @brief Compute element length 2.
+ */
+double FEM::comp_he(double dx, double dy, double dz)
+{
+  return sqrt(dx * dx + dy * dy + dz * dz);
+}
+
+
+/**
  * @brief Compute Darcy resistance.
  */
 double FEM::comp_f(const double phi)

@@ -136,7 +136,7 @@ Spline3D::computeCoefficients(const std::vector<double> &x, const std::vector<do
     std::vector<std::vector<double>> w_k(y.size(), std::vector<double>(x.size()));
     for(int i = 0; i < y.size(); ++i) {
       for(int j = 0; j < x.size(); ++j) {
-        w_k[i][j] = w[k][i][j]; 
+        w_k[i][j] = w[k][i][j];
       }
     }
     coeffs_z_fixed[k] = Spline2D::computeCoefficients(x, y, w_k);
@@ -146,8 +146,8 @@ Spline3D::computeCoefficients(const std::vector<double> &x, const std::vector<do
 }
 
 double Spline3D::evaluate(const std::vector<std::vector<std::vector<Coefficients>>> &coeffs_z_fixed,
-                                 const std::vector<double> &x, const std::vector<double> &y,
-                                 const std::vector<double> &z, double x_query, double y_query, double z_query)
+                          const std::vector<double> &x, const std::vector<double> &y, const std::vector<double> &z,
+                          double x_query, double y_query, double z_query)
 {
   std::vector<double> w_interpolated(z.size());
   for(int k = 0; k < z.size(); ++k) {

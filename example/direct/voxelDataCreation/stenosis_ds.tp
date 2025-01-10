@@ -1,7 +1,7 @@
 Base
 {
   dim = 3
-  outputDir = "stenosis_ds_12x8x8"
+  outputDir = "stenosis_ds_36x24x24"
   numOfOMP = 1
 }
 
@@ -21,7 +21,7 @@ Grid
   DataGrid
   {
     nNodesInDataCell = 8
-    nxData = (12, 8, 8)
+    nxData = (36, 24, 24)
     lxData = (3.0, 2.0, 2.0)
     voxelVelocity = "average"
   }

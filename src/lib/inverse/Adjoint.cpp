@@ -60,9 +60,9 @@ void Adjoint::solveAdjoint(DirectProblem &main, ControlBoundary &cb)
       VectorXd Flocal(size);
       Flocal.setZero();
       if(grid.node.subId[in] == mpi.myId) {
-        Flocal(0) -= feedbackForceT(t, in, 0);
-        Flocal(1) -= feedbackForceT(t, in, 1);
-        Flocal(2) -= feedbackForceT(t, in, 2);
+        Flocal(0) -= feedbackForce(t, in, 0);
+        Flocal(1) -= feedbackForce(t, in, 1);
+        Flocal(2) -= feedbackForce(t, in, 2);
         petsc.setVecValue(grid.node.dofsBCsMapNew[n], Flocal);
       }
     }

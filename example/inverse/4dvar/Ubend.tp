@@ -1,7 +1,7 @@
 Base
 {
   dim = 3
-  outputDir = "Ubend_int_reg2e-4"
+  outputDir = "Ubend_ave_reg1e-4"
   numOfOMP = 1
 }
 
@@ -33,7 +33,7 @@ Grid
 
 Boundary
 {
-  velocityDirichlet = "input/Ubend/dat/velocityDirichlet.dat"
+  velocityDirichlet = "input/Ubend/dat/velocityDirichlet_maxVel.dat"
   pressureDirichlet = "input/Ubend/dat/pressureDirichlet.dat"
 }
 
@@ -46,8 +46,8 @@ PysicalParameter
 
 TimeParameter
 {
-  dt = 0.002947812
-  timeMax = 151
+  dt = 0.005895624
+  timeMax = 156
   pulsatileFlow = "OFF"
   pulseBeginItr = 100
   T = 0.5
@@ -62,8 +62,8 @@ DarcyParameter
 Inverse
 {
   aCF = 1e7
-  bCF = 2e-4
-  gCF = 2e-4
+  bCF = 1e-4
+  gCF = 1e-4
 
   alphaX = 1e0
   alphaX0 = 1e0
@@ -73,20 +73,21 @@ Inverse
   controlBoundary = "bottom" 
   nControlNodesInCell = 4 
   controlBoundaryNodeMap = "input/Ubend/dat/controlBoundaryNodeMap.dat" 
+  controlBoundaryEdgeNodeMap = "input/Ubend/dat/controlBoundaryEdgeNodeMap.dat"
   controlBoundaryCellMap = "input/Ubend/dat/controlBoundaryCellMap.dat" 
   controlBoundaryNodeMapInCell = "input/Ubend/dat/controlBoundaryNodeMapInCell.dat"
 }
 
 Data
 {
-  nSnapShot = 16
-  snapInterval = 10
+  nSnapShot = 32
+  snapInterval = 5
   snapTimeBeginItr = 0
   
   nNodesInDataCell = 8 
   nxData = (27, 27, 27)
   lxData = (0.050625, 0.050625, 0.0513)
-  voxelVelocity = "interpolation"
+  voxelVelocity = "average"
 
-  dataDir = "input/Ubend/dat/data"
+  dataDir = "input/Ubend/dat/data_full"
 }

@@ -1,0 +1,60 @@
+Base
+{
+  dim = 3
+  outputDir = "Ubend_test_foward"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  StructuredGrid{
+    nx = (192, 168, 73)  
+    lx = (0.15, 0.13125, 0.057)
+    image = "input/Ubend/image_foward.dat"
+    fluidExtraction = "ON"
+  }
+
+}
+
+StructuredBoundary
+{
+  top{
+    type = "free"
+    value = (0,0,0)
+  }
+  bottom{
+    type = "poiseuille"
+    center = (0.025, 0, 0.0285)
+    R = 0.0125
+    Q = 1.0
+  }
+  left{
+    type = "v"
+    value = (0,0,0)
+  }
+  right{
+    type = "v"
+    value = (0,0,0)
+  }
+  front{
+    type = "v"
+    value = (0,0,0)
+  }
+  back{
+    type = "v"
+    value = (0,0,0)
+  }
+  outlet{
+    setOutletTractionFreeCondition = "ON"
+    face = "bottom"
+    center_tr = (0.125, 0, 0.0285)
+    R_tr = 0.0125
+  }
+  controlBoundaryExtraction = "OFF"
+  inletControlBoundary = "bottom"
+}

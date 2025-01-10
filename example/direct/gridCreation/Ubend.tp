@@ -31,7 +31,7 @@ StructuredBoundary
     type = "poiseuille"
     center = (0.0240625, 0, 0.0266)  // (0.9375 is added to xorigin for a resistration)
     R = 0.0125
-    Q = 0.3
+    Q = 1.0
   }
   left{
     type = "v"

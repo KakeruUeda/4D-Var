@@ -1,7 +1,7 @@
 Base
 {
   dim = 3
-  outputDir = "stenosis_int_44x16x16"
+  outputDir = "stenosis_ave_66x24x24"
   numOfOMP = 1
 }
 
@@ -73,6 +73,7 @@ Inverse
   controlBoundary = "left" 
   nControlNodesInCell = 4 
   controlBoundaryNodeMap = "input/stenosis/dat/controlBoundaryNodeMap.dat" 
+  controlBoundaryEdgeNodeMap = "input/stenosis/dat/controlBoundaryEdgeNodeMap.dat"
   controlBoundaryCellMap = "input/stenosis/dat/controlBoundaryCellMap.dat" 
   controlBoundaryNodeMapInCell = "input/stenosis/dat/controlBoundaryNodeMapInCell.dat"
 }
@@ -84,10 +85,10 @@ Data
   snapTimeBeginItr = 0
 
   nNodesInDataCell = 8 
-  nxData = (44, 16, 16)
+  nxData = (66, 24, 24)
   lxData = (5.5, 2.0, 2.0)
-  voxelVelocity = "interpolation"
+  voxelVelocity = "average"
 
-  dataDir = "input/stenosis/dat/data_44x16x16"
+  dataDir = "input/stenosis/dat/data_66x24x24"
 }
 

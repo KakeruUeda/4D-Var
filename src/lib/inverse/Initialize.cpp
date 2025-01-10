@@ -99,7 +99,7 @@ void InverseProblem::resize()
     adjoint.lvti.allocate(main.grid.node.nNodesStrGlobal, 3);
   }
 
-  adjoint.feedbackForce.allocate(main.snap.nSnapShot, main.grid.node.nNodesGlobal, dim);
+  adjoint.feedbackForce.allocate(main.timeMax, main.grid.node.nNodesGlobal, dim);
   adjoint.feedbackForceT.allocate(main.timeMax, main.grid.node.nNodesGlobal, dim);
   
   // inverse params

@@ -24,7 +24,8 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, const
     }
   }
 
-  double he = comp_he(tools.xCurrent);
+  //double he = comp_he(tools.xCurrent);
+  double he = comp_he(grid.dx, grid.dy, grid.dz);
   double f = comp_f(grid.cell(ic).phi);
 
   Gauss g2(2);

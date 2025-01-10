@@ -31,6 +31,7 @@ struct VoxelInfo
   vector<int> cells;
   vector<int> refinedVoxelId;
   Array2D<double> v_cfd, v_mri, v_err;  // (time, dim)
+  Array2D<double> v_cfd_t, v_mri_t, v_err_t;
 };
 
 struct RefinedVoxelInfo
@@ -81,6 +82,8 @@ public:
 
   void initialize(Config &conf);
 
+  void comp_v_mri_t(const double dt, const int timeMax);
+
   void setVoxelCenters();
   void setVoxelBoundaries();
   void collectCellsInVoxel();
@@ -94,9 +97,18 @@ public:
   void weightedAverage(const int iv, const int t);
   void interpolate(const int iv, const int t);
 
+  void average_t(Array3D<double> &vt, const int iv, const int t);
+  void interpolate_t(const int iv, const int t);
+  
   void importDAT(const std::string &filename, const int step);
-  void exportDAT(const std::string &filename, const int step);
+  void exportVelCFDDAT(const std::string &filename, const int step);
+  void exportVelMRIDAT(const std::string &filename, const int step);
+  void exportVelErrorDAT(const std::string &filename, const int step);
+  void exportVelCFD_t_DAT(const std::string &filename, const int step);
+  void exportVelMRI_t_DAT(const std::string &filename, const int step);
+  void exportVelError_t_DAT(const std::string &filename, const int step);
   void exportVTI(const std::string &filename, const int t);
+  void exportVTI_t(const std::string &filename, const int t);
   void exportMaskVTI(const std::string &filename);
 
   void importMask(const std::string &filename);

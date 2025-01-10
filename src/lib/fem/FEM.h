@@ -96,6 +96,7 @@ public:
   void restore_Re(const int t);
   double get_Re(const int t);
   double comp_he(Array2D<double> &x);
+  double comp_he(double dx, double dy, double dz);
   double comp_f(const double phi);
   double comp_tau(const double vel[3], const double he);
   double comp_tau2(Array2D<double> &dNdx, const double vel[3], const int nNodesInCell);

@@ -25,8 +25,13 @@ public:
   int crossPoint;
   int flowRateVelDir;
   std::string outputDir;
+  
   std::vector<std::vector<std::vector<double>>> velRef;
   std::vector<std::vector<std::vector<double>>> velOpt;
+  
+  Array3D<double> vRef;
+  Array3D<double> vOpt;
+
   void initialize(Config &conf);
   double compFlowRate(std::vector<std::vector<double>> &vel);
   double compFlowRateError(const double flowRateRefVec, const double flowRateOptVec);

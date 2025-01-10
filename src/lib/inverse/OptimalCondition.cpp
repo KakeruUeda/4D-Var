@@ -329,7 +329,7 @@ void InverseProblem::OptCondX0_Term3_inGaussIntegral(std::vector<std::vector<dou
 {
   setValue(ic);
 
-  double he = main.comp_he(mt3d.xCurrent);
+  double he = main.comp_he(main.grid.dx, main.grid.dy, main.grid.dz);
   double f = main.comp_f(main.grid.cell(ic).phi);
 
   main.tau = main.comp_tau(adjoint.advk1, he);

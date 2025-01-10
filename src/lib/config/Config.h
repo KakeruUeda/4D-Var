@@ -29,9 +29,8 @@ enum class Application
   USNS = 1,
   VOXELDATACREATION = 2,
   FDVAR = 3,
-  FLOWRATE = 4,
-  MAE = 5,
-  GRIDCREATION = 6
+  POSTFDVAR = 4,
+  GRIDCREATION = 5
 };
 
 enum class GridType
@@ -311,6 +310,17 @@ public:
   void readTimeInfo(Config &conf) override;
   void readInverseInfo(Config &conf);
   void readDataInfo(Config &conf);
+};
+
+class TextReaderPost4DVar : public TextReaderInterface
+{
+public:
+  TextReaderPost4DVar()
+  {
+  }
+  void readBasicInfo(Config &conf) override;
+  void readGridInfo(Config &conf) override;
+  void readResultsInfo(Config &conf);
 };
 
 #endif

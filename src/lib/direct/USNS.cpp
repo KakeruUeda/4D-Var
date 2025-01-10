@@ -30,14 +30,13 @@ void DirectProblem::solveNavierStokes()
 
     if(pulsatileFlow == ON) {
       if(t >= pulseBeginItr) {
-        double pulse = comp_pulse(t);
-        //double pulse = dirichlet.comp_pulse(t * dt);
+        //double pulse = comp_pulse(t);
+        double pulse = dirichlet.comp_pulse(t * dt);
         dirichlet.assignPulsatileBCs(pulse);
         dirichlet.getNewArray(grid.node.mapNew);
-        comp_Re(dirichlet.velocitySet);
+        dirichlet.assignBCs(grid.node);
       }
     }
-
     dirichlet.applyBCs(grid.cell, petsc);
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -53,6 +52,7 @@ void DirectProblem::solveNavierStokes()
         petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
     }
+    
     timer1 = MPI_Wtime() - timer1;
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -79,7 +79,7 @@ void DirectProblem::solveNavierStokes()
 
     if(mpi.myId == 0) {
       double timeNow = t * dt;
-      printf("Assy: %fs | Solve: %fs | SimTime: %fs \n", timer1, timer2, timeNow);
+      printf("Assy: %fs | Solve: %fs | SimItr: %d | SimTime: %fs \n", timer1, timer2, t, timeNow);
     }
     MPI_Barrier(MPI_COMM_WORLD);
   }
@@ -108,6 +108,11 @@ void DirectProblem::solveNaveirStokes(const int stepMax, std::vector<std::array<
 
   for(int t = 0; t < stepMax; t++) {
     petsc.setValueZero();
+
+    double pulse = velArr[0][1];
+
+    dirichlet.assignPulsatileBCs(pulse);
+    dirichlet.getNewArray(grid.node.mapNew);
 
     dirichlet.assignBCs(grid.node);
     dirichlet.applyBCs(grid.cell, petsc);
@@ -143,6 +148,7 @@ void DirectProblem::solveNaveirStokes(const int stepMax, std::vector<std::array<
     }
     VecRestoreArray(vecSEQ, &arraySolution);
     updateSolutions();
+    outputSolutionsVTU("other", t);
 
     if(mpi.myId == 0) {
       double timeNow = t * dt;

@@ -52,7 +52,7 @@ public:
   {
   }
 
-  struct AveragedVelocity
+  struct Velocity
   {
     double time;
     double value;

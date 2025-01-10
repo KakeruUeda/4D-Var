@@ -73,6 +73,9 @@ void VoxelDataCreation::initializeNodes(Config &conf)
 void VoxelDataCreation::initializeVectors(Config &conf)
 {
   vOrig.allocate(timeMax, grid.node.nNodesGlobal, 3);
+  // uOrig.allocate(timeMax, grid.node.nNodesGlobal);
+  // vOrig.allocate(timeMax, grid.node.nNodesGlobal);
+  // wOrig.allocate(timeMax, grid.node.nNodesGlobal);
   vRef.allocate(ntInSnapshot, conf.nNodesOptGlobal, 3);
   vRefInit.allocate(conf.nNodesOptGlobal, 3);
   data.snap.vSnap.allocate(data.snap.nSnapShot, conf.nNodesGlobal, 3);
@@ -265,6 +268,6 @@ void VoxelDataCreation::outputBIN()
 
   for(int step = 0; step < snap.nSnapShot; step++) {
     std::string datFile = outputDir + "/data/" + "data_" + std::to_string(step) + ".dat";
-    data.exportDAT(datFile, step);
+    data.exportVelCFDDAT(datFile, step);
   }
 }

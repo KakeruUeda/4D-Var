@@ -462,7 +462,7 @@ template <typename T> Array2D<T> operator*(const Array2D<T> &array, T scalar)
 template <class T> class Array3D
 {
 public:
-  Array3D(int depth, int height, int width)
+  Array3D(long long int depth, long long int height, long long int width)
       : width_(width), height_(height), depth_(depth), data_(new T[depth * height * width]())
   {
   }
@@ -522,9 +522,9 @@ public:
   Array3D operator*(T scalar) const
   {
     Array3D result(depth_, height_, width_);
-    for(int z = 0; z < depth_; ++z) {
-      for(int y = 0; y < height_; ++y) {
-        for(int x = 0; x < width_; ++x) {
+    for(long long int z = 0; z < depth_; ++z) {
+      for(long long int y = 0; y < height_; ++y) {
+        for(long long int x = 0; x < width_; ++x) {
           result(z, y, x) = (*this)(z, y, x) * scalar;
         }
       }
@@ -535,9 +535,9 @@ public:
   Array3D operator-() const
   {
     Array3D result(depth_, height_, width_);
-    for(int z = 0; z < depth_; ++z) {
-      for(int y = 0; y < height_; ++y) {
-        for(int x = 0; x < width_; ++x) {
+    for(long long int z = 0; z < depth_; ++z) {
+      for(long long int y = 0; y < height_; ++y) {
+        for(long long int x = 0; x < width_; ++x) {
           result(z, y, x) = -(*this)(z, y, x);
         }
       }
@@ -551,9 +551,9 @@ public:
       throw std::invalid_argument("Array3D dimensions must match for addition");
     }
     Array3D result(depth_, height_, width_);
-    for(int z = 0; z < depth_; ++z) {
-      for(int y = 0; y < height_; ++y) {
-        for(int x = 0; x < width_; ++x) {
+    for(long long int z = 0; z < depth_; ++z) {
+      for(long long int y = 0; y < height_; ++y) {
+        for(long long int x = 0; x < width_; ++x) {
           result(z, y, x) = (*this)(z, y, x) + other(z, y, x);
         }
       }
@@ -561,32 +561,32 @@ public:
     return result;
   }
 
-  inline T &operator()(int x)
+  inline T &operator()(long long int x)
   {
     return data_[x];
   }
 
-  inline const T &operator()(int x) const
+  inline const T &operator()(long long int x) const
   {
     return data_[x];
   }
 
-  inline T &operator()(int z, int y, int x)
+  inline T &operator()(long long int z, long long int y, long long int x)
   {
     return data_[z * height_ * width_ + y * width_ + x];
   }
 
-  inline const T &operator()(int z, int y, int x) const
+  inline const T &operator()(long long int z, long long int y, long long int x) const
   {
     return data_[z * height_ * width_ + y * width_ + x];
   }
 
-  inline int size() const
+  inline long long int size() const
   {
     return depth_ * height_ * width_;
   }
 
-  inline void allocate(int newDepth, int newHeight, int newWidth)
+  inline void allocate(long long int newDepth, long long int newHeight, long long int newWidth)
   {
     if(data_) {
       delete[] data_;
@@ -602,17 +602,17 @@ public:
     std::fill(data_, data_ + depth_ * height_ * width_, 0);
   }
 
-  int width() const
+  long long int width() const
   {
     return width_;
   }
 
-  int height() const
+  long long int height() const
   {
     return height_;
   }
 
-  int depth() const
+  long long int depth() const
   {
     return depth_;
   }
@@ -631,8 +631,8 @@ public:
       std::cerr << "Could not open file for writing: " << filename << std::endl;
       return;
     }
-    for(int z = 0; z < depth_; ++z) {
-      for(int y = 0; y < height_; ++y) {
+    for(long long int z = 0; z < depth_; ++z) {
+      for(long long int y = 0; y < height_; ++y) {
         ofs.write(reinterpret_cast<const char *>(&data_[z * height_ * width_ + y * width_]), sizeof(T) * width_);
       }
     }
@@ -647,8 +647,8 @@ public:
       std::cerr << "Could not open file for reading: " << filename << std::endl;
       return;
     }
-    for(int z = 0; z < depth_; ++z) {
-      for(int y = 0; y < height_; ++y) {
+    for(long long int z = 0; z < depth_; ++z) {
+      for(long long int y = 0; y < height_; ++y) {
         ifs.read(reinterpret_cast<char *>(&data_[z * height_ * width_ + y * width_]), sizeof(T) * width_);
       }
     }
@@ -689,7 +689,7 @@ public:
   /// @brief Export specific slice data to dat file binary file.
   /// @param filename Export file name.
   /// @param z Slice index.
-  void exportDAT(const std::string &filename, int z) const
+  void exportDAT(const std::string &filename, long long int z) const
   {
     if(z < 0 || z >= depth_) {
       std::cerr << "Invalid depth specified: " << z << std::endl;
@@ -702,7 +702,7 @@ public:
       return;
     }
 
-    for(int y = 0; y < height_; ++y) {
+    for(long long int y = 0; y < height_; ++y) {
       ofs.write(reinterpret_cast<const char *>(&data_[z * height_ * width_ + y * width_]), sizeof(T) * width_);
     }
   }
@@ -710,7 +710,7 @@ public:
   /// @brief Import specific slice data to dat file.
   /// @param filename Export file name.
   /// @param z Slice index.
-  void importDAT(const std::string &filename, int z)
+  void importDAT(const std::string &filename, long long int z)
   {
     if(z < 0 || z >= depth_) {
       std::cerr << "Invalid depth specified: " << z << std::endl;
@@ -723,7 +723,7 @@ public:
       return;
     }
 
-    for(int y = 0; y < height_; ++y) {
+    for(long long int y = 0; y < height_; ++y) {
       ifs.read(reinterpret_cast<char *>(&data_[z * height_ * width_ + y * width_]), sizeof(T) * width_);
     }
   }
@@ -731,7 +731,7 @@ public:
   /// @brief Import specific slice data to binary file.
   /// @param filename File name.
   /// @param z Slice index.
-  void exportBIN(const std::string &filename, int z) const
+  void exportBIN(const std::string &filename, long long int z) const
   {
     if(z < 0 || z >= depth_) {
       std::cerr << "Invalid depth specified: " << z << std::endl;
@@ -752,7 +752,7 @@ public:
   /// @brief Import specific slice data from binary file.
   /// @param filename File name.
   /// @param z Slice index.
-  void importBIN(const std::string &filename, int z)
+  void importBIN(const std::string &filename, long long int z)
   {
     if(z < 0 || z >= depth_) {
       std::cerr << "Invalid depth specified: " << z << std::endl;
@@ -777,16 +777,16 @@ public:
   }
 
 private:
-  int width_, height_, depth_;
+  long long int width_, height_, depth_;
   T *data_;
 };
 
 template <typename T, typename Scalar> Array3D<T> operator*(Scalar scalar, const Array3D<T> &array)
 {
   Array3D<T> result(array.depth(), array.height(), array.width());
-  for(int z = 0; z < array.depth(); ++z) {
-    for(int y = 0; y < array.height(); ++y) {
-      for(int x = 0; x < array.width(); ++x) {
+  for(long long int z = 0; z < array.depth(); ++z) {
+    for(long long int y = 0; y < array.height(); ++y) {
+      for(long long int x = 0; x < array.width(); ++x) {
         result(z, y, x) = scalar * array(z, y, x);
       }
     }
@@ -798,6 +798,5 @@ template <typename T, typename Scalar> Array3D<T> operator*(const Array3D<T> &ar
 {
   return scalar * array;
 }
-
 
 #endif

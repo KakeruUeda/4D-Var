@@ -9,7 +9,6 @@
 #include <unistd.h>
 MyMPI mpi;
 
-
 /**
  * @brief Main function.
  */

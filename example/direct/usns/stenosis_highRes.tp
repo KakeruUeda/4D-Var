@@ -1,0 +1,60 @@
+Base
+{
+  dim = 3
+  outputDir = "stenosis_highRes"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  BaseGrid{
+    node = "input/stenosis_highRes/node.dat"
+    cell = "input/stenosis_highRes/cell.dat"
+  }
+
+  SubGrid{
+    nodeId = "input/stenosis_highRes/nodeId.dat"
+    cellId = "input/stenosis_highRes/cellId.dat"
+  }
+
+  StructuredGrid{
+    nx = (192, 64, 64) 
+    lx = (6.0, 2.0, 2.0)
+    fluidExtraction = "ON"
+    fluidUniqueNodes = "input/stenosis_highRes/fluidUniqueNodes.dat"
+    image = "input/stenosis_highRes/image.dat"
+  }
+}
+
+Boundary
+{
+  velocityDirichlet = "input/stenosis_highRes/velocityDirichlet.dat"
+  pressureDirichlet = "input/stenosis_highRes/pressureDirichlet.dat"
+}
+
+PysicalParameter
+{   
+  rho = 100
+  mu = 1
+  L = 1.0
+}
+
+TimeParameter
+{
+  dt = 0.02
+  timeMax = 400
+  pulsatileFlow = "ON"
+  pulseBeginItr = 250
+  T = 0.5
+}
+
+DarcyParameter
+{
+  alpha = 1e-2
+  resistance = 1e3
+}

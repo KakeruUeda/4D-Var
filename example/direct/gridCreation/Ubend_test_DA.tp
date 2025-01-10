@@ -1,0 +1,56 @@
+Base
+{
+  dim = 3
+  outputDir = "Ubend_test_DA"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  StructuredGrid{
+    nx = (64, 64, 64) 
+    lx = (0.050625, 0.050625, 0.0513)
+    image = "input/Ubend_test/image_inverse.dat"
+    fluidExtraction = "ON"
+  }
+}
+
+StructuredBoundary
+{
+  top{
+    type = "free"
+    value = (0,0,0)
+  }
+  bottom{
+    type = "poiseuille"
+    center = (0.0251325, 0, 0.0266)
+    R = 0.0125
+    Q = 1.0
+  }
+  left{
+    type = "v"
+    value = (0,0,0)
+  }
+  right{
+    type = "v"
+    value = (0,0,0)
+  }
+  front{
+    type = "v"
+    value = (0,0,0)
+  }
+  back{
+    type = "v"
+    value = (0,0,0)
+  }
+  outlet{
+    setOutletTractionFreeCondition = "OFF"
+  }
+  controlBoundaryExtraction = "ON"
+  inletControlBoundary = "bottom"
+}

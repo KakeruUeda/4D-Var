@@ -27,7 +27,7 @@ void Adjoint::matrixAssemblyAdjoint(DirectProblem &main, MatrixXd &Klocal, Vecto
     }
   }
   
-  double he = comp_he(mt3d.xCurrent);
+  double he = comp_he(grid.dx, grid.dy, grid.dz);
   double f = comp_f(grid.cell(ic).phi);
 
   Gauss g2(2);

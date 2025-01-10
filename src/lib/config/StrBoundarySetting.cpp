@@ -105,6 +105,7 @@ void Config::setBoundaryPoiseuilleValue(std::string face)
       if (r < R){
         //value = (2.0 * Q / (PI * R * R)) * (1 - (r * r) / (R * R));
         value = Q * (1 - (r * r) / (R * R));
+        //value = 2 * Q * (1 - (r * r) / (R * R));
       }else{
         value = 0.0;
       }

@@ -89,11 +89,13 @@ public:
   SnapShot(Config &conf)
       : nSnapShot(conf.nSnapShot), snapInterval(conf.snapInterval), snapTimeBeginItr(conf.snapTimeBeginItr)
   {
+    timeMax = (nSnapShot-1) * snapInterval + 1;
   }
 
   int nSnapShot;
   int snapInterval;
   int snapTimeBeginItr;
+  int timeMax;
 
   std::vector<std::vector<std::vector<double>>> v;
   Array3D<double> vSnap;

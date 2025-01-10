@@ -29,10 +29,8 @@ void Config::setApplication(std::string appName)
     app = Application::VOXELDATACREATION;
   } else if(appName == "FDVAR") {
     app = Application::FDVAR;
-  } else if(appName == "FLOWRATE") {
-    app = Application::FLOWRATE;
-  } else if(appName == "MAE") {
-    app = Application::MAE;
+  } else if(appName == "POSTFDVAR") {
+    app = Application::POSTFDVAR;
   } else if(appName == "GRIDCREATION") {
     app = Application::GRIDCREATION;
   } else if(mpi.myId == 0) {
@@ -116,10 +114,6 @@ void Config::readConfigFile()
     reader.readDataInfo(*this);
     break;
   }
-
-  case Application::FLOWRATE:
-    break;
-
   default:
     throw std::runtime_error("Unknown Application");
     break;

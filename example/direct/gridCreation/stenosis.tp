@@ -1,7 +1,7 @@
 Base
 {
   dim = 3
-  outputDir = "stenosis_44x16x16"
+  outputDir = "stenosis"
   numOfOMP = 1
 }
 
@@ -15,7 +15,7 @@ Grid
   StructuredGrid{
     nx = (88, 32, 32) 
     lx = (5.5, 2.0, 2.0)
-    image = "input/test/image_inverse.dat"
+    image = "input/stenosis/image.dat"
     fluidExtraction = "ON"
   }
 }
@@ -47,6 +47,9 @@ StructuredBoundary
   back{
     type = "v"
     value = (0,0,0)
+  }
+  outlet{
+    setOutletTractionFreeCondition = "OFF"
   }
   controlBoundaryExtraction = "ON"
   inletControlBoundary = "left"

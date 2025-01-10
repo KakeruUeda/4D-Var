@@ -13,6 +13,9 @@ DataGrid::DataGrid(Config &conf, Grid &grid, SnapShot &snap)
         voxel(k, j, i).v_mri.allocate(snap.nSnapShot, 3);
         voxel(k, j, i).v_cfd.allocate(snap.nSnapShot, 3);
         voxel(k, j, i).v_err.allocate(snap.nSnapShot, 3);
+        voxel(k, j, i).v_mri_t.allocate(snap.timeMax, 3);
+        voxel(k, j, i).v_cfd_t.allocate(snap.timeMax, 3);
+        voxel(k, j, i).v_err_t.allocate(snap.timeMax, 3);
       }
     }
   }
@@ -46,18 +49,25 @@ void DataGrid::initialize(Config &conf)
     importDAT(file, t);
   }
 
-  //std::string file_mask = conf.dataDir + "/maskMRI.dat";
-  //importMask(file_mask);
+  std::string file_mask = conf.dataDir + "/mask.dat";
+  importMask(file_mask);
 
   // if(mpi.myId == 0) {
   //   std::string out_mask = "mask.vti";
   //   exportMaskVTI(out_mask);
   // }
+
+  mt3d.nNodesInCell = grid.cell.nNodesInCell;
+  mt3d.N.allocate(grid.cell.nNodesInCell);
+  mt3d.dNdr.allocate(grid.cell.nNodesInCell, 3);
+  mt3d.dNdx.allocate(grid.cell.nNodesInCell, 3);
+  mt3d.xCurrent.allocate(grid.cell.nNodesInCell, 3);
+  velCurrent.allocate(grid.cell.nNodesInCell, 3);
 }
 
 void DataGrid::setRefinedGrid()
 {
-  refinementFactor = 3;
+  refinementFactor = 2;
 
   nxRefinedData = nxData * refinementFactor;
   nyRefinedData = nyData * refinementFactor;
@@ -581,6 +591,109 @@ void DataGrid::average(const int iv, const int t)
   }
 }
 
+/**
+ * @brief Compute continuous v_mri
+ */
+void DataGrid::comp_v_mri_t(const double dt, const int timeMax)
+{
+  for(int iv = 0; iv < nDataCellsGlobal; iv++) {
+    std::vector<double> x, y1, y2, y3;
+
+    for(int t = 0; t < snap.nSnapShot; t++) {
+      double dp = t * dt * snap.snapInterval;
+      x.push_back(dp);
+      y1.push_back(voxel(iv).v_mri(t, 0));
+      y2.push_back(voxel(iv).v_mri(t, 1));
+      y3.push_back(voxel(iv).v_mri(t, 2));
+    }
+
+    vector<Spline::Coefficients> cf_x = Spline::compCoefficients(x, y1);
+    vector<Spline::Coefficients> cf_y = Spline::compCoefficients(x, y2);
+    vector<Spline::Coefficients> cf_z = Spline::compCoefficients(x, y3);
+
+    for(int t = 0; t < timeMax; t++) {
+      double p = t * dt;
+      voxel(iv).v_mri_t(t, 0) = Spline::evaluate(cf_x, p);
+      voxel(iv).v_mri_t(t, 1) = Spline::evaluate(cf_y, p);
+      voxel(iv).v_mri_t(t, 2) = Spline::evaluate(cf_z, p);
+    }
+  }
+}
+
+void DataGrid::average_t(Array3D<double> &vt, const int iv, const int t)
+{
+  auto getInterpolatedVelocity = [&](const int irv, const int t, const int p) {
+    int irn = refinedVoxel(irv).node[p];
+
+    if(CFDCellId[irn] == -1) {
+      return;
+    }
+
+    double ss = mt3d.xCurrent(p, 0) - grid.cell(CFDCellId[irn]).center[0];
+    double tt = mt3d.xCurrent(p, 1) - grid.cell(CFDCellId[irn]).center[1];
+    double uu = mt3d.xCurrent(p, 2) - grid.cell(CFDCellId[irn]).center[2];
+
+    ss = ss / (grid.dx / 2e0);
+    tt = tt / (grid.dy / 2e0);
+    uu = uu / (grid.dz / 2e0);
+
+    double eps = 1e-3;
+    if(ss < -1 - eps || ss > 1 + eps) {
+      throw std::runtime_error("s interpolation error.");
+    } else if(tt < -1 - eps || tt > 1 + eps) {
+      throw std::runtime_error("t interpolation error.");
+    } else if(uu < -1 - eps || uu > 1 + eps) {
+      throw std::runtime_error("u interpolation error.");
+    }
+
+    ShapeFunction3D::C3D8_N(mt3d.N, ss, tt, uu);
+    for(int q = 0; q < 8; q++) {
+      for(int d = 0; d < 3; d++) {
+        velCurrent(p, d) += mt3d.N(q) * vt(t, grid.cell(CFDCellId[irn]).node[q], d);
+      }
+    }
+  };
+
+  auto getNodeValues = [&](const int irv, const int t) {
+    velCurrent.fillZero();
+    for(int p = 0; p < 8; p++) {
+      for(int d = 0; d < 3; d++) {
+        mt3d.xCurrent(p, d) = refinedVoxel(irv).x[p][d];
+      }
+      getInterpolatedVelocity(irv, t, p);
+    }
+  };
+
+  auto evaluateValues = [&](vector<double> &values, const int iv, const int t) {
+    for(int d = 0; d < 3; d++) {
+      voxel(iv).v_cfd_t(t, d) += values[d] * mt3d.vol;
+    }
+  };
+
+  auto averageInVoxel = [&](const int iv, const int t) {
+    for(int i1 = 0; i1 < 2; i1++) {
+      for(int i2 = 0; i2 < 2; i2++) {
+        for(int i3 = 0; i3 < 2; i3++) {
+          mt3d.setShapesInGauss(gauss, i1, i2, i3);
+          mt3d.setFactorsInGauss(gauss, i1, i2, i3);
+          auto v_gp = mt3d.getVectorValuesGP(velCurrent);
+          evaluateValues(v_gp, iv, t);
+        }
+      }
+    }
+  };
+
+  for(int i = 0; i < voxel(iv).refinedVoxelId.size(); i++) {
+    int irv = voxel(iv).refinedVoxelId[i];
+    getNodeValues(irv, t);
+    averageInVoxel(iv, t);
+  }
+
+  for(int d = 0; d < 3; d++) {
+    voxel(iv).v_cfd_t(t, d) /= dxData * dyData * dzData;
+  }
+}
+
 void DataGrid::interpolate(const int iv, const int t)
 {
   if(voxel(iv).CFDCellId == -1) return;
@@ -624,7 +737,7 @@ void DataGrid::interpolate(const int iv, const int t)
 
 }
 
-void DataGrid::exportDAT(const std::string &filename, const int step)
+void DataGrid::exportVelCFDDAT(const std::string &filename, const int step)
 {
   std::ofstream ofs(filename);
   if(!ofs) {
@@ -643,6 +756,108 @@ void DataGrid::exportDAT(const std::string &filename, const int step)
     }
   }
 }
+
+void DataGrid::exportVelMRIDAT(const std::string &filename, const int step)
+{
+  std::ofstream ofs(filename);
+  if(!ofs) {
+    std::cerr << "Could not open file for writing: " << filename << std::endl;
+    return;
+  }
+
+  for(int k = 0; k < nzData; k++) {
+    for(int j = 0; j < nyData; j++) {
+      for(int i = 0; i < nxData; i++) {
+        for(int d = 0; d < 3; d++) {
+          ofs << voxel(k, j, i).v_mri(step, d) << " ";
+        }
+        ofs << "\n";
+      }
+    }
+  }
+}
+
+void DataGrid::exportVelErrorDAT(const std::string &filename, const int step)
+{
+  std::ofstream ofs(filename);
+  if(!ofs) {
+    std::cerr << "Could not open file for writing: " << filename << std::endl;
+    return;
+  }
+
+  for(int k = 0; k < nzData; k++) {
+    for(int j = 0; j < nyData; j++) {
+      for(int i = 0; i < nxData; i++) {
+        for(int d = 0; d < 3; d++) {
+          ofs << voxel(k, j, i).v_err(step, d) << " ";
+        }
+        ofs << "\n";
+      }
+    }
+  }
+}
+
+void DataGrid::exportVelCFD_t_DAT(const std::string &filename, const int step)
+{
+  std::ofstream ofs(filename);
+  if(!ofs) {
+    std::cerr << "Could not open file for writing: " << filename << std::endl;
+    return;
+  }
+
+  for(int k = 0; k < nzData; k++) {
+    for(int j = 0; j < nyData; j++) {
+      for(int i = 0; i < nxData; i++) {
+        for(int d = 0; d < 3; d++) {
+          ofs << voxel(k, j, i).v_cfd_t(step, d) << " ";
+        }
+        ofs << "\n";
+      }
+    }
+  }
+}
+
+void DataGrid::exportVelMRI_t_DAT(const std::string &filename, const int step)
+{
+  std::ofstream ofs(filename);
+  if(!ofs) {
+    std::cerr << "Could not open file for writing: " << filename << std::endl;
+    return;
+  }
+
+  for(int k = 0; k < nzData; k++) {
+    for(int j = 0; j < nyData; j++) {
+      for(int i = 0; i < nxData; i++) {
+        for(int d = 0; d < 3; d++) {
+          ofs << voxel(k, j, i).v_mri_t(step, d) << " ";
+        }
+        ofs << "\n";
+      }
+    }
+  }
+}
+
+void DataGrid::exportVelError_t_DAT(const std::string &filename, const int step)
+{
+  std::ofstream ofs(filename);
+  if(!ofs) {
+    std::cerr << "Could not open file for writing: " << filename << std::endl;
+    return;
+  }
+
+  for(int k = 0; k < nzData; k++) {
+    for(int j = 0; j < nyData; j++) {
+      for(int i = 0; i < nxData; i++) {
+        for(int d = 0; d < 3; d++) {
+          ofs << voxel(k, j, i).v_err_t(step, d) << " ";
+        }
+        ofs << "\n";
+      }
+    }
+  }
+}
+
+
 
 void DataGrid::importDAT(const std::string &filename, const int step)
 {
@@ -716,7 +931,6 @@ void DataGrid::exportMaskVTI(const std::string &filename)
     for(int j = 0; j < nyData; j++) {
       for(int i = 0; i < nxData; i++) {
         int iv = i + j * nxData + k * nxData * nyData;
-        std::cout << voxel(k, j, i).mask << std::endl;
         data[iv] = static_cast<float>(voxel(k, j, i).mask);
       }
     }
@@ -821,6 +1035,107 @@ void DataGrid::exportVTI(const std::string &filename, const int t)
         data3[0 + i * 3 + j * nxData * 3 + k * nxData * nyData * 3] = static_cast<float>(voxel(k, j, i).v_err(t, 0));
         data3[1 + i * 3 + j * nxData * 3 + k * nxData * nyData * 3] = static_cast<float>(voxel(k, j, i).v_err(t, 1));
         data3[2 + i * 3 + j * nxData * 3 + k * nxData * nyData * 3] = static_cast<float>(voxel(k, j, i).v_err(t, 2));
+      }
+    }
+  }
+
+  ofs.write(reinterpret_cast<char *>(&allsize), sizeof(allsize));
+  ofs.write(reinterpret_cast<char *>(data3), allsize);
+  delete[] data3;
+
+  ofs.close();
+
+  fp = fopen(filename.c_str(), "a");
+  fprintf(fp, "\n</AppendedData>\n");
+  fprintf(fp, "</VTKFile>\n");
+  fclose(fp);
+}
+
+
+void DataGrid::exportVTI_t(const std::string &filename, const int t)
+{
+  FILE *fp = fopen(filename.c_str(), "w");
+
+  if(fp == NULL) {
+    std::cout << filename << " open error" << std::endl;
+    exit(1);
+  }
+
+  fprintf(fp, "<?xml version=\"1.0\"?>\n");
+  fprintf(fp, "<VTKFile type=\"ImageData\" version=\"1.0\" byte_order=\"LittleEndian\" header_type=\"UInt64\">\n");
+  fprintf(fp, "<ImageData WholeExtent=\"%d %d %d %d %d %d\" Origin=\"%e %e %e\" Spacing=\"%e %e %e\">\n", 0, nxData, 0,
+          nyData, 0, nzData, 0e0, 0e0, 0e0, dxData, dyData, dzData);
+  fprintf(fp, "<Piece Extent=\"%d %d %d %d %d %d\">\n", 0, nxData, 0, nyData, 0, nzData);
+  fprintf(fp, "<PointData>\n");
+  fprintf(fp, "</PointData>\n");
+  fprintf(fp, "<CellData>\n");
+
+  int offset = 0;
+  fprintf(fp,
+          "<DataArray type=\"Float32\" Name=\"vCFD\" NumberOfComponents=\"3\" format=\"appended\" offset=\"%d\"/>\n",
+          offset);
+  offset += sizeof(unsigned long) + nxData * nyData * nzData * 3 * sizeof(float);
+  fprintf(fp,
+          "<DataArray type=\"Float32\" Name=\"vMRI\" NumberOfComponents=\"3\" format=\"appended\" offset=\"%d\"/>\n",
+          offset);
+  offset += sizeof(unsigned long) + nxData * nyData * nzData * 3 * sizeof(float);
+  fprintf(fp, "<DataArray type=\"Float32\" Name=\"ve\" NumberOfComponents=\"3\" format=\"appended\" offset=\"%d\"/>\n",
+          offset);
+  fprintf(fp, "</CellData>\n");
+  fprintf(fp, "</Piece>\n");
+  fprintf(fp, "</ImageData>\n");
+  fprintf(fp, "<AppendedData encoding=\"raw\">\n");
+  fprintf(fp, "_");
+
+  fclose(fp);
+
+  std::fstream ofs;
+  ofs.open(filename.c_str(), std::ios::out | std::ios::app | std::ios::binary);
+  unsigned long allsize = nxData * nyData * nzData * 3 * sizeof(float);
+
+  // Write vCFD data
+  float *data1 = new float[nxData * nyData * nzData * 3];
+  for(int k = 0; k < nzData; k++) {
+    for(int j = 0; j < nyData; j++) {
+      for(int i = 0; i < nxData; i++) {
+        int index = i + j * nxData + k * nxData * nyData;
+        data1[0 + i * 3 + j * nxData * 3 + k * nxData * nyData * 3] = static_cast<float>(voxel(k, j, i).v_cfd_t(t, 0));
+        data1[1 + i * 3 + j * nxData * 3 + k * nxData * nyData * 3] = static_cast<float>(voxel(k, j, i).v_cfd_t(t, 1));
+        data1[2 + i * 3 + j * nxData * 3 + k * nxData * nyData * 3] = static_cast<float>(voxel(k, j, i).v_cfd_t(t, 2));
+      }
+    }
+  }
+
+  ofs.write(reinterpret_cast<char *>(&allsize), sizeof(allsize));
+  ofs.write(reinterpret_cast<char *>(data1), allsize);
+  delete[] data1;
+
+  // Write vMRI data
+  float *data2 = new float[nxData * nyData * nzData * 3];
+  for(int k = 0; k < nzData; k++) {
+    for(int j = 0; j < nyData; j++) {
+      for(int i = 0; i < nxData; i++) {
+        int index = i + j * nxData + k * nxData * nyData;
+        data2[0 + i * 3 + j * nxData * 3 + k * nxData * nyData * 3] = static_cast<float>(voxel(k, j, i).v_mri_t(t, 0));
+        data2[1 + i * 3 + j * nxData * 3 + k * nxData * nyData * 3] = static_cast<float>(voxel(k, j, i).v_mri_t(t, 1));
+        data2[2 + i * 3 + j * nxData * 3 + k * nxData * nyData * 3] = static_cast<float>(voxel(k, j, i).v_mri_t(t, 2));
+      }
+    }
+  }
+
+  ofs.write(reinterpret_cast<char *>(&allsize), sizeof(allsize));
+  ofs.write(reinterpret_cast<char *>(data2), allsize);
+  delete[] data2;
+
+  // Write ve data
+  float *data3 = new float[nxData * nyData * nzData * 3];
+  for(int k = 0; k < nzData; k++) {
+    for(int j = 0; j < nyData; j++) {
+      for(int i = 0; i < nxData; i++) {
+        int index = i + j * nxData + k * nxData * nyData;
+        data3[0 + i * 3 + j * nxData * 3 + k * nxData * nyData * 3] = static_cast<float>(voxel(k, j, i).v_err_t(t, 0));
+        data3[1 + i * 3 + j * nxData * 3 + k * nxData * nyData * 3] = static_cast<float>(voxel(k, j, i).v_err_t(t, 1));
+        data3[2 + i * 3 + j * nxData * 3 + k * nxData * nyData * 3] = static_cast<float>(voxel(k, j, i).v_err_t(t, 2));
       }
     }
   }

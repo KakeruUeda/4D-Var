@@ -1,0 +1,93 @@
+Base
+{
+  dim = 3
+  outputDir = "Ubend_test_noise"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  BaseGrid{
+    node = "input/Ubend_test/dat/node.dat"
+    cell = "input/Ubend_test/dat/cell.dat"
+  }
+
+  SubGrid{
+    nodeId = "input/Ubend_test/dat/nodeId.dat"
+    cellId = "input/Ubend_test/dat/cellId.dat"
+  }
+
+  StructuredGrid{
+    nx = (64, 64, 64) 
+    lx = (0.050625, 0.050625, 0.0513)
+    fluidExtraction = "ON"
+    fluidUniqueNodes = "input/Ubend_test/dat/fluidUniqueNodes.dat"
+    image = "input/Ubend_test/dat/image.dat"
+  }
+}
+
+Boundary
+{
+  velocityDirichlet = "input/Ubend_test/dat/velocityDirichlet.dat"
+  pressureDirichlet = "input/Ubend_test/dat/pressureDirichlet.dat"
+}
+
+PysicalParameter
+{   
+  rho = 1150 // density (kg/m^3)
+  mu = 0.008 // viscosity (Pa/s)   
+  L = 0.025  // characteristic length (m)
+}
+
+TimeParameter
+{
+  dt = 0.005895624
+  timeMax = 156
+  pulsatileFlow = "OFF"
+  pulseBeginItr = 100
+  T = 0.5
+}
+
+DarcyParameter
+{
+  alpha = 1e-2
+  resistance = 1e3
+}
+
+Inverse
+{
+  aCF = 1e7
+  bCF = 0e0
+  gCF = 0e0
+
+  alphaX = 1e0
+  alphaX0 = 2e0
+  loopMAX = 1000
+  outputItr = 5
+
+  controlBoundary = "bottom" 
+  nControlNodesInCell = 4 
+  controlBoundaryNodeMap = "input/Ubend_test/dat/controlBoundaryNodeMap.dat" 
+  controlBoundaryEdgeNodeMap = "input/Ubend_test/dat/controlBoundaryEdgeNodeMap.dat"
+  controlBoundaryCellMap = "input/Ubend_test/dat/controlBoundaryCellMap.dat" 
+  controlBoundaryNodeMapInCell = "input/Ubend_test/dat/controlBoundaryNodeMapInCell.dat"
+}
+
+Data
+{
+  nSnapShot = 32
+  snapInterval = 5
+  snapTimeBeginItr = 0
+  
+  nNodesInDataCell = 8 
+  nxData = (27, 27, 27)
+  lxData = (0.050625, 0.050625, 0.0513)
+  voxelVelocity = "average"
+
+  dataDir = "input/Ubend_test/dat/data_noise"
+}

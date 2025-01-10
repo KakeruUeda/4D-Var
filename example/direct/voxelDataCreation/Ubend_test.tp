@@ -1,0 +1,48 @@
+Base
+{
+  dim = 3
+  outputDir = "Ubend_test"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  StructuredGrid
+  {
+    nx = (192, 168, 73)
+    lx = (0.15, 0.13125, 0.057)
+  }
+
+  DataGrid
+  {
+    nNodesInDataCell = 8
+    nxData = (27, 27, 27)
+    lxData = (0.050625, 0.050625, 0.0513)
+    voxelVelocity = "average"
+  }
+
+  OptGrid
+  {
+    origin = (0.0, 0.0, 0.0019)
+    nxOpt = (64, 64, 64)
+    lxOpt = (0.050625, 0.050625, 0.0513)
+  }
+}
+
+SnapShot
+{
+  timeMax = 476
+  nSnapShot = 32
+  snapInterval = 5
+  snapTimeBeginItr = 320
+}
+
+Original
+{
+  inputDir = "../usns/output/Ubend_test/input" 
+}

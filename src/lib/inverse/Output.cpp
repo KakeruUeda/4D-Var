@@ -109,11 +109,10 @@ void InverseProblem::outputVelocityData(const int loop)
     return;
 
   std::string vtiFile;
-  for(int t = 0; t < main.snap.nSnapShot; t++) {
+  for(int t = 0; t < main.timeMax; t++) {
     vtiFile = main.outputDir + "/data/data_" + to_string(loop) + "_" + to_string(t) + ".vti";
-    data.exportVTI(vtiFile, t);
+    data.exportVTI_t(vtiFile, t);
   }
-
 }
 
 /**
@@ -127,7 +126,7 @@ void InverseProblem::outputFeedbackForce(const int loop)
   std::string vtuFile;
   for(int t = 0; t < main.timeMax; t++) {
     vtuFile = main.outputDir + "/other/feedbackForce" + to_string(loop) + "_" + to_string(t) + ".vtu";
-    EXPORT::exportVectorPointDataVTU(vtuFile, "feedbackForce", main.grid.node, main.grid.cell, adjoint.feedbackForceT,
+    EXPORT::exportVectorPointDataVTU(vtuFile, "feedbackForce", main.grid.node, main.grid.cell, adjoint.feedbackForce,
                                      t);
   }
 }
@@ -146,7 +145,9 @@ void InverseProblem::outputVelocityBIN(const int loop)
     binFile = main.outputDir + "/bin/velocity_" + to_string(loop) + "_" + to_string(t) + ".bin";
     main.vvti.exportBIN(binFile);
   }
+
   updateControlVariablesVTI();
+
   binFile = main.outputDir + "/bin/velocity_initial_" + to_string(loop) + ".bin";
   X0vti.exportBIN(binFile);
 }
@@ -171,6 +172,24 @@ void InverseProblem::outputOptimizedVariables()
     }
   } else {
     throw std::runtime_error("Undefined gridType");
+  }
+
+  for(int t = 0; t < main.timeMax; t++) {
+    std::string vtiFile = main.outputDir + "/optimized/data_" + to_string(t) + ".vti";
+    data.exportVTI_t(vtiFile, t);
+  }
+
+  for(int t = 0; t < main.timeMax; t++) {
+    std::string datFile;
+
+    datFile = main.outputDir + "/optimized/v_cfd_" + std::to_string(t) + ".dat";
+    data.exportVelCFD_t_DAT(datFile, t);
+
+    datFile = main.outputDir + "/optimized/v_mri_" + std::to_string(t) + ".dat";
+    data.exportVelMRI_t_DAT(datFile, t);
+
+    datFile = main.outputDir + "/optimized/v_err_" + std::to_string(t) + ".dat";
+    data.exportVelError_t_DAT(datFile, t);
   }
 
   // To binary file
