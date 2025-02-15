@@ -93,7 +93,7 @@ void VoxelDataCreation::createRefAndData()
 {
   takeSnapshots();
   createReferenceData();
-  createData();
+  //createData();
 }
 
 void VoxelDataCreation::takeSnapshots()
@@ -120,18 +120,116 @@ void VoxelDataCreation::createReferenceData()
 
 void VoxelDataCreation::createData()
 {
+  std::string file_mask = "../../../example/inverse/4dvar/input/Ubend/bend1/data_half/mask.dat";
+  data.importMask(file_mask);
+
   grid.cell.getBoundaries();
   grid.cell.getCenterCoordinates();
   data.setVoxelCenters();
+  data.setBoundingBox();
 
   data.setRefinedGrid();
   data.collectRefinedVoxelId();
   data.collectCFDCellId();
 
-  for(int t = 0; t < data.snap.nSnapShot; t++) {
-    for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-      data.average(iv, t);
+  std::vector<int> cell_inside;
+
+  for(int ic = 0; ic < grid.cell.nCellsGlobal; ic++) {
+    if(grid.cell(ic).x[0][0] < data.xOrigin || grid.cell(ic).x[0][0] > data.xOrigin + data.lxData) continue;
+    if(grid.cell(ic).x[0][1] < data.yOrigin || grid.cell(ic).x[0][1] > data.yOrigin + data.lyData) continue;
+    if(grid.cell(ic).x[0][2] < data.zOrigin || grid.cell(ic).x[0][2] > data.zOrigin + data.lzData) continue;
+    cell_inside.push_back(ic);
+  }
+
+  for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+    if(data.voxel(iv).mask < 0.5) continue;
+    if(mpi.myId == 0) std::cout << "iv" << iv << std::endl;
+    for(int ic = 0; ic < cell_inside.size(); ic++) {
+      if(data.isCellIncludedInCircle(2 * data.dxData, iv, ic)) {
+        data.voxel(iv).cells.push_back(ic);
+      }
     }
+  }
+
+  //data.collectCellsInCircle(2 * dxData);
+  data.collectCFDTimeStep();
+
+  // ----- comp numerical velocity (space) ------
+  switch(data.vel_space) {
+  case VoxelVelocity::AVERAGE:
+    for(int t = 0; t < data.n_cfd_step; t++) {
+      if((t >= snap.snapTimeBeginItr) && (t < (snap.snapTimeBeginItr + ntInSnapshot))) {
+        for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+          if(data.voxel(iv).mask < 1e-12) continue;
+          if(data.voxel(iv).subId != mpi.myId) continue;
+          data.average_space(vRef, iv, t);
+        }
+      }
+    }
+    break;
+
+  case VoxelVelocity::WEIGHTED_AVERAGE:
+    for(int t = 0; t < data.n_cfd_step; t++) {
+      if((t >= snap.snapTimeBeginItr) && (t < (snap.snapTimeBeginItr + ntInSnapshot))) {
+        int time = t - snap.snapTimeBeginItr;
+        if(mpi.myId == 0) std::cout << "t = " << t << std::endl;
+        for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+          if(data.voxel(iv).mask < 0.5) continue;
+          data.weighted_average_space(vRef, iv, time);
+        }
+      }
+    }
+    break;
+
+  case VoxelVelocity::INTERPOLATION:
+    for(int t = 0; t < data.n_cfd_step; t++) {
+      if((t >= snap.snapTimeBeginItr) && (t < (snap.snapTimeBeginItr + ntInSnapshot))) {
+        for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+          if(data.voxel(iv).mask < 1e-12) continue;
+          data.linear_interpolate_space(vRef, iv, t);
+        }
+      }
+    }
+    break;
+
+  default:
+    PetscPrintf(MPI_COMM_WORLD, "undefined VoxelVelocity method");
+    exit(1);
+  }
+  // -----------------------
+
+  if(mpi.myId == 0) std::cout << "v " << std::endl;
+  // ----- comp numerical velocity (time) ------
+  switch(data.vel_time) {
+  case VoxelVelocity::AVERAGE:
+    for(int t = 0; t < data.n_mri_step; t++) {
+      for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+        //data.average_time(iv, t);
+      }
+    }
+    break;
+
+  case VoxelVelocity::WEIGHTED_AVERAGE:
+    for(int t = 0; t < data.n_mri_step; t++) {
+      for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+        if(data.voxel(iv).mask < 0.5) continue;
+        data.weighted_average_time(iv, t);
+      }
+    }
+    break;
+
+  case VoxelVelocity::INTERPOLATION:
+    for(int t = 0; t < data.n_mri_step; t++) {
+      for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+        if(data.voxel(iv).mask < 1e-12) continue;
+        data.spline_interpolate_time(iv, t);
+      }
+    }
+    break;
+
+  default:
+    PetscPrintf(MPI_COMM_WORLD, "undefined VoxelVelocity method");
+    exit(1);
   }
 }
 
@@ -239,7 +337,7 @@ void VoxelDataCreation::interpolateInitialReferenceData(Array1D<double> &N, int 
 
 void VoxelDataCreation::outputVTK()
 {
-  for(int step = 0; step < timeMax; step++) {
+  for(int step = snap.snapTimeBeginItr; step < snap.snapTimeBeginItr + ntInSnapshot; step++) {
     std::string vtiFile = outputDir + "/vtk/" + "velocityOriginal_" + std::to_string(step) + ".vti";
     EXPORT::exportVectorPointDataVTI<double>(vtiFile, "velocityOriginal", vOrig, nx, ny, nz, dx, dy, dz, step);
   }
@@ -248,10 +346,10 @@ void VoxelDataCreation::outputVTK()
     EXPORT::exportVectorPointDataVTI<double>(vtiFile, "velocityReference", vRef, nxOpt, nyOpt, nzOpt, dxOpt, dyOpt,
                                              dzOpt, step);
   }
-  for(int step = 0; step < snap.nSnapShot; step++) {
-    std::string vtiFile = outputDir + "/vtk/" + "data_" + std::to_string(step) + ".vti";
-    data.exportVTI(vtiFile, step);
-  }
+  // for(int step = 0; step < snap.nSnapShot; step++) {
+  //   std::string vtiFile = outputDir + "/vtk/" + "data_" + std::to_string(step) + ".vti";
+  //   data.exportVTI(vtiFile, step);
+  // }
   std::string vtiFile = outputDir + "/vtk/" + "velocityReference_initial.vti";
   EXPORT::exportVectorPointDataVTI<double>(vtiFile, "velocityReference_initial", vRefInit, nxOpt, nyOpt, nzOpt, dxOpt,
                                            dyOpt, dzOpt);
@@ -266,8 +364,8 @@ void VoxelDataCreation::outputBIN()
   std::string binFile = outputDir + "/bin/" + "velocityReference_initial.bin";
   vRefInit.exportBIN(binFile);
 
-  for(int step = 0; step < snap.nSnapShot; step++) {
-    std::string datFile = outputDir + "/data/" + "data_" + std::to_string(step) + ".dat";
-    data.exportVelCFDDAT(datFile, step);
-  }
+  // for(int step = 0; step < snap.nSnapShot; step++) {
+  //   std::string datFile = outputDir + "/data/" + "data_" + std::to_string(step) + ".dat";
+  //   data.exportVelCFD_DAT(datFile, step);
+  // }
 }

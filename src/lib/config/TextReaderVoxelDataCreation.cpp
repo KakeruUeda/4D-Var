@@ -68,20 +68,36 @@ void TextReaderVoxelDataCreation::readGridInfo(Config &conf)
 
   sub_label = base_label + "/DataGrid";
 
-  label = sub_label + "/voxelVelocity";
+  label = sub_label + "/numerical_velocity_space";
 
   if(!conf.tp.getInspectedValue(label, str)) {
     throw std::runtime_error(label + " is not set");
   }
 
-  if(str == "pointspread") {
-    conf.vvox = VoxelVelocity::POINTSPREAD;
+  if(str == "weighted_average") {
+    conf.vel_space = VoxelVelocity::WEIGHTED_AVERAGE;
   }else if(str == "average") {
-    conf.vvox = VoxelVelocity::AVERAGE;
+    conf.vel_space = VoxelVelocity::AVERAGE;
   } else if(str == "interpolation") {
-    conf.vvox = VoxelVelocity::INTERPOLATION;
+    conf.vel_space = VoxelVelocity::INTERPOLATION;
   } else {
-    throw std::runtime_error("undefined voxelVelocity");
+    throw std::runtime_error("undefined numerical_velocity_space");
+  }
+
+  label = sub_label + "/numerical_velocity_time";
+
+  if(!conf.tp.getInspectedValue(label, str)) {
+    throw std::runtime_error(label + " is not set");
+  }
+
+  if(str == "weighted_average") {
+    conf.vel_time = VoxelVelocity::WEIGHTED_AVERAGE;
+  }else if(str == "average") {
+    conf.vel_time = VoxelVelocity::AVERAGE;
+  } else if(str == "interpolation") {
+    conf.vel_time = VoxelVelocity::INTERPOLATION;
+  } else {
+    throw std::runtime_error("undefined numerical_velocity_time");
   }
 
   label = sub_label + "/nNodesInDataCell";

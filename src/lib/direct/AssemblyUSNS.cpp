@@ -24,7 +24,7 @@ void DirectProblem::matrixAssemblyUSNS(MatrixXd &Klocal, VectorXd &Flocal, const
     }
   }
 
-  //double he = comp_he(tools.xCurrent);
+  // double he = comp_he(tools.xCurrent);
   double he = comp_he(grid.dx, grid.dy, grid.dz);
   double f = comp_f(grid.cell(ic).phi);
 
@@ -73,7 +73,7 @@ void DirectProblem::settingInGauss(MathTools3D &tools, Gauss &g2, const double h
 
   setVelocityValue(tools, ic, t);
   tau = comp_tau(adv_gp, he);
-  //tau = comp_tau2(tools.dNdx, adv_gp, tools.nNodesInCell);
+  // tau = comp_tau2(tools.dNdx, adv_gp, tools.nNodesInCell);
 }
 
 /**

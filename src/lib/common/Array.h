@@ -427,7 +427,7 @@ public:
       return;
     }
 
-    int fileWidth, fileHeight;
+    long long int fileWidth, fileHeight;
     ifs.read(reinterpret_cast<char *>(&fileWidth), sizeof(fileWidth));
 
     if(fileWidth != width_) {
@@ -439,7 +439,7 @@ public:
   }
 
 private:
-  int width_, height_;
+ long int width_, height_;
   T *data_;
 };
 
@@ -764,12 +764,13 @@ public:
       return;
     }
 
-    int fileWidth, fileHeight, fileDepth;
+    long int fileWidth, fileHeight, fileDepth;
     ifs.read(reinterpret_cast<char *>(&fileWidth), sizeof(fileWidth));
     ifs.read(reinterpret_cast<char *>(&fileHeight), sizeof(fileHeight));
 
     if(fileWidth != width_ || fileHeight != height_) {
       std::cerr << "File dimensions do not match the current Array3D dimensions" << std::endl;
+      //std::cout << z * height_ * width_ << " " << fileWidth << " " << width_ << " " << fileHeight << " " << height_ << std::endl;
       return;
     }
 

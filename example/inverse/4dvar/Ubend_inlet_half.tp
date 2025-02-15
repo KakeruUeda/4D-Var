@@ -1,0 +1,98 @@
+Base
+{
+  dim = 3
+  outputDir = "Ubend_inlet_half_space_wave_time_wave_reg1e-1"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  BaseGrid{
+    node = "input/Ubend/inlet/node.dat"
+    cell = "input/Ubend/inlet/cell.dat"
+  }
+
+  SubGrid{
+    nodeId = "input/Ubend/inlet/nodeId.dat"
+    cellId = "input/Ubend/inlet/cellId.dat"
+    voxelId = "input/Ubend/inlet/voxelId.dat"
+  }
+
+  StructuredGrid{
+    nx = (64, 64, 64) 
+    lx = (0.050625, 0.050625, 0.0513)
+    fluidExtraction = "ON"
+    fluidUniqueNodes = "input/Ubend/inlet/fluidUniqueNodes.dat"
+    image = "input/Ubend/inlet/image.dat"
+  }
+}
+
+Boundary
+{
+  velocityDirichlet = "input/Ubend/inlet/velocityDirichlet.dat"
+  pressureDirichlet = "input/Ubend/inlet/pressureDirichlet.dat"
+}
+
+PysicalParameter
+{   
+  rho = 1150 // density (kg/m^3)
+  mu = 0.008 // viscosity (Pa/s)   
+  L = 0.025  // characteristic length (m)
+}
+
+TimeParameter
+{
+  dt = 0.005895624
+  timeMax = 76
+  pulsatileFlow = "OFF"
+  pulseBeginItr = 100
+  T = 0.5
+}
+
+DarcyParameter
+{
+  alpha = 1e-2
+  resistance = 1e3
+}
+
+Inverse
+{
+  aCF = 1e7
+  bCF = 1e-1
+  gCF = 1e-1
+
+  alphaX = 1e0
+  alphaX0 = 2e0
+  loopMAX = 1000
+  outputItr = 5
+
+  controlBoundary = "bottom" 
+  nControlNodesInCell = 4 
+  controlBoundaryNodeMap = "input/Ubend/inlet/controlBoundaryNodeMap.dat" 
+  controlBoundaryEdgeNodeMap = "input/Ubend/inlet/controlBoundaryEdgeNodeMap.dat"
+  controlBoundaryCellMap = "input/Ubend/inlet/controlBoundaryCellMap.dat" 
+  controlBoundaryNodeMapInCell = "input/Ubend/inlet/controlBoundaryNodeMapInCell.dat"
+}
+
+Data
+{
+  nSnapShot = 16
+  snapInterval = 5
+  snapTimeBeginItr = 0
+
+  dt_mri = 0.02947812
+
+  nNodesInDataCell = 8 
+  nxData = (27, 27, 27)
+  lxData = (0.050625, 0.050625, 0.0513)
+
+  numerical_velocity_space = "weighted_average"
+  numerical_velocity_time = "weighted_average"
+
+  dataDir = "input/Ubend/inlet/data_half"
+}

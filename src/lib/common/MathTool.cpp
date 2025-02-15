@@ -5,6 +5,16 @@
 
 #include "MathTool.h"
 
+MathTools1D::MathTools1D(const int nNodesInCell)
+{
+  this->nNodesInCell = nNodesInCell;
+  N.allocate(nNodesInCell);
+  xCurrent.allocate(nNodesInCell);
+  dNdr.allocate(nNodesInCell);
+  dNdx.allocate(nNodesInCell);
+}
+
+
 MathTools2D::MathTools2D(const int nNodesInCell)
 {
   this->nNodesInCell = nNodesInCell;
@@ -23,6 +33,14 @@ MathTools3D::MathTools3D(const int nNodesInCell)
   dNdr.allocate(nNodesInCell, 3);
   dNdx.allocate(nNodesInCell, 3);
   K.allocate(nNodesInCell, nNodesInCell);
+}
+
+void MathTools1D::setZero()
+{
+  N.fillZero();
+  xCurrent.fillZero();
+  dNdr.fillZero();
+  dNdx.fillZero();
 }
 
 void MathTools2D::setZero()
@@ -144,6 +162,18 @@ void MathTools3D::comp_dNdx(Array2D<double> &dNdx, Array2D<double> &dNdr, const 
   }
 }
 
+void MathTools1D::setShapesInGauss(Gauss &gauss, const int i1)
+{
+  ShapeFunction1D::P2_N(N, gauss.point[i1]);
+  ShapeFunction1D::P2_dNdr(dNdr, gauss.point[i1]);
+}
+
+void MathTools1D::setFactorsInGauss(Gauss &gauss, const int i1, const double dx)
+{
+  weight = gauss.weight[i1];
+  vol = dx * weight;
+}
+
 void MathTools2D::setShapesInGauss(Gauss &gauss, const int i1, const int i2)
 {
   ShapeFunction2D::C2D4_N(N, gauss.point[i1], gauss.point[i2]);
@@ -172,6 +202,26 @@ void MathTools3D::setFactorsInGauss(Gauss &gauss, const int i1, const int i2, co
   detJ = MathTools3D::compDeterminant(dxdr);
   weight = gauss.weight[i1] * gauss.weight[i2] * gauss.weight[i3];
   vol = detJ * weight;
+}
+
+double MathTools1D::getScalarValueGP(Array1D<double> &nodeValues)
+{
+  double value;
+  for(int p = 0; p < nNodesInCell; p++) {
+    value += N(p) * nodeValues(p);
+  }
+  return value;
+}
+
+std::vector<double> MathTools1D::getVectorValueGP(Array2D<double> &nodeValues)
+{
+  std::vector<double> values(3, 0e0);
+  for(int d = 0; d < 3; d++) {
+    for(int p = 0; p < nNodesInCell; p++) {
+      values[d] += N(p) * nodeValues(p, d);
+    }
+  }
+  return values;
 }
 
 double MathTools3D::getScalarValueGP(Array1D<double> &nodeValues)

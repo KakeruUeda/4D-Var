@@ -118,6 +118,7 @@ void TextReader4DVar::readGridInfo(Config &conf)
 
   std::string nodeIdFile;
   std::string cellIdFile;
+  std::string voxelIdFile;
 
   sub_label = base_label + "/SubGrid";
 
@@ -131,11 +132,14 @@ void TextReader4DVar::readGridInfo(Config &conf)
   if(!conf.tp.getInspectedValue(label, cellIdFile)) {
     throw std::runtime_error(label + " is not set");
   }
-
   IMPORT::importScalarDataDAT<int>(cellIdFile, conf.cellId);
+
+  label = sub_label + "/voxelId";
+  if(!conf.tp.getInspectedValue(label, voxelIdFile)) {
+    throw std::runtime_error(label + " is not set");
+  }
+  IMPORT::importScalarDataDAT<int>(voxelIdFile, conf.voxelId);
 }
-
-
 
 void TextReader4DVar::readInverseInfo(Config &conf)
 {
@@ -266,6 +270,11 @@ void TextReader4DVar::readDataInfo(Config &conf)
     throw std::runtime_error(label + " is not set");
   }
 
+  label = base_label + "/dt_mri";
+  if(!conf.tp.getInspectedValue(label, conf.dt_mri)) {
+    throw std::runtime_error(label + " is not set");
+  }
+
   label = base_label + "/nNodesInDataCell";
   if(!conf.tp.getInspectedValue(label, conf.nNodesInCellData)) {
     throw std::runtime_error(label + " is not set");
@@ -295,18 +304,36 @@ void TextReader4DVar::readDataInfo(Config &conf)
 
   conf.nDataCellsGlobal = conf.nxData * conf.nyData * conf.nzData;
 
-  label = base_label + "/voxelVelocity";
+  label = base_label + "/numerical_velocity_space";
 
   if(!conf.tp.getInspectedValue(label, str)) {
     throw std::runtime_error(label + " is not set");
   }
 
-  if(str == "average") {
-    conf.vvox = VoxelVelocity::AVERAGE;
+  if(str == "weighted_average") {
+    conf.vel_space = VoxelVelocity::WEIGHTED_AVERAGE;
+  } else if(str == "average") {
+    conf.vel_space = VoxelVelocity::AVERAGE;
   } else if(str == "interpolation") {
-    conf.vvox = VoxelVelocity::INTERPOLATION;
+    conf.vel_space = VoxelVelocity::INTERPOLATION;
   } else {
-    throw std::runtime_error("undefined voxelVelocity");
+    throw std::runtime_error("undefined numerical_velocity_space");
+  }
+
+  label = base_label + "/numerical_velocity_time";
+
+  if(!conf.tp.getInspectedValue(label, str)) {
+    throw std::runtime_error(label + " is not set");
+  }
+
+  if(str == "weighted_average") {
+    conf.vel_time = VoxelVelocity::WEIGHTED_AVERAGE;
+  } else if(str == "average") {
+    conf.vel_time = VoxelVelocity::AVERAGE;
+  } else if(str == "interpolation") {
+    conf.vel_time = VoxelVelocity::INTERPOLATION;
+  } else {
+    throw std::runtime_error("undefined numerical_velocity_time");
   }
 
   label = base_label + "/dataDir";

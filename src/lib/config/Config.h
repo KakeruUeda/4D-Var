@@ -52,7 +52,7 @@ enum class ControlBoundaryFace
 
 enum class VoxelVelocity
 {
-  POINTSPREAD = 0,
+  WEIGHTED_AVERAGE = 0,
   AVERAGE = 1,
   INTERPOLATION = 2
 };
@@ -75,7 +75,8 @@ public:
   ControlBoundaryFace controlBoundary;
   ControlBoundaryFace inletCB;
   ControlBoundaryFace outletCB;
-  VoxelVelocity vvox;
+  VoxelVelocity vel_space;
+  VoxelVelocity vel_time;
   CrossSection crossSection;
 
   // Basic parameter
@@ -117,11 +118,14 @@ public:
 
   std::vector<int> cellId;
   std::vector<int> nodeId;
+  std::vector<int> voxelId;
 
   // SnapShot parameter
   int nSnapShot;
   int snapInterval;
   int snapTimeBeginItr;
+
+  double dt_mri;
 
   // DataGrid parameter
   int nData;

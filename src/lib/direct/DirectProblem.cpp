@@ -10,8 +10,7 @@
  * @brief Constructer.
  */
 DirectProblem::DirectProblem(Config &conf)
-    : FEM(conf), app(conf.app), dim(conf.dim), outputDir(conf.outputDir),
-      nOMP(conf.nOMP), grid(conf), snap(conf)
+    : FEM(conf), app(conf.app), dim(conf.dim), outputDir(conf.outputDir), nOMP(conf.nOMP), grid(conf), snap(conf)
 {
   if(app == Application::USNS) {
     std::string dir;
@@ -39,6 +38,7 @@ void DirectProblem::runSimulation()
 {
   outputDomain();
   solveNavierStokes();
+  //solve_NavierStokes_optimized_BCs();
 }
 
 /**
@@ -46,11 +46,9 @@ void DirectProblem::runSimulation()
  */
 void DirectProblem::outputDomain()
 {
-  if(mpi.myId > 0) {
-    return;
-  }
+  if(mpi.myId > 0) return;
+
   std::string vtuFile;
-  std::string vtiFile;
 
   vtuFile = outputDir + "/domain/meshPartition.vtu";
   EXPORT::exportMeshPartitionVTU(vtuFile, grid.node, grid.cell);

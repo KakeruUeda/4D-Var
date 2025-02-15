@@ -72,7 +72,7 @@ void InverseProblem::resize()
 
   if(main.grid.gridType == GridType::STRUCTURED) {
     main.vvti.allocate(main.grid.node.nNodesStrGlobal, 3);
-    main.pvti.allocate(main.grid.node.nNodesStrGlobal);
+    //main.pvti.allocate(main.grid.node.nNodesStrGlobal);
   }
 
   main.velCurrent.allocate(main.grid.cell.nNodesInCell, 3);
@@ -94,13 +94,13 @@ void InverseProblem::resize()
   adjoint.dirichlet.initialValues.allocate(adjoint.grid.nDofsGlobal);
 
   if(adjoint.grid.gridType == GridType::STRUCTURED) {
-    adjoint.wvti.allocate(main.grid.node.nNodesStrGlobal, 3);
-    adjoint.qvti.allocate(main.grid.node.nNodesStrGlobal);
-    adjoint.lvti.allocate(main.grid.node.nNodesStrGlobal, 3);
+    // adjoint.wvti.allocate(main.grid.node.nNodesStrGlobal, 3);
+    // adjoint.qvti.allocate(main.grid.node.nNodesStrGlobal);
+    // adjoint.lvti.allocate(main.grid.node.nNodesStrGlobal, 3);
   }
 
   adjoint.feedbackForce.allocate(main.timeMax, main.grid.node.nNodesGlobal, dim);
-  adjoint.feedbackForceT.allocate(main.timeMax, main.grid.node.nNodesGlobal, dim);
+  //adjoint.feedbackForceT.allocate(main.timeMax, main.grid.node.nNodesGlobal, dim);
   
   // inverse params
   gradX0.allocate(main.grid.node.nNodesGlobal, dim);
@@ -109,14 +109,14 @@ void InverseProblem::resize()
   X0.allocate(main.grid.node.nNodesGlobal, dim);
 
   if(main.grid.gridType == GridType::STRUCTURED) {
-    X0vti.allocate(main.grid.node.nNodesStrGlobal, 3);
-    Xvti.allocate(main.timeMax, main.grid.node.nNodesStrGlobal, 3);
+    // X0vti.allocate(main.grid.node.nNodesStrGlobal, 3);
+    //Xvti.allocate(main.timeMax, main.grid.node.nNodesStrGlobal, 3);
   }
 
   VecTool::resize(adjoint.petsc.solution, adjoint.grid.nDofsGlobal);
 
   // snap
-  main.snap.vSnap.allocate(main.snap.nSnapShot, main.grid.nNodesGlobal, 3);
+  //main.snap.vSnap.allocate(main.snap.nSnapShot, main.grid.nNodesGlobal, 3);
 
 }
 
@@ -159,7 +159,7 @@ void InverseProblem::initializeVarZero()
   }
 
   adjoint.feedbackForce.fillZero();
-  adjoint.feedbackForceT.fillZero();
+  //adjoint.feedbackForceT.fillZero();
 
   // inverse prams
   gradX0.fillZero();

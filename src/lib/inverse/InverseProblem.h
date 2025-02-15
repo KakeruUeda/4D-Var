@@ -69,7 +69,8 @@ public:
   MathTools2D mt2d;
   MathTools3D mt3d;
 
-  VoxelVelocity vvox;
+  VoxelVelocity vel_space;
+  VoxelVelocity vel_time;
 
   double aCF, bCF, gCF;
   int loopMax;
@@ -90,15 +91,19 @@ public:
   void initialize(Config &conf);
   void resize();
   void initializeVarZero();
+  void outputDomain();
   void runSimulation();
 
 private:
   void compInletAveragedVeloicty(std::vector<std::array<double, 2>> &velArr);
   void compInletFlowRate(std::vector<std::array<double, 2>> &velArr);
   void compInletFlowRate_X(std::vector<std::array<double, 2>> &velArr);
+  void compInletFlowRate_left_surface(std::vector<std::array<double, 2>> &velArr);
+  void compInletFlowRate_top_surface(std::vector<std::array<double, 2>> &velArr);
   void compInletFlowRate_tmp(const int n, std::vector<std::array<double, 2>> &velArr);
   void compInletMaxVelocity(std::vector<std::array<double, 2>> &velArr);
   void compInitialOptimalVelocityField();
+  void spline_interpolate_v_mri_slice();
 
   // Cost function
   void compCostFunction();
@@ -115,7 +120,7 @@ private:
   void compTimeInterpolatedFeedbackForce();
   void assembleFeedbackForce(const int ic, const int t);
   void feedbackGaussIntegral(double (&feedback)[3], const int ic, const int t);
-  
+
   // Optimal condition
   void compOptimalCondition();
   void OptCondX_Term1_inGaussIntegral(std::vector<std::vector<double>> &value, const int nc, const int ic, const int t);
@@ -144,7 +149,6 @@ private:
 
   void updateControlVariablesVTI();
   bool checkConvergence(std::ofstream &cf, const int loop);
-
 };
 
 #endif
