@@ -1,0 +1,49 @@
+Base
+{
+  dim = 3
+  outputDir = "Ubend_assimilated_BC"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  StructuredGrid
+  {
+    nx = (188, 158, 64)  
+    lx = (0.15, 0.125625, 0.0513)
+  }
+
+  DataGrid
+  {
+    nNodesInDataCell = 8
+    nxData = (40, 40, 27)
+    lxData = (0.075, 0.075, 0.0513)
+    numerical_velocity_space = "weighted_average"
+    numerical_velocity_time = "weighted_average"
+  }
+
+  OptGrid
+  {
+    origin = (0, 0.050625, 0)
+    nxOpt = (94, 94, 64)
+    lxOpt = (0.075, 0.075, 0.0513)
+  }
+}
+
+SnapShot
+{
+  timeMax = 624
+  nSnapShot = 16
+  snapInterval = 5
+  snapTimeBeginItr = 312
+}
+
+Original
+{
+  inputDir = "../usns/output/Ubend_assimilated_BC/input" 
+}

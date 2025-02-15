@@ -65,6 +65,7 @@ public:
   void setValuesInGaussIntegral(DirectProblem &main, Gauss &g2, const double he, const int i1, const int i2, const int i3, const int ic, const int t);
   void adjointGaussIntegralLHS(DirectProblem &main, MatrixXd &Klocal, const double f, const int ii, const int jj);
   void adjointGaussIntegralRHS(DirectProblem &main, VectorXd &Flocal, const double f, const int ii);
+  
   void updateSolutionsVTI();
   void updateSolutionsVTI(const int t);
   void outputSolutionsVTU(const std::string &dir, const int t);

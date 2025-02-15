@@ -1,0 +1,57 @@
+Base
+{
+  dim = 3
+  outputDir = "Ubend_outlet"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  StructuredGrid{
+    nx = (64, 64, 64) 
+    lx = (0.050625, 0.050625, 0.0513)
+    image = "input/Ubend/outlet/image64x64x64.dat"
+    fluidExtraction = "ON"
+  }
+
+}
+
+StructuredBoundary
+{
+  top{
+    type = "poiseuille"
+    center = (0.02435, 0.050625, 0.0266)  // (x dir: 0.025 - 0.00065 (resistration))
+    R = 0.0125 
+    Q = 1.0
+  }
+  bottom{
+    type = "free"
+    value = (0,0,0)
+  }
+  left{
+    type = "v"
+    value = (0,0,0)
+  }
+  right{
+    type = "v"
+    value = (0,0,0)
+  }
+  front{
+    type = "v"
+    value = (0,0,0)
+  }
+  back{
+    type = "v"
+    value = (0,0,0)
+  }
+  outlet{
+    setOutletTractionFreeCondition = "OFF"
+  }
+  controlBoundaryExtraction = "ON"
+  inletControlBoundary = "top"
+}

@@ -52,7 +52,7 @@ void DirectProblem::solveNavierStokes()
         petsc.setValue(grid.cell(ic).dofsBCsMap, grid.cell(ic).dofsMap, grid.cell(ic).dofsBCsMap, Klocal, Flocal);
       }
     }
-    
+
     timer1 = MPI_Wtime() - timer1;
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -91,7 +91,7 @@ void DirectProblem::solveNavierStokes()
 /**
  * @brief Compute fully developed flow field.
  */
-void DirectProblem::solveNaveirStokes(const int stepMax, std::vector<std::array<double, 2>> &velArr)
+void DirectProblem::solveNavierStokes(const int stepMax, std::vector<std::array<double, 2>> &velArr)
 {
   PetscPrintf(MPI_COMM_WORLD, "\nMain Solver Opt Initial\n");
 
@@ -148,7 +148,7 @@ void DirectProblem::solveNaveirStokes(const int stepMax, std::vector<std::array<
     }
     VecRestoreArray(vecSEQ, &arraySolution);
     updateSolutions();
-    outputSolutionsVTU("other", t);
+    outputTemporaryVelocityVTU("other", t);
 
     if(mpi.myId == 0) {
       double timeNow = t * dt;
@@ -170,7 +170,7 @@ void DirectProblem::solveNaveirStokes(const int stepMax, std::vector<std::array<
 /**
  * @brief tmp
  */
-void DirectProblem::solveNaveirStokes(std::vector<std::array<double, 2>> &velArr, 
+void DirectProblem::solveNavierStokes(std::vector<std::array<double, 2>> &velArr,
                                       std::vector<std::map<int, std::vector<double>>> &vectorVelocitySet)
 {
   PetscPrintf(MPI_COMM_WORLD, "\nMain Solver\n");
@@ -184,13 +184,13 @@ void DirectProblem::solveNaveirStokes(std::vector<std::array<double, 2>> &velArr
   petsc.initialAssembly();
 
   dirichlet.setValuesZero(grid.nDofsGlobal);
-  //dirichlet.velocitySetInit = dirichlet.velocitySet;
+  dirichlet.velocitySetInit = dirichlet.velocitySet;
 
   int snapCount = 0;
 
   for(int t = 0; t < timeMax; t++) {
     petsc.setValueZero();
-    
+
     double pulse = dirichlet.comp_pulse2(t * dt, velArr);
 
     dirichlet.assignPulsatileBCs(pulse);
@@ -237,12 +237,7 @@ void DirectProblem::solveNaveirStokes(std::vector<std::array<double, 2>> &velArr
 
     updateSolutions();
     updateTimeSolutions(t);
-    outputSolutionsVTU("other", t);
-
-    if((t - snap.snapTimeBeginItr) % snap.snapInterval == 0) {
-      snap.takeSnapShot(v, grid.node.nNodesGlobal, snapCount);
-      snapCount++;
-    }
+    outputVelocityVTU("other", t);
 
     if(mpi.myId == 0) {
       double timeNow = t * dt;
@@ -311,10 +306,10 @@ void DirectProblem::solveNavierStokes(Array2D<double> &X0, Array3D<double> &X)
     updateSolutions();
     updateTimeSolutions(t);
 
-    if((t - snap.snapTimeBeginItr) % snap.snapInterval == 0) {
-      snap.takeSnapShot(v, grid.node.nNodesGlobal, snapCount);
-      snapCount++;
-    }
+    // if((t - snap.snapTimeBeginItr) % snap.snapInterval == 0) {
+    //   snap.takeSnapShot(v, grid.node.nNodesGlobal, snapCount);
+    //   snapCount++;
+    // }
 
     if(mpi.myId == 0) {
       double timeNow = t * dt;
@@ -341,13 +336,19 @@ void DirectProblem::outputSolutions(const int t)
 {
   switch(grid.gridType) {
   case GridType::STRUCTURED:
-    updateSolutionsVTI();
-    outputSolutionsVTI("solution", t);
-    outputSolutionsBIN("input", t);
+    updateVelocityVTI();
+    updatePressureVTI();
+    outputTemporaryVelocityVTU("solution", t);
+    outputTemporaryPressureVTU("solution", t);
+    outputVelocityVTI("solution", t);
+    outputPressureVTI("solution", t);
+    outputVelocityBIN("input", t);
+    outputPressureBIN("input", t);
     //compVorticity(t);
     break;
   case GridType::UNSTRUCTURED:
-    outputSolutionsVTU("solution", t);
+    outputTemporaryVelocityVTU("solution", t);
+    outputTemporaryPressureVTU("solution", t);
     break;
   default:
     PetscPrintf(MPI_COMM_WORLD, "\nUndifined gridType\n");
@@ -453,12 +454,21 @@ void DirectProblem::updateTimeSolutions(const int t)
 /**
  * @brief Update solutions for VTI.
  */
-void DirectProblem::updateSolutionsVTI()
+void DirectProblem::updateVelocityVTI()
 {
   for(int in = 0; in < grid.node.nNodesGlobal; in++) {
     for(int d = 0; d < dim; d++) {
       vvti(grid.vecFluidUniqueNodes[in], d) = v(in, d);
     }
+  }
+}
+
+/**
+ * @brief Update solutions for VTI.
+ */
+void DirectProblem::updatePressureVTI()
+{
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
     pvti(grid.vecFluidUniqueNodes[in]) = p(in);
   }
 }
@@ -466,12 +476,21 @@ void DirectProblem::updateSolutionsVTI()
 /**
  * @brief Update solutions for VTI.
  */
-void DirectProblem::updateSolutionsVTI(const int t)
+void DirectProblem::updateVelocityVTI(const int t)
 {
   for(int in = 0; in < grid.node.nNodesGlobal; in++) {
     for(int d = 0; d < dim; d++) {
       vvti(grid.vecFluidUniqueNodes[in], d) = vt(t, in, d);
     }
+  }
+}
+
+/**
+ * @brief Update solutions for VTI.
+ */
+void DirectProblem::updatePressureVTI(const int t)
+{
+  for(int in = 0; in < grid.node.nNodesGlobal; in++) {
     pvti(grid.vecFluidUniqueNodes[in]) = pt(t, in);
   }
 }
@@ -479,14 +498,20 @@ void DirectProblem::updateSolutionsVTI(const int t)
 /**
  * @brief Export solutions for VTI.
  */
-void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t)
+void DirectProblem::outputVelocityVTI(const std::string &dir, const int t)
 {
-  if(mpi.myId > 0) {
-    return;
-  }
+  if(mpi.myId > 0) return;
   std::string vtiFile;
   vtiFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".vti";
   EXPORT::exportVectorPointDataVTI(vtiFile, "velocity", vvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+}
+/**
+ * @brief Export solutions for VTI.
+ */
+void DirectProblem::outputPressureVTI(const std::string &dir, const int t)
+{
+  if(mpi.myId > 0) return;
+  std::string vtiFile;
   vtiFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".vti";
   EXPORT::exportScalarPointDataVTI(vtiFile, "pressure", pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
@@ -494,14 +519,23 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t)
 /**
  * @brief Export solutions for VTI.
  */
-void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t, const int loop)
+void DirectProblem::outputVelocityVTI(const std::string &dir, const int t, const int loop)
 {
-  if(mpi.myId > 0) {
-    return;
-  }
+  if(mpi.myId > 0) return;
+
   std::string vtiFile;
   vtiFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vti";
   EXPORT::exportVectorPointDataVTI(vtiFile, "velocity", vvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
+}
+
+/**
+ * @brief Export solutions for VTI.
+ */
+void DirectProblem::outputPressureVTI(const std::string &dir, const int t, const int loop)
+{
+  if(mpi.myId > 0) return;
+
+  std::string vtiFile;
   vtiFile = outputDir + "/" + dir + "/pressure_" + to_string(loop) + "_" + to_string(t) + ".vti";
   EXPORT::exportScalarPointDataVTI(vtiFile, "pressure", pvti, grid.nx, grid.ny, grid.nz, grid.dx, grid.dy, grid.dz);
 }
@@ -509,45 +543,86 @@ void DirectProblem::outputSolutionsVTI(const std::string &dir, const int t, cons
 /**
  * @brief Export solutions for VTU.
  */
-void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t)
+void DirectProblem::outputTemporaryVelocityVTU(const std::string &dir, const int t)
 {
-  if(mpi.myId > 0) {
-    return;
-  }
-  std::string vtuFile;
-  vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".vtu";
+  if(mpi.myId > 0) return;
+
+  std::string vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".vtu";
   EXPORT::exportVectorPointDataVTU<double>(vtuFile, "velocity", grid.node, grid.cell, v);
-  vtuFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".vtu";
+}
+
+/**
+ * @brief Export solutions for VTU.
+ */
+void DirectProblem::outputTemporaryPressureVTU(const std::string &dir, const int t)
+{
+  if(mpi.myId > 0) return;
+
+  std::string vtuFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".vtu";
   EXPORT::exportScalarPointDataVTU<double>(vtuFile, "pressure", grid.node, grid.cell, p);
 }
 
 /**
  * @brief Export solutions for VTU.
  */
-void DirectProblem::outputSolutionsVTU(const std::string &dir, const int t, const int loop)
+void DirectProblem::outputVelocityVTU(const std::string &dir, const int t)
 {
-  if(mpi.myId > 0) {
-    return;
-  }
-  std::string vtuFile;
-  vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-  EXPORT::exportVectorPointDataVTU<double>(vtuFile, "velocity", grid.node, grid.cell, grid.node.v);
-  vtuFile = outputDir + "/" + dir + "/pressure_" + to_string(loop) + "_" + to_string(t) + ".vtu";
-  EXPORT::exportScalarPointDataVTU<double>(vtuFile, "pressure", grid.node, grid.cell, grid.node.p);
+  if(mpi.myId > 0) return;
+
+  std::string vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".vtu";
+  EXPORT::exportVectorPointDataVTU<double>(vtuFile, "velocity", grid.node, grid.cell, vt, t);
+}
+
+/**
+ * @brief Export solutions for VTU.
+ */
+void DirectProblem::outputPressureVTU(const std::string &dir, const int t)
+{
+  if(mpi.myId > 0) return;
+
+  std::string vtuFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".vtu";
+  EXPORT::exportScalarPointDataVTU<double>(vtuFile, "pressure", grid.node, grid.cell, pt, t);
+}
+
+/**
+ * @brief Export solutions for VTU.
+ */
+void DirectProblem::outputVelocityVTU(const std::string &dir, const int t, const int loop)
+{
+  if(mpi.myId > 0) return;
+
+  std::string vtuFile = outputDir + "/" + dir + "/velocity_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+  EXPORT::exportVectorPointDataVTU<double>(vtuFile, "velocity", grid.node, grid.cell, vt, t);
+}
+
+/**
+ * @brief Export solutions for VTU.
+ */
+void DirectProblem::outputPressureVTU(const std::string &dir, const int t, const int loop)
+{
+  if(mpi.myId > 0) return;
+
+  std::string vtuFile = outputDir + "/" + dir + "/pressure_" + to_string(loop) + "_" + to_string(t) + ".vtu";
+  EXPORT::exportScalarPointDataVTU<double>(vtuFile, "pressure", grid.node, grid.cell, pt, t);
 }
 
 /**
  * @brief Export solutions for BIN.
  */
-void DirectProblem::outputSolutionsBIN(const std::string &dir, const int t)
+void DirectProblem::outputVelocityBIN(const std::string &dir, const int t)
 {
-  if(mpi.myId > 0) {
-    return;
-  }
-  std::string binFile;
-  binFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".bin";
+  if(mpi.myId > 0) return;
+  std::string binFile = outputDir + "/" + dir + "/velocity_" + to_string(t) + ".bin";
   vvti.exportBIN(binFile);
-  binFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".bin";
+}
+
+/**
+ * @brief Export solutions for BIN.
+ */
+void DirectProblem::outputPressureBIN(const std::string &dir, const int t)
+{
+  if(mpi.myId > 0) return;
+  std::string binFile = outputDir + "/" + dir + "/pressure_" + to_string(t) + ".bin";
   pvti.exportBIN(binFile);
 }
 

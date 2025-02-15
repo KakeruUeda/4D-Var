@@ -10,9 +10,10 @@
  * @brief construct inverse object from config param
  */
 InverseProblem::InverseProblem(Config &conf)
-    : main(conf), adjoint(conf), data(conf, main.grid, main.snap), app(conf.app), vvox(conf.vvox), dim(conf.dim),
-      outputDir(conf.outputDir), outputItr(conf.outputItr), nOMP(conf.nOMP), aCF(conf.aCF), bCF(conf.bCF),
-      gCF(conf.gCF), alphaX0(conf.alphaX0), alphaX(conf.alphaX), loopMax(conf.loopMax), planeDir(conf.planeDir)
+    : main(conf), adjoint(conf), data(conf, main.grid, main.snap), app(conf.app), vel_space(conf.vel_space),
+      vel_time(conf.vel_time), dim(conf.dim), outputDir(conf.outputDir), outputItr(conf.outputItr), nOMP(conf.nOMP),
+      aCF(conf.aCF), bCF(conf.bCF), gCF(conf.gCF), alphaX0(conf.alphaX0), alphaX(conf.alphaX), loopMax(conf.loopMax),
+      planeDir(conf.planeDir)
 {
   std::string dir;
   std::string output = "output";
@@ -42,23 +43,57 @@ InverseProblem::InverseProblem(Config &conf)
 }
 
 /**
+ * @brief visualize domain
+ */
+void InverseProblem::outputDomain()
+{
+  if(mpi.myId > 0) return;
+
+  std::string vtuFile, vtiFile;
+
+  vtuFile = outputDir + "/domain/meshPartition.vtu";
+  EXPORT::exportMeshPartitionVTU(vtuFile, main.grid.node, main.grid.cell);
+  vtuFile = outputDir + "/domain/phi.vtu";
+  EXPORT::exportPhiVTU(vtuFile, main.grid.node, main.grid.cell);
+  vtiFile = outputDir + "/domain/mask.vti";
+  data.exportMaskVTI(vtiFile);
+}
+
+/**
  * @brief Run inverse routine
  */
 void InverseProblem::runSimulation()
 {
-  main.outputDomain();
+  outputDomain();
   compInitialOptimalVelocityField();
 
-  data.comp_v_mri_t(main.dt, main.timeMax);
+  // Array3D<double> v;
+  // v.allocate(76, 95 * 95 * 65, 3);
+
+  // std::string dir = "../../direct/voxelDataCreation/output/Ubend_assimilated_BC/bin";
+  // for(int t = 0; t < 76; t++) {
+  //   if(mpi.myId == 0) std::cout << "t = " << t << std::endl;
+  //   std::string velFile = dir + "/velocityReference_" + std::to_string(t) + ".bin";
+  //   v.importBIN(velFile, t);
+  // }
+
+  // for(int t = 0; t < 76; t++) {
+  //   for(int i = 0; i < main.grid.nNodesGlobal; i++) {
+  //     for(int d = 0; d < 3; d++) {
+  //       main.vt(t, i, d) = v(t, main.grid.vecFluidUniqueNodes[i], d);
+  //     }
+  //   }
+  // }
+
+  // compCostFunction();
 
   std::ofstream cf(outputDir + "/dat/costFunction.dat");
 
   for(int loop = 0; loop < loopMax; loop++) {
     PetscPrintf(MPI_COMM_WORLD, "\nOpt itr. : %d\n", loop);
 
-    compCostFunction();
+    if(loop == 0) compCostFunction();
     PetscPrintf(MPI_COMM_WORLD, "\ncostFunction = %e\n", costFunction.total);
-
     costFunction.history.push_back(costFunction.total);
 
     if(mpi.myId == 0) {
@@ -69,11 +104,10 @@ void InverseProblem::runSimulation()
     }
 
     bool isConverged = checkConvergence(cf, loop);
-    if(isConverged)
-      break;
+    if(isConverged) break;
 
+    data.comp_v_err_refined();
     compFeedbackForce();
-    //compTimeInterpolatedFeedbackForce();
 
     adjoint.solveAdjoint(main, inletCB);
 
@@ -141,8 +175,7 @@ void InverseProblem::compInletAveragedVeloicty(std::vector<std::array<double, 2>
 
     velAve = velSum / count;
 
-    if(mpi.myId == 0)
-      std::cout << "t = " << t << " velAve = " << velAve << std::endl;
+    if(mpi.myId == 0) std::cout << "t = " << t << " velAve = " << velAve << std::endl;
 
     std::array<double, 2> arr = {t * 0.02947812, velAve};
     velArr.push_back(arr);
@@ -162,10 +195,8 @@ void InverseProblem::compInletFlowRate(std::vector<std::array<double, 2>> &velAr
     for(int k = 0; k < data.nzData; k++) {
       for(int j = 0; j < data.nyData; j++) {
         for(int i = 0; i < data.nxData; i++) {
-          if(data.voxel(k, j, i).mask < 0.9999) continue;
-          if(j == 0) {
-            flowRate += data.voxel(k, j, i).v_mri(t, 1) * data.dxData * data.dzData;
-          }
+          if(data.voxel(k, j, i).mask < 0.5) continue;
+          if(j == 0) flowRate += data.voxel(k, j, i).v_mri(t, 1) * data.dxData * data.dzData;
         }
       }
     }
@@ -212,13 +243,16 @@ void InverseProblem::compInletFlowRate_X(std::vector<std::array<double, 2>> &vel
 
   for(int t = 0; t < data.snap.nSnapShot; t++) {
     double flowRate = 0e0;
-    std::vector<double> vel_y;
+    std::vector<double> vel_y(data.nxData * data.nzData, 0e0);
 
+    int count = 0;
     for(int k = 0; k < data.nzData; k++) {
       for(int j = 0; j < data.nyData; j++) {
         for(int i = 0; i < data.nxData; i++) {
+          if(data.voxel(k, j, i).mask < 0.5) continue;
           if(j == 0) {
-            vel_y.push_back(data.voxel(k, j, i).v_mri(t, 1));
+            vel_y[count] = data.voxel(k, j, i).v_mri(t, 1);
+            count++;
           }
         }
       }
@@ -283,12 +317,238 @@ void InverseProblem::compInletFlowRate_X(std::vector<std::array<double, 2>> &vel
     }
 
     if(mpi.myId == 0) {
-      std::cout << "flowRateX = " << flowRate << std::endl;
+      std::cout << "flowRate = " << flowRate << std::endl;
+    }
+
+    std::array<double, 2> arr = {t * dt, flowRate};
+    velArr.push_back(arr);
+  }
+}
+
+void InverseProblem::compInletFlowRate_top_surface(std::vector<std::array<double, 2>> &velArr)
+{
+  double dt = main.dt * data.snap.snapInterval;
+
+  int sub_nx = 500;
+  int sub_nz = 500;
+
+  int nSubCell = sub_nx * sub_nz;
+  int nSubNode = (sub_nx + 1) * (sub_nz + 1);
+
+  double sub_dx = main.grid.lx / sub_nx;
+  double sub_dz = main.grid.lz / sub_nz;
+
+  std::vector<std::vector<double>> sub_x(nSubNode, std::vector<double>(2, 0e0));
+
+  for(int k = 0; k < sub_nz + 1; k++) {
+    for(int i = 0; i < sub_nx + 1; i++) {
+      sub_x[i + k * (sub_nx + 1)][0] = i * sub_dx;
+      sub_x[i + k * (sub_nx + 1)][1] = k * sub_dz;
     }
   }
 
-  MPI_Finalize();
-  exit(1);
+  mt2d.nNodesInCell = 4;
+  mt2d.N.allocate(4);
+  mt2d.xCurrent.allocate(4, 2);
+  mt2d.dNdr.allocate(4, 2);
+  mt2d.dNdx.allocate(4, 2);
+
+  for(int t = 0; t < data.snap.nSnapShot; t++) {
+    double flowRate = 0e0;
+    std::vector<double> vel_y(data.nxData * data.nzData, 0e0);
+
+    int count = 0;
+    for(int k = 0; k < data.nzData; k++) {
+      for(int j = 0; j < data.nyData; j++) {
+        for(int i = 0; i < data.nxData; i++) {
+          if(data.voxel(k, j, i).mask < 0.5) continue;
+          if(j == data.nyData - 1) {
+            vel_y[count] = data.voxel(k, j, i).v_mri(t, 1);
+            count++;
+          }
+        }
+      }
+    }
+
+    std::vector<double> vel_y_int(nSubNode, 0e0);
+
+    for(int k = 0; k < sub_nz + 1; k++) {
+      for(int i = 0; i < sub_nx + 1; i++) {
+        int in = i + k * (sub_nx + 1);
+
+        double px = i * sub_dx - data.dxData / 2e0;
+        double pz = k * sub_dz - data.dzData / 2e0;
+
+        int ix = px / data.dxData + EPS;
+        int iz = pz / data.dzData + EPS;
+
+        if(px < 0 || px >= main.grid.lx - data.dxData || pz < 0 || pz >= main.grid.lz - data.dzData) {
+          continue;
+        }
+
+        double s = (px - (ix * data.dxData + (data.dxData / 2e0))) / (data.dxData / 2e0);
+        double u = (pz - (iz * data.dzData + (data.dzData / 2e0))) / (data.dzData / 2e0);
+
+        if(s < -1 - EPS || s > 1 + EPS || u < -1 - EPS || u > 1 + EPS) {
+          if(mpi.myId == 0)
+            std::cerr << "px = " << px << " pz = " << pz << " ix = " << ix << " iz = " << iz << " s = " << s
+                      << " u = " << u << "\n";
+          throw std::runtime_error("Interpolation error: s or u out of bounds.");
+        }
+
+        Array1D<double> N(4);
+        ShapeFunction2D::C2D4_N(N, s, u);
+        vel_y_int[in] = N(0) * vel_y[ix + iz * data.nxData] + N(1) * vel_y[(ix + 1) + iz * data.nxData] +
+                        N(2) * vel_y[(ix + 1) + (iz + 1) * data.nxData] + N(3) * vel_y[ix + (iz + 1) * data.nxData];
+      }
+    }
+
+    for(int k = 0; k < sub_nz; k++) {
+      for(int i = 0; i < sub_nx; i++) {
+        for(int d = 0; d < 2; d++) {
+          mt2d.xCurrent(0, d) = sub_x[i + k * (sub_nx + 1)][d];
+          mt2d.xCurrent(1, d) = sub_x[(i + 1) + k * (sub_nx + 1)][d];
+          mt2d.xCurrent(2, d) = sub_x[(i + 1) + (k + 1) * (sub_nx + 1)][d];
+          mt2d.xCurrent(3, d) = sub_x[i + (k + 1) * (sub_nx + 1)][d];
+        }
+
+        Gauss g2(2);
+
+        for(int i2 = 0; i2 < 2; i2++) {
+          for(int i1 = 0; i1 < 2; i1++) {
+            mt2d.setShapesInGauss(g2, i1, i2);
+            mt2d.setFactorsInGauss(g2, i1, i2);
+
+            flowRate += mt2d.vol * (vel_y_int[i + k * (sub_nx + 1)] * mt2d.N(0) +
+                                    vel_y_int[(i + 1) + k * (sub_nx + 1)] * mt2d.N(1) +
+                                    vel_y_int[(i + 1) + (k + 1) * (sub_nx + 1)] * mt2d.N(2) +
+                                    vel_y_int[i + (k + 1) * (sub_nx + 1)] * mt2d.N(3));
+          }
+        }
+      }
+    }
+
+    // if(flowRate < -6e-5) flowRate = -6e-5;
+
+    if(mpi.myId == 0) {
+      std::cout << "flowRate = " << flowRate << std::endl;
+    }
+
+    std::array<double, 2> arr = {t * dt, flowRate};
+    velArr.push_back(arr);
+  }
+}
+
+void InverseProblem::compInletFlowRate_left_surface(std::vector<std::array<double, 2>> &velArr)
+{
+  double dt = main.dt * data.snap.snapInterval;
+
+  int sub_ny = 500;
+  int sub_nz = 500;
+
+  int nSubCell = sub_ny * sub_nz;
+  int nSubNode = (sub_ny + 1) * (sub_nz + 1);
+
+  double sub_dy = main.grid.ly / sub_ny;
+  double sub_dz = main.grid.lz / sub_nz;
+
+  std::vector<std::vector<double>> sub_x(nSubNode, std::vector<double>(2, 0e0));
+
+  for(int k = 0; k < sub_nz + 1; k++) {
+    for(int j = 0; j < sub_ny + 1; j++) {
+      sub_x[j + k * (sub_ny + 1)][0] = j * sub_dy;
+      sub_x[j + k * (sub_ny + 1)][1] = k * sub_dz;
+    }
+  }
+
+  mt2d.nNodesInCell = 4;
+  mt2d.N.allocate(4);
+  mt2d.xCurrent.allocate(4, 2);
+  mt2d.dNdr.allocate(4, 2);
+  mt2d.dNdx.allocate(4, 2);
+
+  for(int t = 0; t < data.snap.nSnapShot; t++) {
+    double flowRate = 0e0;
+    std::vector<double> vel_x(data.nyData * data.nzData, 0e0);
+
+    int count = 0;
+    for(int k = 0; k < data.nzData; k++) {
+      for(int j = 0; j < data.nyData; j++) {
+        for(int i = 0; i < data.nxData; i++) {
+          if(data.voxel(k, j, i).mask < 0.5) continue;
+          if(i == 0) {
+            vel_x[count] = data.voxel(k, j, i).v_mri(t, 0);
+            count++;
+          }
+        }
+      }
+    }
+
+    std::vector<double> vel_x_int(nSubNode, 0e0);
+
+    for(int k = 0; k < sub_nz + 1; k++) {
+      for(int j = 0; j < sub_ny + 1; j++) {
+        int in = j + k * (sub_ny + 1);
+
+        double py = j * sub_dy - data.dyData / 2e0;
+        double pz = k * sub_dz - data.dzData / 2e0;
+
+        int iy = py / data.dyData + EPS;
+        int iz = pz / data.dzData + EPS;
+
+        if(py < 0 || py >= main.grid.ly - data.dyData || pz < 0 || pz >= main.grid.lz - data.dzData) {
+          continue;
+        }
+
+        double s = (py - (iy * data.dyData + (data.dyData / 2e0))) / (data.dyData / 2e0);
+        double u = (pz - (iz * data.dzData + (data.dzData / 2e0))) / (data.dzData / 2e0);
+
+        if(s < -1 - EPS || s > 1 + EPS || u < -1 - EPS || u > 1 + EPS) {
+          if(mpi.myId == 0)
+            std::cerr << "py = " << py << " pz = " << pz << " iy = " << iy << " iz = " << iz << " s = " << s
+                      << " u = " << u << "\n";
+          throw std::runtime_error("Interpolation error: s or u out of bounds.");
+        }
+
+        Array1D<double> N(4);
+        ShapeFunction2D::C2D4_N(N, s, u);
+        vel_x_int[in] = N(0) * vel_x[iy + iz * data.nyData] + N(1) * vel_x[(iy + 1) + iz * data.nyData] +
+                        N(2) * vel_x[(iy + 1) + (iz + 1) * data.nyData] + N(3) * vel_x[iy + (iz + 1) * data.nyData];
+      }
+    }
+
+    for(int k = 0; k < sub_nz; k++) {
+      for(int j = 0; j < sub_ny; j++) {
+        for(int d = 0; d < 2; d++) {
+          mt2d.xCurrent(0, d) = sub_x[j + k * (sub_ny + 1)][d];
+          mt2d.xCurrent(1, d) = sub_x[(j + 1) + k * (sub_ny + 1)][d];
+          mt2d.xCurrent(2, d) = sub_x[(j + 1) + (k + 1) * (sub_ny + 1)][d];
+          mt2d.xCurrent(3, d) = sub_x[j + (k + 1) * (sub_ny + 1)][d];
+        }
+
+        Gauss g2(2);
+
+        for(int i2 = 0; i2 < 2; i2++) {
+          for(int i1 = 0; i1 < 2; i1++) {
+            mt2d.setShapesInGauss(g2, i1, i2);
+            mt2d.setFactorsInGauss(g2, i1, i2);
+
+            flowRate += mt2d.vol * (vel_x_int[j + k * (sub_ny + 1)] * mt2d.N(0) +
+                                    vel_x_int[(j + 1) + k * (sub_ny + 1)] * mt2d.N(1) +
+                                    vel_x_int[(j + 1) + (k + 1) * (sub_ny + 1)] * mt2d.N(2) +
+                                    vel_x_int[j + (k + 1) * (sub_ny + 1)] * mt2d.N(3));
+          }
+        }
+      }
+    }
+
+    if(mpi.myId == 0) {
+      std::cout << "flowRate = " << flowRate << std::endl;
+    }
+
+    std::array<double, 2> arr = {t * dt, flowRate};
+    velArr.push_back(arr);
+  }
 }
 
 void InverseProblem::compInletFlowRate_tmp(const int n, std::vector<std::array<double, 2>> &velArr)
@@ -302,8 +562,7 @@ void InverseProblem::compInletFlowRate_tmp(const int n, std::vector<std::array<d
       for(int j = 0; j < data.nyData; j++) {
         for(int i = 0; i < data.nxData; i++) {
           if(j == 0) {
-            if(fabs(data.voxel(k, j, i).v_mri(t, 1)) > 0.5)
-              continue;
+            if(fabs(data.voxel(k, j, i).v_mri(t, 1)) > 0.5) continue;
             flowRate += data.voxel(k, j, i).v_mri(t, 1) * data.dxData * data.dzData;
           }
         }
@@ -314,12 +573,10 @@ void InverseProblem::compInletFlowRate_tmp(const int n, std::vector<std::array<d
 
     if(n == 0) {
       arr = {t * dt, flowRate};
-      if(mpi.myId == 0)
-        std::cout << 0.6 * flowRate << std::endl;
+      if(mpi.myId == 0) std::cout << 0.6 * flowRate << std::endl;
     } else if(n == 1) {
       arr = {t * dt, flowRate};
-      if(mpi.myId == 0)
-        std::cout << flowRate << std::endl;
+      if(mpi.myId == 0) std::cout << flowRate << std::endl;
     } else if(n == 2) {
       arr = {t * dt, flowRate};
     }
@@ -340,8 +597,7 @@ void InverseProblem::compInletMaxVelocity(std::vector<std::array<double, 2>> &ve
         for(int i = 0; i < data.nxData; i++) {
           if(j == 0) {
             if((i >= 7 && i <= 18) && (k >= 8 && k <= 19)) {
-              if(fabs(data.voxel(k, j, i).v_mri(t, 1)) > 0.5)
-                continue;
+              if(fabs(data.voxel(k, j, i).v_mri(t, 1)) > 0.5) continue;
               double max_tmp = data.voxel(k, j, i).v_mri(t, 1);
               if(max_tmp > max) {  // > 0 only
                 max = max_tmp;
@@ -352,11 +608,46 @@ void InverseProblem::compInletMaxVelocity(std::vector<std::array<double, 2>> &ve
       }
     }
 
-    if(mpi.myId == 0)
-      std::cout << max << std::endl;
+    if(mpi.myId == 0) std::cout << max << std::endl;
 
     std::array<double, 2> arr = {t * dt, max};
     velArr.push_back(arr);
+  }
+}
+
+void InverseProblem::spline_interpolate_v_mri_slice()
+{
+  data.u_interpolated_slice.resize(data.n_cfd_step);
+  data.v_interpolated_slice.resize(data.n_cfd_step);
+  data.w_interpolated_slice.resize(data.n_cfd_step);
+
+  for(int t = 0; t < data.n_cfd_step; t++) {
+    data.u_interpolated_slice[t].resize(data.u_mri_slice[0].size());
+    data.v_interpolated_slice[t].resize(data.u_mri_slice[0].size());
+    data.w_interpolated_slice[t].resize(data.u_mri_slice[0].size());
+  }
+
+  for(int i = 0; i < data.u_mri_slice[0].size(); i++) {
+    std::vector<double> x, y1, y2, y3;
+
+    for(int t = 0; t < data.n_mri_step; t++) {
+      double p = t * data.dt_mri;
+      x.push_back(p);
+      y1.push_back(data.u_mri_slice[t][i]);
+      y2.push_back(data.v_mri_slice[t][i]);
+      y3.push_back(data.w_mri_slice[t][i]);
+    }
+
+    vector<Spline::Coefficients> cf_x = Spline::compCoefficients(x, y1);
+    vector<Spline::Coefficients> cf_y = Spline::compCoefficients(x, y2);
+    vector<Spline::Coefficients> cf_z = Spline::compCoefficients(x, y3);
+
+    for(int t = 0; t < data.n_cfd_step; t++) {
+      double p = t * data.dt_cfd;
+      data.u_interpolated_slice[t][i] = Spline::evaluate(cf_x, p);
+      data.v_interpolated_slice[t][i] = Spline::evaluate(cf_y, p);
+      data.w_interpolated_slice[t][i] = Spline::evaluate(cf_z, p);
+    }
   }
 }
 
@@ -367,64 +658,48 @@ void InverseProblem::compInletMaxVelocity(std::vector<std::array<double, 2>> &ve
  */
 void InverseProblem::compInitialOptimalVelocityField()
 {
-  std::vector<std::array<double, 2>> velArr;
-  //compInletFlowRate(velArr);
-  //compInletFlowRate_X(velArr);
-  //compInletAveragedVeloicty(velArr);
-  compInletMaxVelocity(velArr);
-
-  main.solveNaveirStokes(main.timeMax * 3, velArr);
-
-  /*
-  main.v.fillZero();
-  main.vPrev.fillZero();
-  main.p.fillZero();
-
-  main.vt.fillZero();
-  main.pt.fillZero();
-  */
-
-  /*
-  for(int t = 0; t < main.timeMax; t++) {
-    for(int in = 0; in < main.grid.node.nNodesGlobal; in++) {
-      for(int d = 0; d < 3; d++) {
-        main.vt(t, in, d) = main.v0(in, d);
-      }
-    }
-  }
-
-  int snapCount = 0;
-  for(int t = 0; t < main.timeMax; t++) {
-    if((t - main.snap.snapTimeBeginItr) % main.snap.snapInterval == 0) {
-      main.snap.takeSnapShot(main.vt, main.grid.node.nNodesGlobal, snapCount, t);
-      snapCount++;
-    }
-  }
-  */
-
-  // std::vector<std::array<double, 2>> velArr0, velArr1;
-  // compInletFlowRate_tmp(0, velArr0);
-  // compInletFlowRate_tmp(1, velArr1);
+  // ----- Based On Polynomial BCs ----------------
+  // spline_interpolate_v_mri_slice();
+  // main.solve_NavierStokes_polynmial_BCs(data, inletCB, 3 * main.timeMax);
 
   // std::vector<std::map<int, std::vector<double>>> vectorVelocitySet;
-  // std::vector<std::map<int, std::vector<double>>> vectorVelocitySet_dummy;
+  // main.solve_NavierStokes_polynmial_BCs(data, inletCB, vectorVelocitySet);
+  // main.solve_NavierStokes_polynmial_BCs(data, inletCB, 0, vectorVelocitySet);
+  // main.solve_NavierStokes_polynmial_BCs(data, inletCB, 1, vectorVelocitySet);
+  // main.solve_NavierStokes_polynmial_BCs(data, inletCB, 2, vectorVelocitySet);
 
-  // main.dirichlet.setValuesZero(main.grid.nDofsGlobal);
-  // main.dirichlet.velocitySetInit = main.dirichlet.velocitySet;
-
-  // main.solveNaveirStokes(velArr0, vectorVelocitySet_dummy);
-  // main.solveNaveirStokes(velArr1, vectorVelocitySet_dummy);
-  // main.solveNaveirStokes(velArr1, vectorVelocitySet_dummy);
-  // main.solveNaveirStokes(velArr1, vectorVelocitySet);
-
-  // for(int in = 0; in < main.grid.node.nNodesGlobal; in++) {
-  //   for(int d = 0; d < 3; d++) {
-  //     main.v0(in, d) = main.vt(0, in, d);
+  // for(int t = 0; t < main.timeMax; t++) {
+  //   for(auto &[idx, vec] : vectorVelocitySet[t]) {
+  //     for(int d = 0; d < 3; d++) {
+  //       X(t, idx, d) = vec[d];
+  //     }
   //   }
   // }
 
+  // for(int in = 0; in < main.grid.node.nNodesGlobal; in++) {
+  //   for(int d = 0; d < 3; d++) {
+  //     X0(in, d) = main.vt(0, in, d);
+  //   }
+  // }
+  // ---------------------------------------------
+
+  // ----- Based On Flow Rate ----------------
+  std::vector<std::array<double, 2>> velArr;
+  compInletFlowRate(velArr);
+
+  // compInletFlowRate_left_surface(velArr);
+  compInletFlowRate_top_surface(velArr);
+
+  // main.solveNavierStokes(3 * main.timeMax, velArr);
+
   std::vector<std::map<int, std::vector<double>>> vectorVelocitySet;
-  main.solveNaveirStokes(velArr, vectorVelocitySet);
+  main.solveNavierStokes(velArr, vectorVelocitySet);
+
+  for(int in = 0; in < main.grid.node.nNodesGlobal; in++) {
+    for(int d = 0; d < 3; d++) {
+      main.v0(in, d) = main.vt(0, in, d);
+    }
+  }
 
   for(int t = 0; t < main.timeMax; t++) {
     for(auto &[idx, vec] : vectorVelocitySet[t]) {
@@ -439,8 +714,8 @@ void InverseProblem::compInitialOptimalVelocityField()
       X0(in, d) = main.v0(in, d);
     }
   }
+  // ----------------------------------------
 }
-
 /**
  * @brief Compute discrepancies over domain and time
  */
@@ -454,54 +729,54 @@ void InverseProblem::compCostFunction()
   costFunction.term6 = 0e0;
   costFunction.term7 = 0e0;
 
-  // for(int t = 0; t < main.snap.nSnapShot; t++) {
-  //   for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-  //     for(int d = 0; d < dim; d++) {
-  //       data.voxel(iv).v_cfd(t, d) = 0e0;
-  //       data.voxel(iv).v_err(t, d) = 0e0;
-  //     }
-  //   }
-  // }
-
-  // switch(data.vvox) {
-  // case VoxelVelocity::AVERAGE:
-  //   for(int t = 0; t < main.snap.nSnapShot; t++) {
-  //     for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-  //       data.average(iv, t);
-  //     }
-  //   }
-  //   break;
-
-  // case VoxelVelocity::INTERPOLATION:
-  //   for(int t = 0; t < main.snap.nSnapShot; t++) {
-  //     for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-  //       data.interpolate(iv, t);
-  //     }
-  //   }
-  //   break;
-
-  for(int t = 0; t < main.timeMax; t++) {
+  for(int t = 0; t < data.n_mri_step; t++) {
     for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
       for(int d = 0; d < dim; d++) {
-        data.voxel(iv).v_cfd_t(t, d) = 0e0;
-        data.voxel(iv).v_err_t(t, d) = 0e0;
+        data.voxel(iv).v_cfd(t, d) = 0e0;
+        data.voxel(iv).v_err(t, d) = 0e0;
       }
     }
   }
 
-  switch(data.vvox) {
+  for(int t = 0; t < data.n_cfd_step; t++) {
+    for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+      for(int d = 0; d < dim; d++) {
+        data.voxel(iv).v_cfd_refined(t, d) = 0e0;
+        data.voxel(iv).v_err_refined(t, d) = 0e0;
+      }
+    }
+  }
+
+  PetscPrintf(MPI_COMM_WORLD, "\nComputing Voxel Velocity ...\n");
+
+  // ----- comp numerical velocity (space) ------
+  switch(data.vel_space) {
   case VoxelVelocity::AVERAGE:
-    for(int t = 0; t < main.timeMax; t++) {
+    for(int t = 0; t < data.n_cfd_step; t++) {
       for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-        data.average_t(main.vt, iv, t);
+        if(data.voxel(iv).mask < 1e-12) continue;
+        if(data.voxel(iv).subId != mpi.myId) continue;
+        data.average_space(main.vt, iv, t);
+      }
+    }
+    break;
+
+  case VoxelVelocity::WEIGHTED_AVERAGE:
+    for(int t = 0; t < data.n_cfd_step; t++) {
+      for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+        if(data.voxel(iv).mask < 0.5) continue;
+        if(data.voxel(iv).subId != mpi.myId) continue;
+        data.weighted_average_space(main.vt, iv, t);
       }
     }
     break;
 
   case VoxelVelocity::INTERPOLATION:
-    for(int t = 0; t < main.snap.nSnapShot; t++) {
+    for(int t = 0; t < data.n_cfd_step; t++) {
       for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-        //data.interpolate(iv, t);
+        if(data.voxel(iv).mask < 1e-12) continue;
+        if(data.voxel(iv).subId != mpi.myId) continue;
+        data.linear_interpolate_space(main.vt, iv, t);
       }
     }
     break;
@@ -510,39 +785,61 @@ void InverseProblem::compCostFunction()
     PetscPrintf(MPI_COMM_WORLD, "undefined VoxelVelocity method");
     exit(1);
   }
+  // -----------------------
 
-  // // term 1
-  // for(int t = 0; t < main.snap.nSnapShot; t++) {
-  //   for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
-  //     //if(data.voxel(iv).mask < 0.999) {
-  //     //continue;
-  //     //}
-  //     double dev = 0e0;
-  //     double volume = data.dxData * data.dyData * data.dzData;
-  //     double deltaT = main.dt * main.snap.snapInterval;
-  //     for(int d = 0; d < dim; d++) {
-  //       data.voxel(iv).v_err(t, d) = data.voxel(iv).v_cfd(t, d) - data.voxel(iv).v_mri(t, d);
-  //       dev += data.voxel(iv).v_err(t, d) * data.voxel(iv).v_err(t, d);
-  //     }
-  //     costFunction.term1 += 5e-1 * aCF * dev * volume * deltaT;
-  //   }
-  // }
+  // ---- MPI communication ----
+  data.gather_voxel_info();
+
+  // ----- comp numerical velocity (time) ------
+  switch(data.vel_time) {
+  case VoxelVelocity::AVERAGE:
+    for(int t = 0; t < data.n_mri_step; t++) {
+      for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+        //data.average_time(iv, t);
+      }
+    }
+    break;
+
+  case VoxelVelocity::WEIGHTED_AVERAGE:
+    for(int t = 0; t < data.n_mri_step; t++) {
+      for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+        if(data.voxel(iv).mask < 0.5) continue;
+        data.weighted_average_time(iv, t);
+      }
+    }
+    break;
+
+  case VoxelVelocity::INTERPOLATION:
+    for(int t = 0; t < data.n_mri_step; t++) {
+      for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
+        if(data.voxel(iv).mask < 1e-12) continue;
+        data.spline_interpolate_time(iv, t);
+      }
+    }
+    break;
+
+  default:
+    PetscPrintf(MPI_COMM_WORLD, "undefined VoxelVelocity method");
+    exit(1);
+  }
+  // -----------------------
 
   // term 1
-  for(int t = 0; t < main.timeMax; t++) {
+  for(int t = 0; t < data.n_mri_step; t++) {
     for(int iv = 0; iv < data.nDataCellsGlobal; iv++) {
       double dev = 0e0;
-      double volume = data.dxData * data.dyData * data.dzData;
-
-      if(data.voxel(iv).mask < 0.9999) continue;
+      double aCF_tmp = aCF;
+      double dv_mri = data.dxData * data.dyData * data.dzData;
 
       for(int d = 0; d < dim; d++) {
-        data.voxel(iv).v_err_t(t, d) = data.voxel(iv).v_cfd_t(t, d) - data.voxel(iv).v_mri_t(t, d);
-        dev += data.voxel(iv).v_err_t(t, d) * data.voxel(iv).v_err_t(t, d);
+        data.voxel(iv).v_err(t, d) = data.voxel(iv).v_cfd(t, d) - data.voxel(iv).v_mri(t, d);
+        dev += data.voxel(iv).v_err(t, d) * data.voxel(iv).v_err(t, d);
       }
-      costFunction.term1 += 5e-1 * aCF * dev * volume * main.dt;
+      if(data.voxel(iv).mask < 0.5) aCF_tmp = 0e0;
+      costFunction.term1 += 5e-1 * aCF_tmp * dev * dv_mri * data.dt_mri;
     }
   }
+
   int nc = inletCB.CBNodeMapInCell[0].size();
 
   Gauss gauss(2);
@@ -585,10 +882,10 @@ void InverseProblem::compCostFunction()
           //RegTerm5_inGaussIntegral(value5, nc, ic, t);
         }
       }
-      //costFunction.term2 += 5e-1 * bCF * value2;
-      costFunction.term3 += 5e-1 * bCF * value3;
-      costFunction.term4 += 5e-1 * bCF * value4;
-      //costFunction.term5 += 5e-1 * bCF * value5;
+      //costFunction.term2 += 5e-1 * bCF * value2 * data.dt_cfd;
+      costFunction.term3 += 5e-1 * bCF * value3 * data.dt_cfd;
+      costFunction.term4 += 5e-1 * bCF * value4 * data.dt_cfd;
+      //costFunction.term5 += 5e-1 * bCF * value5 * data.dt_cfd;
     }
   }
 
@@ -865,7 +1162,10 @@ void InverseProblem::compInterpolatedFeeback(double (&feedback)[3], double (&poi
     if(ix < 0 || iy < 0 || iz < 0 || ix >= data.nxData || iy >= data.nyData || iz >= data.nzData) {
       return 0e0;
     }
-    return data.voxel(iz, iy, ix).v_err_t(t, d);
+    if(data.voxel(iz, iy, ix).mask < 0.5) {
+      return 0e0;
+    }
+    return data.voxel(iz, iy, ix).v_err_refined(t, d);
   };
 
   for(int d = 0; d < 3; d++) {
@@ -888,7 +1188,6 @@ void InverseProblem::feedbackGaussIntegral(double (&feedback)[3], const int ic, 
     }
   }
 }
-
 
 /**
  * @brief Interpolate the feedback force at each CFD time step.
@@ -925,8 +1224,7 @@ void InverseProblem::compTimeInterpolatedFeedbackForce()
  */
 void InverseProblem::armijoCriteriaX0(const double fk)
 {
-  if(alphaX0 < 1e-7)
-    return;
+  if(alphaX0 < 1e-7) return;
 
   const double c1 = 1e-4;
   Array2D<double> X0_tmp;
@@ -935,8 +1233,7 @@ void InverseProblem::armijoCriteriaX0(const double fk)
   X0_tmp.fillZero();
 
   while(true) {
-    if(alphaX0 < 1e-7)
-      break;
+    if(alphaX0 < 1e-7) break;
 
     X0_tmp = X0 + alphaX0 * (-gradX0);
 
@@ -971,8 +1268,7 @@ void InverseProblem::armijoCriteriaX0(const double fk)
  */
 void InverseProblem::armijoCriteriaX(const double fk)
 {
-  if(alphaX < 1e-7)
-    return;
+  if(alphaX < 1e-7) return;
 
   const double c1 = 1e-4;
   Array3D<double> X_tmp;
@@ -981,8 +1277,7 @@ void InverseProblem::armijoCriteriaX(const double fk)
   X_tmp.fillZero();
 
   while(true) {
-    if(alphaX < 1e-7)
-      break;
+    if(alphaX < 1e-7) break;
 
     X_tmp = X + alphaX * (-gradX);
 
@@ -994,13 +1289,13 @@ void InverseProblem::armijoCriteriaX(const double fk)
     double tmp = 0e0;
 
     for(int t = 0; t < adjoint.timeMax; t++) {
-      if(t % main.snap.snapInterval == 0) {
-        for(int in = 0; in < main.grid.nNodesGlobal; in++) {
-          for(int d = 0; d < 3; d++) {
-            tmp += -(gradX(t, in, d) * gradX(t, in, d));
-          }
+      //if(t % main.snap.snapInterval == 0) {
+      for(int in = 0; in < main.grid.nNodesGlobal; in++) {
+        for(int d = 0; d < 3; d++) {
+          tmp += -(gradX(t, in, d) * gradX(t, in, d));
         }
       }
+      //}
     }
 
     double l_tmp = fk + c1 * tmp * alphaX;

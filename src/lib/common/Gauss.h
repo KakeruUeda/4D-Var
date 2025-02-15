@@ -17,6 +17,11 @@ Gauss(const int num)
 {
 	switch(num)
 	{
+	case 1:
+	    point[0] = 0e0;
+        weight[0] = 2e0;
+		break;
+		
 	case 2:
 		point[0]=-0.577350296189626;
 		point[1]=0.577350296189626;

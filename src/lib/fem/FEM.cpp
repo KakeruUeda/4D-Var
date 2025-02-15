@@ -80,7 +80,7 @@ double FEM::comp_he(Array2D<double> &x)
 
 
 /**
- * @brief Compute element length 2.
+ * @brief Compute element length.
  */
 double FEM::comp_he(double dx, double dy, double dz)
 {

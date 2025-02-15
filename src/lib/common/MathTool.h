@@ -17,6 +17,29 @@
 
 using namespace std;
 
+class MathTools1D
+{
+public:
+  MathTools1D(const int nNodesInCell);
+  MathTools1D(){}
+
+  double detJ, weight, vol;
+  double dxdr;
+  int nNodesInCell;
+
+  Array1D<double> xCurrent;
+  Array1D<double> N;
+  Array1D<double> dNdr;
+  Array1D<double> dNdx;
+
+  void setZero();
+  void setShapesInGauss(Gauss &gauss, const int i1);
+  void setFactorsInGauss(Gauss &gauss, const int i1, const double dx);
+
+  double getScalarValueGP(Array1D<double> &nodeValues);
+  std::vector<double> getVectorValueGP(Array2D<double> &nodeValues);
+};
+
 class MathTools2D
 {
 public:

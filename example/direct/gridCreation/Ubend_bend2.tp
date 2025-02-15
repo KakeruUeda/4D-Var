@@ -1,0 +1,56 @@
+Base
+{
+  dim = 3
+  outputDir = "Ubend_bend2dddd"
+  numOfOMP = 1
+}
+
+Grid
+{
+  GridType{
+    type = "Structured"
+    nNodesInCell = 8
+  }
+
+  StructuredGrid{
+    nx = (40, 40, 27)
+    lx = (0.075, 0.075, 0.0513)
+    image = "input/Ubend/bend2/image40x40x27.dat"
+    fluidExtraction = "OFF"
+  }
+
+}
+
+StructuredBoundary
+{
+  top{
+    type = "v"
+    value = (0,0,0)
+  }
+  bottom{
+    type = "free"
+  }
+  left{
+    type = "poiseuille"
+    center = (0, 0.050625, 0.0266) 
+    R = 0.0125
+    Q = 1.0
+  }
+  right{
+    type = "v"
+    value = (0,0,0)
+  }
+  front{
+    type = "v"
+    value = (0,0,0)
+  }
+  back{
+    type = "v"
+    value = (0,0,0)
+  }
+  outlet{
+    setOutletTractionFreeCondition = "OFF"
+  }
+  controlBoundaryExtraction = "ON"
+  inletControlBoundary = "left"
+}

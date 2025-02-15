@@ -80,10 +80,10 @@ void InverseProblem::compOptimalCondition()
       for(int p = 0; p < nc; p++) {
         int in = inletCB.CBNodeMapInCell[ic][p];
         for(int d = 0; d < 3; d++) {
-          //gradX(t, in, d) += bCF * value1[p][d];
-          gradX(t, in, d) += bCF * value2[p][d];
-          gradX(t, in, d) += bCF * value3[p][d];
-          //gradX(t, in, d) += bCF * value4[p][d];
+          //gradX(t, in, d) += bCF * value1[p][d] * data.dt_cfd;
+          gradX(t, in, d) += bCF * value2[p][d] * data.dt_cfd;
+          gradX(t, in, d) += bCF * value3[p][d] * data.dt_cfd;
+          //gradX(t, in, d) += bCF * value4[p][d] * data.dt_cfd;;
           gradX(t, in, d) += value5[p][d];
         }
       }

@@ -8,6 +8,8 @@ target_sources(direct
     Initialize.cpp
     AssemblyUSNS.cpp
     USNS.cpp
+    USNS_polynomial_BCs.cpp
+    USNS_optimized_BCs.cpp
 )
 
 target_include_directories(direct

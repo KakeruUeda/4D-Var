@@ -5,6 +5,7 @@ add_library(common STATIC)
 target_sources(common PRIVATE
     MathTool.cpp
     Spline.cpp
+    Polynomial.cpp
     SignalHnadler.cpp
 )
 

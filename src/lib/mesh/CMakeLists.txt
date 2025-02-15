@@ -6,6 +6,8 @@ target_sources(mesh
 PRIVATE
   Grid.cpp
   DataGrid.cpp
+  NumericalVelocitySpace.cpp
+  NumericalVelocityTime.cpp
   Cell.cpp
   Node.cpp
 )
