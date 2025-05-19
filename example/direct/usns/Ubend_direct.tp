@@ -1,7 +1,7 @@
 Base
 {
   dim = 3
-  outputDir = "Ubend_direct_MRI_flowRate_inlet"
+  outputDir = "Ubend_assimilated_BC_v2"
   numOfOMP = 1
 }
 
@@ -47,7 +47,7 @@ PysicalParameter
 TimeParameter
 {
   dt = 0.005895624
-  timeMax = 624
+  timeMax = 801
   pulsatileFlow = "ON"
   pulseBeginItr = 0
   T = 0.5

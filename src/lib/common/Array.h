@@ -439,7 +439,7 @@ public:
   }
 
 private:
- long int width_, height_;
+  int width_, height_;
   T *data_;
 };
 

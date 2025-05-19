@@ -37,8 +37,8 @@ DirectProblem::DirectProblem(Config &conf)
 void DirectProblem::runSimulation()
 {
   outputDomain();
-  solveNavierStokes();
-  //solve_NavierStokes_optimized_BCs();
+  //solveNavierStokes();
+  solve_NavierStokes_optimized_BCs();
 }
 
 /**

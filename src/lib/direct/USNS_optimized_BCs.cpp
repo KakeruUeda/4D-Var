@@ -35,14 +35,13 @@ double DirectProblem::interpolated_velocity(Array2D<double> &vel_opt, double px,
 
   double vel_int[3];
 
-  int i1 = ix + iz * (nx_opt+1) * (ny_opt+1);
-  int i2 = (ix + 1) + iz * (nx_opt+1) * (ny_opt+1);
-  int i3 = (ix + 1) + (iz + 1) * (nx_opt+1) * (ny_opt+1);
-  int i4 = ix + (iz + 1) * (nx_opt+1) * (ny_opt+1);
+  int i1 = ix + iz * (nx_opt + 1) * (ny_opt + 1);
+  int i2 = (ix + 1) + iz * (nx_opt + 1) * (ny_opt + 1);
+  int i3 = (ix + 1) + (iz + 1) * (nx_opt + 1) * (ny_opt + 1);
+  int i4 = ix + (iz + 1) * (nx_opt + 1) * (ny_opt + 1);
 
   for(int d = 0; d < 3; d++) {
-    vel_int[d] = N(0) * vel_opt(i1, d) + N(1) * vel_opt(i2, d) +
-                 N(2) * vel_opt(i3, d) + N(3) * vel_opt(i4, d);
+    vel_int[d] = N(0) * vel_opt(i1, d) + N(1) * vel_opt(i2, d) + N(2) * vel_opt(i3, d) + N(3) * vel_opt(i4, d);
   }
 
   if(dir == 0) return vel_int[0];
@@ -79,15 +78,96 @@ void DirectProblem::solve_NavierStokes_optimized_BCs()
     velocity_opt[t].importBIN(file_name);
   }
 
+  std::vector<std::vector<double>> vel_int_x;
+  std::vector<std::vector<double>> vel_int_y;
+  std::vector<std::vector<double>> vel_int_z;
+
+  vel_int_x.resize(timeMax, std::vector<double>(dirichlet.velocitySet.size(), 0e0));
+  vel_int_y.resize(timeMax, std::vector<double>(dirichlet.velocitySet.size(), 0e0));
+  vel_int_z.resize(timeMax, std::vector<double>(dirichlet.velocitySet.size(), 0e0));
+
+  int tmp = 0;
+  for(auto &entry : dirichlet.velocitySet) {
+    std::vector<double> &velocities = entry.second;
+
+    double x_coord = grid.node.x[entry.first][0];
+    double y_coord = grid.node.x[entry.first][1];
+    double z_coord = grid.node.x[entry.first][2];
+
+    for(int t = 0; t <= 155; t++) {
+      int it = t;
+      vel_int_x[t][tmp] = interpolated_velocity(velocity_opt[it], x_coord, z_coord, 0);
+      vel_int_y[t][tmp] = interpolated_velocity(velocity_opt[it], x_coord, z_coord, 1);
+      vel_int_z[t][tmp] = interpolated_velocity(velocity_opt[it], x_coord, z_coord, 2);
+    }
+    for(int t = 215; t <= 370; t++) {
+      int it = t - 215;
+      vel_int_x[t][tmp] = interpolated_velocity(velocity_opt[it], x_coord, z_coord, 0);
+      vel_int_y[t][tmp] = interpolated_velocity(velocity_opt[it], x_coord, z_coord, 1);
+      vel_int_z[t][tmp] = interpolated_velocity(velocity_opt[it], x_coord, z_coord, 2);
+    }
+    for(int t = 430; t <= 585; t++) {
+      int it = t - 430;
+      vel_int_x[t][tmp] = interpolated_velocity(velocity_opt[it], x_coord, z_coord, 0);
+      vel_int_y[t][tmp] = interpolated_velocity(velocity_opt[it], x_coord, z_coord, 1);
+      vel_int_z[t][tmp] = interpolated_velocity(velocity_opt[it], x_coord, z_coord, 2);
+    }
+    for(int t = 645; t <= 800; t++) {
+      int it = t - 645;
+      vel_int_x[t][tmp] = interpolated_velocity(velocity_opt[it], x_coord, z_coord, 0);
+      vel_int_y[t][tmp] = interpolated_velocity(velocity_opt[it], x_coord, z_coord, 1);
+      vel_int_z[t][tmp] = interpolated_velocity(velocity_opt[it], x_coord, z_coord, 2);
+    }
+
+    std::vector<double> x, y1, y2, y3;
+
+    for(int t = 155 - 5; t <= 155; t++) {
+      int it = t;
+      x.push_back(t);
+      y1.push_back(interpolated_velocity(velocity_opt[it], x_coord, z_coord, 0));
+      y2.push_back(interpolated_velocity(velocity_opt[it], x_coord, z_coord, 1));
+      y3.push_back(interpolated_velocity(velocity_opt[it], x_coord, z_coord, 2));
+    }
+    for(int t = 215; t <= 215 + 5; t++) {
+      int it = t - 215;
+      x.push_back(t);
+      y1.push_back(interpolated_velocity(velocity_opt[it], x_coord, z_coord, 0));
+      y2.push_back(interpolated_velocity(velocity_opt[it], x_coord, z_coord, 1));
+      y3.push_back(interpolated_velocity(velocity_opt[it], x_coord, z_coord, 2));
+    }
+
+    vector<Spline::Coefficients> cf_x = Spline::compCoefficients(x, y1);
+    vector<Spline::Coefficients> cf_y = Spline::compCoefficients(x, y2);
+    vector<Spline::Coefficients> cf_z = Spline::compCoefficients(x, y3);
+
+    for(int t = 155; t <= 215; t++) {
+      int it = t;
+      vel_int_x[t][tmp] = Spline::evaluate(cf_x, it);
+      vel_int_y[t][tmp] = Spline::evaluate(cf_y, it);
+      vel_int_z[t][tmp] = Spline::evaluate(cf_z, it);
+    }
+    int tmp2 = 155;
+    for(int t = 370; t <= 430; t++) {
+      vel_int_x[t][tmp] = Spline::evaluate(cf_x, tmp2);
+      vel_int_y[t][tmp] = Spline::evaluate(cf_y, tmp2);
+      vel_int_z[t][tmp] = Spline::evaluate(cf_z, tmp2);
+      tmp2++;
+    }
+    tmp2 = 155;
+    for(int t = 585; t <= 645; t++) {
+      vel_int_x[t][tmp] = Spline::evaluate(cf_x, tmp2);
+      vel_int_y[t][tmp] = Spline::evaluate(cf_y, tmp2);
+      vel_int_z[t][tmp] = Spline::evaluate(cf_z, tmp2);
+      tmp2++;
+    }
+
+    tmp++;
+  }
+
   for(int t = 0; t < timeMax; t++) {
     petsc.setValueZero();
 
-    int tc = 0;
-
-    if(t >= 0 && t < 156) tc = t;
-    if(t >= 156 && t < 312) tc = t-156;
-    if(t >= 312 && t < 468) tc = t-312;
-    if(t >= 468 && t < timeMax) tc = t-468;
+    int tmp = 0;
     for(auto &entry : dirichlet.velocitySet) {
       std::vector<double> &velocities = entry.second;
 
@@ -96,10 +176,11 @@ void DirectProblem::solve_NavierStokes_optimized_BCs()
       double z_coord = grid.node.x[entry.first][2];
 
       if(y_coord < 1e-12) {
-        velocities[0] = interpolated_velocity(velocity_opt[tc], x_coord, z_coord, 0);
-        velocities[1] = interpolated_velocity(velocity_opt[tc], x_coord, z_coord, 1);
-        velocities[2] = interpolated_velocity(velocity_opt[tc], x_coord, z_coord, 2);
+        velocities[0] = vel_int_x[t][tmp];
+        velocities[1] = vel_int_y[t][tmp];
+        velocities[2] = vel_int_z[t][tmp];
       }
+      tmp++;
     }
     dirichlet.getNewArray(grid.node.mapNew);
 
